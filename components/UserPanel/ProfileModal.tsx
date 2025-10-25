@@ -136,7 +136,7 @@ export const ProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div className="bg-card-bg rounded-xl p-8 max-w-md w-full">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-orange"></div>
@@ -147,7 +147,7 @@ export const ProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-card-bg rounded-xl w-full max-w-2xl my-8 border border-border-color shadow-2xl">
         {/* Header with Avatar */}
         <div className="bg-gradient-to-r from-accent-orange to-accent-coral p-6 rounded-t-xl relative">

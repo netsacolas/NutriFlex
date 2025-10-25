@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { MealHistory } from './MealHistory';
 import { WeightHistory } from './WeightHistory';
+import { PhysicalActivityHistory } from './PhysicalActivityHistory';
 import { NutritionChat } from './NutritionChat';
 
-type HistoryTab = 'meals' | 'weight';
+type HistoryTab = 'meals' | 'weight' | 'activities';
 
 export const HistoryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<HistoryTab>('meals');
@@ -11,32 +12,32 @@ export const HistoryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div className="bg-card-bg rounded-xl w-full max-w-6xl my-8 border border-border-color shadow-2xl">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 rounded-t-xl relative">
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-4 rounded-t-xl relative">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-white hover:text-gray-200 text-2xl font-bold"
+              className="absolute top-4 right-4 text-white text-2xl hover:opacity-80 transition-opacity z-10"
             >
               &times;
             </button>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pr-8">
               <div className="flex items-center gap-3">
-                <div className="text-5xl">📊</div>
+                <div className="text-4xl">📊</div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Histórico Completo</h2>
+                  <h2 className="text-xl font-bold text-white">Histórico Completo</h2>
                   <p className="text-white/80 text-sm">Acompanhe sua evolução ao longo do tempo</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowChat(true)}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold px-6 py-3 rounded-lg transition-all flex items-center gap-2 border border-white/30"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
               >
-                <span className="text-xl">💬</span>
-                <span>Assistente</span>
+                <span className="text-lg">🤖</span>
+                <span>Assistente de IA</span>
               </button>
             </div>
           </div>
@@ -53,7 +54,21 @@ export const HistoryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             >
               <div className="flex items-center justify-center gap-2">
                 <span className="text-2xl">🍽️</span>
-                <span>Histórico de Refeições</span>
+                <span>Refeições</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('activities')}
+              className={`flex-1 px-6 py-4 font-semibold transition-all ${
+                activeTab === 'activities'
+                  ? 'text-accent-orange border-b-2 border-accent-orange bg-hover-bg'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-hover-bg/50'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-2xl">🏃</span>
+                <span>Atividades</span>
               </div>
             </button>
 
@@ -67,7 +82,7 @@ export const HistoryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             >
               <div className="flex items-center justify-center gap-2">
                 <span className="text-2xl">⚖️</span>
-                <span>Histórico de Pesagens</span>
+                <span>Pesagens</span>
               </div>
             </button>
           </div>
@@ -83,6 +98,18 @@ export const HistoryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                   </p>
                 </div>
                 <MealHistory />
+              </div>
+            )}
+
+            {activeTab === 'activities' && (
+              <div>
+                <div className="mb-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg p-4">
+                  <p className="text-text-secondary text-sm">
+                    <span className="font-semibold text-purple-500">💡 Dica:</span> Registre todas suas atividades físicas
+                    para ter um controle completo do seu gasto calórico!
+                  </p>
+                </div>
+                <PhysicalActivityHistory />
               </div>
             )}
 

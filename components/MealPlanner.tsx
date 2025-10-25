@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { MealType } from '../types';
+import type { MealType, UserProfile } from '../types';
 import { PizzaIcon, TargetIcon, XIcon, ZapIcon, LoaderIcon, StarIcon } from './icons';
 import { searchFoods } from '../data/foodDatabase';
+import { profileService } from '../services/profileService';
 
 interface MealPlannerProps {
     onCalculate: (foods: string[], targetCalories: number, mealType: MealType) => void;
@@ -18,6 +19,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
 
     const [favoriteFoods, setFavoriteFoods] = useState<string[]>(() => {
         try {
@@ -32,6 +34,38 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
     useEffect(() => {
         localStorage.setItem('favoriteFoods', JSON.stringify(favoriteFoods));
     }, [favoriteFoods]);
+
+    // Carregar perfil do usuário ao montar o componente
+    useEffect(() => {
+        const loadProfile = async () => {
+            console.log('🔍 Carregando perfil do usuário...');
+            const { data, error } = await profileService.getProfile();
+            if (data) {
+                console.log('✅ Perfil carregado:', data);
+                setProfile(data);
+            } else if (error) {
+                console.error('❌ Erro ao carregar perfil:', error);
+            }
+        };
+        loadProfile();
+    }, []);
+
+    // Atualizar targetCalories quando mealType ou profile mudar
+    useEffect(() => {
+        if (profile) {
+            const calorieMap = {
+                breakfast: profile.breakfast_calories || 400,
+                lunch: profile.lunch_calories || 600,
+                dinner: profile.dinner_calories || 600,
+                snack: profile.snack_calories || 200,
+            };
+            const newCalories = calorieMap[mealType];
+            console.log(`🍽️ Atualizando calorias para ${mealType}:`, newCalories);
+            setTargetCalories(newCalories);
+        } else {
+            console.log('⚠️ Perfil não carregado ainda, usando valores padrão');
+        }
+    }, [mealType, profile]);
 
     // Autocomplete: atualizar sugestões quando o usuário digita
     useEffect(() => {

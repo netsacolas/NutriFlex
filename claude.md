@@ -23,7 +23,8 @@
 - **Recharts 3.3.0** - Visualização de dados (gráficos de pizza para macronutrientes)
 - **@google/genai 1.27.0** - SDK oficial do Google Gemini AI
 
-### Infraestrutura
+### Backend & Infraestrutura
+- **Supabase** - Backend as a Service (autenticação, banco de dados PostgreSQL)
 - **Gemini 2.0 Flash Experimental** - Modelo de IA para cálculos nutricionais
 - **AI Studio CDN** - Hosting de dependências via importmap
 
@@ -33,21 +34,48 @@
 
 ```
 NutriFlex/
-├── index.html                 # Entry point HTML com config Tailwind
-├── index.tsx                  # Entry point React + root render
-├── App.tsx                    # Componente principal da aplicação
-├── types.ts                   # Definições TypeScript compartilhadas
-├── vite.config.ts            # Configuração Vite + env vars
-├── tsconfig.json             # Configuração TypeScript
-├── package.json              # Dependências e scripts
-├── metadata.json             # Metadados da aplicação
-├── .env.local                # Variáveis de ambiente (não commitado)
+├── index.html                          # Entry point HTML com config Tailwind
+├── index.tsx                           # Entry point React + root render
+├── App.tsx                             # Componente principal da aplicação
+├── types.ts                            # Definições TypeScript compartilhadas
+├── vite.config.ts                     # Configuração Vite + env vars
+├── tsconfig.json                      # Configuração TypeScript
+├── package.json                       # Dependências e scripts
+├── metadata.json                      # Metadados da aplicação
+├── .env.local                         # Variáveis de ambiente (não commitado)
 ├── components/
-│   ├── MealPlanner.tsx       # Interface de planejamento de refeições
-│   ├── MealResult.tsx        # Exibição de resultados + edição interativa
-│   └── icons.tsx             # Ícones SVG customizados
-└── services/
-    └── geminiService.ts      # Integração com Gemini API
+│   ├── MealPlanner.tsx                # Interface de planejamento de refeições
+│   ├── MealResult.tsx                 # Exibição de resultados + edição interativa
+│   ├── icons.tsx                      # Ícones SVG customizados
+│   ├── LoginForm.tsx                  # Formulário de login/cadastro
+│   ├── ConfirmDeleteModal.tsx         # Modal de confirmação de exclusão (reutilizável)
+│   └── UserPanel/
+│       ├── UserPanel.tsx              # Painel principal do usuário
+│       ├── ProfileModal.tsx           # Modal de edição de perfil
+│       ├── HealthModal.tsx            # Modal de saúde, metas de calorias e atividades
+│       ├── HistoryModal.tsx           # Modal de histórico (refeições, atividades, pesagens)
+│       ├── ActivityHistory.tsx        # Componente de histórico de atividades (resumido)
+│       ├── PhysicalActivityHistory.tsx # Histórico completo de atividades físicas
+│       ├── MealHistory.tsx            # Histórico de refeições consumidas
+│       ├── WeightHistory.tsx          # Histórico de pesagens com gráfico
+│       └── NutritionChat.tsx          # Chat com assistente de IA nutricional
+├── services/
+│   ├── geminiService.ts               # Integração com Gemini API
+│   ├── supabaseClient.ts              # Cliente Supabase configurado
+│   ├── authService.ts                 # Serviços de autenticação
+│   ├── profileService.ts              # CRUD de perfil do usuário
+│   ├── mealHistoryService.ts          # CRUD de histórico de refeições
+│   ├── weightHistoryService.ts        # CRUD de histórico de peso
+│   └── physicalActivityService.ts     # CRUD de atividades físicas
+├── data/
+│   └── activitiesDatabase.ts          # Banco de dados de atividades físicas com MET values
+├── utils/
+│   └── bmiUtils.ts                    # Cálculos e classificação de IMC
+└── migrations/                        # Migrações SQL do Supabase
+    ├── 001_initial_schema.sql
+    ├── 002_add_meal_history.sql
+    ├── 003_add_weight_history.sql
+    └── 004_add_physical_activities_and_meal_goals.sql
 ```
 
 ---
@@ -271,6 +299,347 @@ Persona de nutricionista especialista com instruções para:
 
 ---
 
+## Sistema de Usuário e Backend (Supabase)
+
+### 5. Autenticação e Perfil de Usuário
+
+**Serviços Backend**:
+- [authService.ts](services/authService.ts) - Login, cadastro, logout, recuperação de sessão
+- [profileService.ts](services/profileService.ts) - CRUD de perfil do usuário
+- [supabaseClient.ts](services/supabaseClient.ts) - Cliente configurado do Supabase
+
+**Funcionalidades de Autenticação**:
+```typescript
+// Login com email/senha
+await authService.signIn(email, password)
+
+// Cadastro de novo usuário
+await authService.signUp(email, password)
+
+// Logout
+await authService.signOut()
+
+// Recuperar sessão (ao recarregar página)
+await authService.getCurrentSession()
+```
+
+**Perfil de Usuário**:
+```typescript
+interface UserProfile {
+  id: string
+  email: string
+  weight?: number
+  height?: number
+  age?: number
+  gender?: 'male' | 'female'
+  meals_per_day?: number
+  breakfast_calories?: number
+  lunch_calories?: number
+  dinner_calories?: number
+  snack_calories?: number
+  created_at: string
+  updated_at: string
+}
+```
+
+**Componentes**:
+- [LoginForm.tsx](components/LoginForm.tsx) - Tela de login/cadastro com tabs
+- [UserPanel.tsx](components/UserPanel/UserPanel.tsx) - Painel do usuário com botões de ação
+- [ProfileModal.tsx](components/UserPanel/ProfileModal.tsx) - Edição de perfil e alteração de senha
+
+---
+
+### 6. HealthModal - Saúde, Metas e Atividades Físicas
+[components/UserPanel/HealthModal.tsx](components/UserPanel/HealthModal.tsx)
+
+**Responsabilidade**: Gerenciar dados de saúde, metas de calorias e registro de atividades físicas.
+
+**Seções Principais**:
+
+#### 6.1 Dados Básicos
+- Peso (kg), Altura (cm), Idade, Sexo
+- Cálculo automático de IMC com classificação colorida
+- Cores dinâmicas baseadas na classificação (verde, amarelo, laranja, vermelho)
+
+#### 6.2 Metas de Calorias
+- **Refeições por dia**: Configurável (1-6)
+- **Calorias por refeição**:
+  - ☀️ Café da manhã
+  - 🍽️ Almoço
+  - 🌙 Jantar
+  - 🍪 Lanche
+- **Quantidade de lanches**: Campo numérico (1, 2, 3, 4+)
+- **Total diário**: Calculado automaticamente incluindo `snack_calories × snackQuantity`
+
+**Exemplo de cálculo**:
+```typescript
+Total = breakfast_calories + lunch_calories + dinner_calories + (snack_calories × snackQuantity)
+// Ex: 400 + 600 + 600 + (200 × 3) = 2200 kcal/dia
+```
+
+#### 6.3 Registro de Atividades Físicas
+- **Autocomplete de atividades**: Busca em banco com 100+ atividades
+- **Banco de dados de atividades**: [activitiesDatabase.ts](data/activitiesDatabase.ts)
+- **Cálculo automático de calorias**: Baseado em MET values
+- **Fórmula de calorias queimadas**:
+  ```typescript
+  calories = MET × weight(kg) × time(hours)
+  ```
+- **Campos**:
+  - Tipo de atividade (com autocomplete)
+  - Duração (minutos)
+  - Calorias queimadas (calculado automaticamente)
+
+**MET Values (Metabolic Equivalent of Task)**:
+- Caminhada leve: 3.5 MET
+- Corrida (8 km/h): 8.0 MET
+- Natação moderada: 5.8 MET
+- Ciclismo (20 km/h): 8.0 MET
+- Musculação: 6.0 MET
+
+**Categorias de Atividades**:
+- Caminhada e Corrida (10+ variações)
+- Ciclismo (6 variações)
+- Natação (5 variações)
+- Esportes Coletivos (15+)
+- Musculação e Academia (10+)
+- Atividades Domésticas (20+)
+- Dança (8 variações)
+- Artes Marciais (10+)
+- E muito mais...
+
+#### 6.4 Histórico de Atividades
+- Componente colapsável com últimas atividades
+- [ActivityHistory.tsx](components/UserPanel/ActivityHistory.tsx) - Visualização resumida
+- Exibição de atividade, duração e calorias
+- Botão para expandir histórico completo
+
+#### 6.5 Assistente de IA
+- Botão com gradiente roxo-rosa chamativo
+- Abre chat nutricional com contexto do perfil
+- Sugestões personalizadas baseadas em dados do usuário
+
+---
+
+### 7. HistoryModal - Histórico Completo
+[components/UserPanel/HistoryModal.tsx](components/UserPanel/HistoryModal.tsx)
+
+**Responsabilidade**: Visualizar histórico de refeições, atividades físicas e pesagens.
+
+**Sistema de Abas**:
+```typescript
+type HistoryTab = 'meals' | 'activities' | 'weight'
+```
+
+#### 7.1 Aba: Refeições
+[components/UserPanel/MealHistory.tsx](components/UserPanel/MealHistory.tsx)
+
+**Features**:
+- Filtros: Última Semana | Último Mês | Tudo
+- Cards com detalhes de cada refeição:
+  - Tipo de refeição (ícone + nome)
+  - Alimentos consumidos
+  - Calorias totais
+  - Macronutrientes (proteína, carboidratos, gorduras, fibras)
+  - Data e hora
+- Estatísticas:
+  - Total de refeições registradas
+  - Total de calorias consumidas
+  - Média de calorias por refeição
+- **Exclusão com confirmação**: Modal de confirmação antes de deletar
+
+#### 7.2 Aba: Atividades
+[components/UserPanel/PhysicalActivityHistory.tsx](components/UserPanel/PhysicalActivityHistory.tsx)
+
+**Features**:
+- Filtros temporais (semana, mês, tudo)
+- Cards detalhados de atividades:
+  - Nome da atividade
+  - Duração (minutos)
+  - Calorias queimadas
+  - Data e hora
+- Estatísticas:
+  - Total de atividades realizadas
+  - Total de calorias queimadas
+  - Total de minutos de exercício
+- Exclusão com modal de confirmação
+
+#### 7.3 Aba: Pesagens
+[components/UserPanel/WeightHistory.tsx](components/UserPanel/WeightHistory.tsx)
+
+**Features**:
+- Gráfico de linha com evolução do peso (Recharts)
+- Lista de pesagens com:
+  - Peso em kg
+  - Data e hora
+  - Variação em relação à pesagem anterior (↑ +1.5kg ou ↓ -2.0kg)
+- Registro de novo peso
+- Exclusão com confirmação
+- Visualização de tendência (ganho/perda de peso)
+
+#### 7.4 Assistente de IA no Histórico
+- Botão idêntico ao HealthModal
+- Contexto enriquecido com:
+  - Dados do perfil
+  - Histórico de refeições recentes
+  - Histórico de peso
+  - Atividades físicas
+
+---
+
+### 8. ConfirmDeleteModal - Modal de Confirmação
+[components/ConfirmDeleteModal.tsx](components/ConfirmDeleteModal.tsx)
+
+**Responsabilidade**: Modal reutilizável para confirmação de exclusões.
+
+**Props**:
+```typescript
+interface ConfirmDeleteModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  title: string          // Ex: "Excluir Refeição?"
+  message: string        // Ex: "Esta ação não pode ser desfeita."
+  itemName?: string      // Ex: "Café da manhã - 400 kcal"
+  isDeleting?: boolean   // Estado de loading durante exclusão
+}
+```
+
+**Design**:
+- Header vermelho-laranja (red-orange gradient)
+- Backdrop escuro com blur (bg-black/70 backdrop-blur-sm)
+- Z-index 60 (acima dos modais principais que usam z-50)
+- Botões de ação: Cancelar (cinza) e Excluir (vermelho)
+- Loading state no botão de exclusão
+
+**Uso**:
+```typescript
+<ConfirmDeleteModal
+  isOpen={showDeleteModal}
+  onClose={() => setShowDeleteModal(false)}
+  onConfirm={handleDelete}
+  title="Excluir Atividade?"
+  message="Esta ação não pode ser desfeita."
+  itemName={activityToDelete?.activity_type}
+  isDeleting={isDeleting}
+/>
+```
+
+---
+
+### 9. NutritionChat - Assistente de IA Nutricional
+[components/UserPanel/NutritionChat.tsx](components/UserPanel/NutritionChat.tsx)
+
+**Responsabilidade**: Chat interativo com Gemini AI para orientação nutricional.
+
+**Contexto Fornecido à IA**:
+```typescript
+interface ChatContext {
+  profile?: UserProfile
+  weightHistory?: WeightHistory[]
+  recentMeals?: MealHistory[]
+}
+```
+
+**Funcionalidades**:
+- Histórico de mensagens (usuário e assistente)
+- Streaming de respostas (digitação em tempo real)
+- Contexto completo do usuário:
+  - Dados pessoais (peso, altura, idade, sexo)
+  - IMC calculado
+  - Metas de calorias por refeição
+  - Histórico de peso (últimos 10 registros)
+  - Refeições recentes (últimos 20 registros)
+- Sugestões personalizadas baseadas em dados reais
+- Design com gradiente roxo-rosa no header
+
+**Persona da IA**:
+- Nutricionista especializado
+- Linguagem acessível e amigável
+- Respostas baseadas em evidências científicas
+- Considera histórico e perfil do usuário
+- Sugestões práticas e personalizadas
+
+---
+
+### 10. activitiesDatabase - Banco de Atividades Físicas
+[data/activitiesDatabase.ts](data/activitiesDatabase.ts)
+
+**Responsabilidade**: Banco de dados local com 100+ atividades físicas e valores MET.
+
+**Estrutura de Dados**:
+```typescript
+interface ActivityData {
+  name: string      // Ex: "Corrida - moderada (8 km/h)"
+  met: number       // Ex: 8.0 (Metabolic Equivalent of Task)
+  category: string  // Ex: "Corrida"
+}
+```
+
+**Funções Principais**:
+
+#### searchActivities(query: string, limit?: number)
+- Busca fuzzy em nomes de atividades
+- Case-insensitive
+- Retorna array de nomes ordenados por relevância
+
+#### getActivityMET(activityName: string)
+- Busca exata do valor MET de uma atividade
+- Retorna número ou undefined
+
+#### calculateCaloriesBurned(met: number, weightKg: number, durationMinutes: number)
+- Fórmula: `MET × weight(kg) × time(hours)`
+- Retorna calorias arredondadas
+
+**Categorias Incluídas**:
+- Caminhada e Corrida (11 atividades)
+- Ciclismo (6 atividades)
+- Natação (5 atividades)
+- Esportes Coletivos (16 atividades)
+- Musculação e Academia (11 atividades)
+- Yoga e Pilates (5 atividades)
+- Dança (8 atividades)
+- Artes Marciais (10 atividades)
+- Atividades Domésticas (21 atividades)
+- Jardinagem (5 atividades)
+- Trabalho Manual (8 atividades)
+- Recreação (10 atividades)
+
+**Total**: 116 atividades diferentes
+
+---
+
+### 11. bmiUtils - Cálculos de IMC
+[utils/bmiUtils.ts](utils/bmiUtils.ts)
+
+**Responsabilidade**: Calcular e classificar Índice de Massa Corporal.
+
+**Função Principal**:
+```typescript
+getBMIInfo(weight: number, height: number): BMIInfo
+
+interface BMIInfo {
+  value: number      // IMC calculado
+  label: string      // Ex: "Peso Normal"
+  color: string      // Cor da classificação (hex)
+}
+```
+
+**Classificação OMS**:
+- **Abaixo do peso** (< 18.5): #60a5fa (azul)
+- **Peso normal** (18.5 - 24.9): #4ade80 (verde)
+- **Sobrepeso** (25.0 - 29.9): #fbbf24 (amarelo)
+- **Obesidade Grau I** (30.0 - 34.9): #fb923c (laranja)
+- **Obesidade Grau II** (35.0 - 39.9): #f87171 (vermelho claro)
+- **Obesidade Grau III** (≥ 40.0): #dc2626 (vermelho escuro)
+
+**Fórmula**:
+```typescript
+BMI = weight(kg) / (height(m) × height(m))
+```
+
+---
+
 ## Sistema de Tipos (types.ts)
 
 [types.ts](types.ts)
@@ -320,14 +689,21 @@ type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
 **.env.local** (não commitado no git):
 ```bash
+# Gemini AI
 VITE_GEMINI_API_KEY=AIzaSyBcnk5mEwW3Fr_yQQofEaTX5ftLGMIEtEo
+
+# Supabase
+VITE_SUPABASE_URL=https://keawapzxqoyesptpwpwav.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
 
 **Importante**: Vite usa o prefixo `VITE_` para expor variáveis ao client.
 
 Acesso no código:
 ```typescript
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ```
 
 ### Vite Config
@@ -544,15 +920,32 @@ cd NutriFlex
 # 2. Instalar dependências
 npm install
 
-# 3. Configurar API Key
-# Criar .env.local na raiz:
-VITE_GEMINI_API_KEY=your_key_here
+# 3. Configurar variáveis de ambiente
+# Criar .env.local na raiz com:
+VITE_GEMINI_API_KEY=your_gemini_key_here
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
-# 4. Rodar desenvolvimento
+# 4. Configurar Supabase
+# Executar as migrações SQL no painel do Supabase:
+# - migrations/001_initial_schema.sql
+# - migrations/002_add_meal_history.sql
+# - migrations/003_add_weight_history.sql
+# - migrations/004_add_physical_activities_and_meal_goals.sql
+
+# 5. Rodar desenvolvimento
 npm run dev
 
 # Acesso: http://localhost:3000 (ou próxima porta disponível)
 ```
+
+### Configuração do Supabase
+
+1. Criar conta em [supabase.com](https://supabase.com)
+2. Criar novo projeto
+3. Executar as migrações SQL (pasta migrations/) no SQL Editor do Supabase
+4. Copiar URL do projeto e Anon Key para .env.local
+5. Habilitar autenticação por email no painel Authentication
 
 ---
 
@@ -580,6 +973,63 @@ npm run dev
 ---
 
 ## Histórico de Alterações
+
+### Commit atual (2025-10-25)
+**Sistema completo de usuário, atividades físicas e históricos**
+
+- **Sistema de autenticação com Supabase**:
+  - Login e cadastro de usuários
+  - Recuperação de sessão
+  - Perfil de usuário com dados pessoais e metas de calorias
+
+- **Painel de Usuário completo**:
+  - UserPanel com botões de ação (Perfil, Saúde, Histórico, Sair)
+  - ProfileModal para edição de perfil e senha
+  - HealthModal com dados de saúde, metas e atividades
+  - HistoryModal com 3 abas (Refeições, Atividades, Pesagens)
+
+- **Sistema de Atividades Físicas**:
+  - Banco de dados com 116 atividades e valores MET
+  - Autocomplete para seleção de atividades
+  - Cálculo automático de calorias queimadas
+  - Histórico completo de atividades
+  - Estatísticas (total atividades, calorias, minutos)
+
+- **Metas de Calorias**:
+  - Configuração de calorias por refeição (café, almoço, jantar, lanche)
+  - **Campo quantidade de lanches**: Multiplicador simples (input numérico)
+  - Cálculo automático de total diário
+  - Integração com MealPlanner (auto-população de metas)
+
+- **Histórico de Refeições**:
+  - Armazenamento de refeições planejadas
+  - Visualização com filtros (semana, mês, tudo)
+  - Estatísticas de consumo
+  - Cards detalhados com macros
+
+- **Histórico de Peso**:
+  - Registro de pesagens
+  - Gráfico de evolução (Recharts)
+  - Cálculo de variações
+  - Tendências de ganho/perda
+
+- **Assistente de IA Nutricional**:
+  - Chat interativo com Gemini AI
+  - Contexto completo do usuário
+  - Sugestões personalizadas
+  - Botão com gradiente roxo-rosa destacado
+
+- **Modal de Confirmação**:
+  - Componente ConfirmDeleteModal reutilizável
+  - Design com header vermelho-laranja
+  - Estados de loading
+  - Z-index correto (60 sobre modais principais)
+
+- **Melhorias de UX/UI**:
+  - Backdrop escuro com blur (bg-black/70 backdrop-blur-sm)
+  - Botão AI Assistant mais visível
+  - IMC com cores dinâmicas
+  - Animações e transições suaves
 
 ### Commit 0ca0178 (2025-10-25)
 **Atualizar distribuição de macros para 40/30/30 e corrigir edição de porções**
@@ -646,18 +1096,32 @@ npm run dev
 **Causa**: Instruções ambíguas no prompt
 **Solução**: Calcular metas exatas em gramas, fornecer exemplo detalhado, enfatizar SOMA
 
+### 7. Design Quebrado do Campo de Lanches
+**Problema**: Botões +/− com "3x" quebravam o layout do campo de lanche
+**Causa**: Excesso de elementos inline no mesmo container
+**Solução**: Separar em dois campos distintos:
+  - Campo de calorias do lanche (200 kcal)
+  - Campo de quantidade de lanches (1, 2, 3, 4+)
+  - Layout limpo e simples com input type="number"
+
 ---
 
 ## Possíveis Melhorias Futuras
 
 ### Features
-1. **Histórico de Refeições**: Salvar planos anteriores no localStorage
-2. **Metas Diárias**: Soma de múltiplas refeições com gráfico consolidado
-3. **Exportação**: PDF ou imagem do plano nutricional
-4. **Modo Offline**: Service Worker + Cache API
-5. **Autenticação**: Perfis de usuário com Firebase/Supabase
-6. **Banco de Alimentos**: Autocomplete com TACO/USDA
-7. **Distribuição Customizável**: Permitir usuário ajustar % de macros
+1. ✅ ~~**Histórico de Refeições**~~ - Implementado com Supabase
+2. ✅ ~~**Autenticação**~~ - Implementado com Supabase
+3. ✅ ~~**Histórico de Peso**~~ - Implementado com gráfico de evolução
+4. ✅ ~~**Atividades Físicas**~~ - Implementado com banco de 116 atividades
+5. **Metas Diárias**: Dashboard com soma de múltiplas refeições e gráfico consolidado
+6. **Exportação**: PDF ou imagem do plano nutricional
+7. **Modo Offline**: Service Worker + Cache API para uso sem internet
+8. **Banco de Alimentos**: Autocomplete com tabela TACO/USDA oficial
+9. **Distribuição Customizável**: Permitir usuário ajustar % de macros (ex: 30/40/30)
+10. **Metas de Macros**: Além de calorias, configurar gramas de proteína/carbs/gordura
+11. **Receitas**: Salvar combinações de alimentos como receitas favoritas
+12. **Planejamento Semanal**: Planejar refeições para a semana inteira
+13. **Notificações**: Lembretes de refeições e registro de atividades
 
 ### Técnicas
 1. **React Query**: Cache e sincronização de estado servidor
@@ -685,7 +1149,8 @@ npm run dev
   "react": "^19.2.0",
   "react-dom": "^19.2.0",
   "recharts": "^3.3.0",
-  "@google/genai": "^1.27.0"
+  "@google/genai": "^1.27.0",
+  "@supabase/supabase-js": "^2.x.x"
 }
 ```
 
@@ -731,5 +1196,15 @@ Projeto privado (`"private": true` em package.json).
 ---
 
 **Última atualização**: 2025-10-25
-**Versão**: 0.0.0
-**Último Commit**: 0ca0178 - Distribuição 40/30/30 + Fix edição de porções
+**Versão**: 1.0.0
+**Funcionalidades**:
+- Sistema completo de autenticação (Supabase)
+- Planejamento de refeições com IA (Gemini)
+- Painel de usuário com perfil e metas
+- Registro e histórico de atividades físicas
+- Histórico de refeições e pesagens
+- Assistente nutricional com IA
+- Banco de 116 atividades físicas
+- Cálculo automático de calorias (MET values)
+- Gráficos de evolução de peso
+- Modal de confirmação reutilizável

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from './supabaseClient';
 import type { PhysicalActivity, ActivityIntensity } from '../types';
 
 export const physicalActivityService = {

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { profileService } from '../../services/profileService';
 import { physicalActivityService } from '../../services/physicalActivityService';
 import { getBMIInfo } from '../../utils/bmiUtils';
 import { ActivityHistory } from './ActivityHistory';
 import { NutritionChat } from './NutritionChat';
+import { searchActivities, calculateCaloriesBurned, getActivityMET } from '../../data/activitiesDatabase';
 import type { UserProfile, ActivityIntensity } from '../../types';
 
 export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -20,15 +21,56 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [lunchCal, setLunchCal] = useState('600');
   const [dinnerCal, setDinnerCal] = useState('600');
   const [snackCal, setSnackCal] = useState('200');
+  const [snackQuantity, setSnackQuantity] = useState(1);
   const [activityType, setActivityType] = useState('');
   const [duration, setDuration] = useState('');
-  const [intensity, setIntensity] = useState<ActivityIntensity>('moderate');
   const [caloriesBurned, setCaloriesBurned] = useState('');
   const [addingActivity, setAddingActivity] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showActivityHistory, setShowActivityHistory] = useState(false);
+  const [activitySuggestions, setActivitySuggestions] = useState<string[]>([]);
+  const [showActivitySuggestions, setShowActivitySuggestions] = useState(false);
+  const [selectedActivityIndex, setSelectedActivityIndex] = useState(-1);
+  const activityInputRef = useRef<HTMLInputElement>(null);
+  const activitySuggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadData(); }, []);
+
+  // Autocomplete de atividades
+  useEffect(() => {
+    if (activityType.trim().length > 0) {
+      const results = searchActivities(activityType, 8);
+      setActivitySuggestions(results);
+      setShowActivitySuggestions(results.length > 0);
+      setSelectedActivityIndex(-1);
+    } else {
+      setActivitySuggestions([]);
+      setShowActivitySuggestions(false);
+    }
+  }, [activityType]);
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activitySuggestionsRef.current && !activitySuggestionsRef.current.contains(event.target as Node) &&
+          activityInputRef.current && !activityInputRef.current.contains(event.target as Node)) {
+        setShowActivitySuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Calcular calorias automaticamente
+  useEffect(() => {
+    if (activityType && duration && weight) {
+      const met = getActivityMET(activityType);
+      if (met) {
+        const calories = calculateCaloriesBurned(met, parseFloat(weight), parseInt(duration));
+        setCaloriesBurned(calories.toString());
+      }
+    }
+  }, [activityType, duration, weight]);
 
   const loadData = async () => {
     setLoading(true);
@@ -70,14 +112,46 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     loadData();
   };
 
+  const handleActivitySelect = (activity: string) => {
+    setActivityType(activity);
+    setShowActivitySuggestions(false);
+  };
+
+  const handleActivityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showActivitySuggestions || activitySuggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedActivityIndex(prev =>
+          prev < activitySuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedActivityIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedActivityIndex >= 0) {
+          handleActivitySelect(activitySuggestions[selectedActivityIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowActivitySuggestions(false);
+        break;
+    }
+  };
+
   const handleAddActivity = async () => {
     if (!activityType || !duration) {
       setError('Preencha tipo e duração.');
       return;
     }
     setAddingActivity(true);
+    // Usar intensidade padrão 'moderate' já que as atividades já têm a descrição completa
     const { error: addError } = await physicalActivityService.addActivity(
-      activityType, parseInt(duration), intensity, new Date(),
+      activityType, parseInt(duration), 'moderate', new Date(),
       caloriesBurned ? parseInt(caloriesBurned) : undefined
     );
     if (addError) {
@@ -106,16 +180,19 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div className="bg-card-bg rounded-xl w-full max-w-5xl my-8 border border-border-color shadow-2xl">
           <div className="bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl relative">
-            <button onClick={onClose} className="absolute top-2 right-2 text-white text-2xl">&times;</button>
-            <div className="flex items-center justify-between">
+            <button onClick={onClose} className="absolute top-4 right-4 text-white text-2xl hover:opacity-80 transition-opacity z-10">&times;</button>
+            <div className="flex items-center justify-between pr-8">
               <div className="flex items-center gap-2">
                 <span className="text-3xl">💪</span>
                 <h2 className="text-xl font-bold text-white">Saúde & Bem-Estar</h2>
               </div>
-              <button onClick={() => setShowChat(true)} className="bg-white/20 text-white px-4 py-2 rounded-lg text-sm">💬 Assistente</button>
+              <button onClick={() => setShowChat(true)} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2">
+                <span className="text-lg">🤖</span>
+                <span>Assistente de IA</span>
+              </button>
             </div>
           </div>
 
@@ -194,11 +271,22 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       </div>
                       <div>
                         <label className="block text-xs text-text-secondary mb-1">🍪 Lanche</label>
-                        <input type="number" value={snackCal} onChange={(e) => setSnackCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="200" />
+                        <input type="number" value={snackCal} onChange={(e) => setSnackCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-accent-orange focus:outline-none" placeholder="200" />
                       </div>
                     </div>
+                    <div>
+                      <label className="block text-xs text-text-secondary mb-1">Quantidade de Lanches</label>
+                      <input
+                        type="number"
+                        value={snackQuantity}
+                        onChange={(e) => setSnackQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-accent-orange focus:outline-none"
+                        placeholder="1"
+                        min="1"
+                      />
+                    </div>
                     <div className="text-xs text-text-secondary bg-hover-bg p-2 rounded">
-                      Total: {parseInt(breakfastCal || '0') + parseInt(lunchCal || '0') + parseInt(dinnerCal || '0') + parseInt(snackCal || '0')} kcal/dia
+                      Total: {parseInt(breakfastCal || '0') + parseInt(lunchCal || '0') + parseInt(dinnerCal || '0') + (parseInt(snackCal || '0') * snackQuantity)} kcal/dia
                     </div>
                   </div>
                 </div>
@@ -209,16 +297,57 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
                   <h3 className="text-sm font-semibold text-text-bright mb-3">🏃 Registrar Atividade</h3>
                   <div className="space-y-3">
-                    <input type="text" value={activityType} onChange={(e) => setActivityType(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="Ex: Corrida" />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="Duração (min)" />
-                      <input type="number" value={caloriesBurned} onChange={(e) => setCaloriesBurned(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="Calorias" />
+                    <div className="relative">
+                      <input
+                        ref={activityInputRef}
+                        type="text"
+                        value={activityType}
+                        onChange={(e) => setActivityType(e.target.value)}
+                        onKeyDown={handleActivityKeyDown}
+                        onFocus={() => activityType.trim() && setShowActivitySuggestions(activitySuggestions.length > 0)}
+                        className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-accent-orange focus:outline-none"
+                        placeholder="Ex: Corrida, Caminhada, Natação..."
+                        autoComplete="off"
+                      />
+                      {showActivitySuggestions && activitySuggestions.length > 0 && (
+                        <div
+                          ref={activitySuggestionsRef}
+                          className="absolute z-50 w-full mt-1 bg-hover-bg border-2 border-accent-orange/50 rounded-lg shadow-2xl shadow-accent-orange/20 max-h-48 overflow-y-auto"
+                        >
+                          {activitySuggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              onClick={() => handleActivitySelect(suggestion)}
+                              className={`px-3 py-2 cursor-pointer transition-all text-sm ${
+                                index === selectedActivityIndex
+                                  ? 'bg-accent-orange text-white font-semibold'
+                                  : 'hover:bg-secondary-bg text-text-primary'
+                              } ${index !== activitySuggestions.length - 1 ? 'border-b border-border-color' : ''}`}
+                            >
+                              🏃 {suggestion}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <select value={intensity} onChange={(e) => setIntensity(e.target.value as ActivityIntensity)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color">
-                      <option value="low">Leve</option>
-                      <option value="moderate">Moderado</option>
-                      <option value="high">Intenso</option>
-                    </select>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-accent-orange focus:outline-none" placeholder="Duração (min)" />
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={caloriesBurned}
+                          onChange={(e) => setCaloriesBurned(e.target.value)}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-accent-orange focus:outline-none"
+                          placeholder="Calorias"
+                        />
+                        {caloriesBurned && (
+                          <span className="absolute right-2 top-2 text-xs text-success">✓</span>
+                        )}
+                      </div>
+                    </div>
+                    {caloriesBurned && (
+                      <div className="text-xs text-text-muted italic">💡 Calorias calculadas automaticamente</div>
+                    )}
                     <button onClick={handleAddActivity} disabled={addingActivity} className="w-full bg-accent-orange text-white font-semibold px-4 py-2 rounded-lg hover:bg-accent-coral text-sm disabled:opacity-50">{addingActivity ? 'Adicionando...' : '➕ Adicionar'}</button>
                   </div>
                 </div>

@@ -17,7 +17,8 @@
       "Bash(curl:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(del componentsUserPanelHealthModal.tsx)"
+      "Bash(del componentsUserPanelHealthModal.tsx)",
+      "Bash(timeout /t 5 /nobreak)"
     ],
     "deny": [],
     "ask": []
