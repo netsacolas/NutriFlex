@@ -50,6 +50,11 @@ export interface UserProfile {
     dietary_preferences: string[] | null;
     allergies: string[] | null;
     health_goals: string[] | null;
+    meals_per_day: number | null;
+    breakfast_calories: number | null;
+    lunch_calories: number | null;
+    dinner_calories: number | null;
+    snack_calories: number | null;
     created_at: string;
     updated_at: string;
 }
@@ -113,6 +118,21 @@ export interface MealConsumption {
     glycemic_index: number | null;
     glycemic_load: number | null;
     portions: Portion[];
+    notes: string | null;
+    created_at: string;
+}
+
+// Physical Activity types
+export type ActivityIntensity = 'low' | 'moderate' | 'high';
+
+export interface PhysicalActivity {
+    id: string;
+    user_id: string;
+    activity_type: string;
+    duration_minutes: number;
+    intensity: ActivityIntensity;
+    calories_burned: number | null;
+    performed_at: string;
     notes: string | null;
     created_at: string;
 }

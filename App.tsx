@@ -3,10 +3,14 @@ import React, { useState, useCallback } from 'react';
 import { MealPlanner } from './components/MealPlanner';
 import { MealResultDisplay } from './components/MealResult';
 import { AuthFlow } from './components/Auth/AuthFlow';
-import { UserPanelNew } from './components/UserPanel/UserPanelNew';
+import { ProfileModal } from './components/UserPanel/ProfileModal';
+import { HealthModal } from './components/UserPanel/HealthModal';
+import { HistoryModal } from './components/UserPanel/HistoryModal';
 import { calculateMealPortions } from './services/geminiService';
 import { useAuth } from './contexts/AuthContext';
 import type { MealResult, MealType } from './types';
+
+type ModalType = 'profile' | 'health' | 'history' | null;
 
 const App: React.FC = () => {
     const { user, loading: authLoading, signOut } = useAuth();
@@ -14,7 +18,7 @@ const App: React.FC = () => {
     const [currentMealType, setCurrentMealType] = useState<MealType>('lunch');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showUserPanel, setShowUserPanel] = useState(false);
+    const [activeModal, setActiveModal] = useState<ModalType>(null);
 
     const handleCalculate = useCallback(async (foods: string[], targetCalories: number, mealType: MealType) => {
         setIsLoading(true);
@@ -62,16 +66,31 @@ const App: React.FC = () => {
                                 NutriFlex AI
                             </h1>
                         </div>
-                        <div className="flex-1 flex justify-end gap-4">
+                        <div className="flex-1 flex justify-end gap-3">
                             <button
-                                onClick={() => setShowUserPanel(true)}
-                                className="text-accent-orange hover:text-accent-coral text-sm font-medium transition-colors"
+                                onClick={() => setActiveModal('profile')}
+                                className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:shadow-lg transition-all flex items-center gap-2"
                             >
-                                Meu Perfil
+                                <span>👤</span>
+                                <span className="hidden md:inline">Perfil</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveModal('health')}
+                                className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                            >
+                                <span>💪</span>
+                                <span className="hidden md:inline">Saúde</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveModal('history')}
+                                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                            >
+                                <span>📊</span>
+                                <span className="hidden md:inline">Histórico</span>
                             </button>
                             <button
                                 onClick={signOut}
-                                className="text-text-secondary hover:text-text-bright text-sm font-medium transition-colors"
+                                className="bg-secondary-bg text-text-secondary hover:text-error hover:border-error px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-border-color"
                             >
                                 Sair
                             </button>
@@ -104,7 +123,10 @@ const App: React.FC = () => {
                 <p>Powered by Gemini API & Supabase. Designed with passion.</p>
             </footer>
 
-            {showUserPanel && <UserPanelNew onClose={() => setShowUserPanel(false)} />}
+            {/* Modals */}
+            {activeModal === 'profile' && <ProfileModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'health' && <HealthModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'history' && <HistoryModal onClose={() => setActiveModal(null)} />}
         </div>
     );
 };

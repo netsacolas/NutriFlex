@@ -141,32 +141,6 @@ export const MealHistory: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-          <p className="text-xs text-text-secondary mb-1">Total de Refeições</p>
-          <p className="text-2xl font-bold text-text-bright">{history.length}</p>
-        </div>
-        <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-          <p className="text-xs text-text-secondary mb-1">Calorias Totais</p>
-          <p className="text-2xl font-bold text-text-bright">
-            {history.reduce((sum, m) => sum + m.total_calories, 0).toFixed(0)}
-          </p>
-        </div>
-        <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-          <p className="text-xs text-text-secondary mb-1">Média Diária</p>
-          <p className="text-2xl font-bold text-text-bright">
-            {(history.reduce((sum, m) => sum + m.total_calories, 0) / filterDays).toFixed(0)}
-          </p>
-        </div>
-        <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-          <p className="text-xs text-text-secondary mb-1">Proteína Total</p>
-          <p className="text-2xl font-bold text-text-bright">
-            {history.reduce((sum, m) => sum + (m.total_protein || 0), 0).toFixed(0)}g
-          </p>
-        </div>
-      </div>
-
       {/* Meal History Timeline */}
       <div className="space-y-4">
         {Object.entries(groupedMeals).map(([date, meals]) => (

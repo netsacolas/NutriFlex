@@ -126,24 +126,59 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
         }
     };
 
+    const mealTypeConfig = {
+        breakfast: { icon: '☀️', label: 'Café da Manhã', color: 'from-yellow-500 to-orange-400' },
+        lunch: { icon: '🍽️', label: 'Almoço', color: 'from-orange-500 to-red-400' },
+        dinner: { icon: '🌙', label: 'Jantar', color: 'from-purple-500 to-indigo-500' },
+        snack: { icon: '🍪', label: 'Lanche', color: 'from-green-500 to-teal-400' },
+    };
+
     return (
         <div className="bg-card-bg rounded-xl p-6 md:p-8 w-full max-w-2xl mx-auto border border-border-color shadow-lg">
-            <div className="flex flex-col md:flex-row justify-between md:items-center mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold text-text-bright mb-2 md:mb-0">
+            <div className="mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-text-bright mb-4 text-center">
                     Planejador de Refeição
                 </h2>
-                <div className="flex items-center gap-2 bg-secondary-bg px-3 py-2 rounded-lg">
-                     <select 
-                        value={mealType}
-                        onChange={(e) => setMealType(e.target.value as MealType)}
-                        className="bg-transparent text-accent-orange font-semibold focus:outline-none appearance-none"
-                        aria-label="Select meal type"
-                     >
-                        <option value="breakfast">Café da Manhã</option>
-                        <option value="lunch">Almoço</option>
-                        <option value="dinner">Jantar</option>
-                        <option value="snack">Lanche</option>
-                     </select>
+
+                {/* Meal Type Selector - Modern Design */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {(Object.keys(mealTypeConfig) as MealType[]).map((type) => {
+                        const config = mealTypeConfig[type];
+                        const isActive = mealType === type;
+
+                        return (
+                            <button
+                                key={type}
+                                onClick={() => setMealType(type)}
+                                className={`relative overflow-hidden p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
+                                    isActive
+                                        ? 'border-accent-orange shadow-lg shadow-accent-orange/30'
+                                        : 'border-border-color hover:border-accent-orange/50'
+                                }`}
+                            >
+                                {/* Background gradient when active */}
+                                {isActive && (
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${config.color} opacity-10`}></div>
+                                )}
+
+                                <div className="relative z-10 flex flex-col items-center gap-2">
+                                    <span className="text-3xl">{config.icon}</span>
+                                    <span className={`text-sm font-semibold ${
+                                        isActive ? 'text-accent-orange' : 'text-text-secondary'
+                                    }`}>
+                                        {config.label}
+                                    </span>
+                                </div>
+
+                                {/* Active indicator */}
+                                {isActive && (
+                                    <div className="absolute top-2 right-2">
+                                        <div className="w-3 h-3 bg-accent-orange rounded-full animate-pulse"></div>
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 

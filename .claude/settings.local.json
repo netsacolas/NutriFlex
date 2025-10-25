@@ -16,7 +16,8 @@
       "Bash(curl -I https://keawapzxqoyesptpwpwav.supabase.co)",
       "Bash(curl:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(del componentsUserPanelHealthModal.tsx)"
     ],
     "deny": [],
     "ask": []
