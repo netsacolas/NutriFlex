@@ -3,6 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { MealPlanner } from './components/MealPlanner';
 import { MealResultDisplay } from './components/MealResult';
 import { AuthFlow } from './components/Auth/AuthFlow';
+import { UserPanel } from './components/UserPanel/UserPanel';
 import { calculateMealPortions } from './services/geminiService';
 import { useAuth } from './contexts/AuthContext';
 import type { MealResult, MealType } from './types';
@@ -12,6 +13,7 @@ const App: React.FC = () => {
     const [mealResult, setMealResult] = useState<MealResult | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showUserPanel, setShowUserPanel] = useState(false);
 
     const handleCalculate = useCallback(async (foods: string[], targetCalories: number, mealType: MealType) => {
         setIsLoading(true);
@@ -58,18 +60,19 @@ const App: React.FC = () => {
                                 NutriFlex AI
                             </h1>
                         </div>
-                        <div className="flex-1 flex justify-end">
-                            <div className="text-right">
-                                <p className="text-text-secondary text-sm mb-2">
-                                    Olá, {user.user_metadata?.full_name || user.email}
-                                </p>
-                                <button
-                                    onClick={signOut}
-                                    className="text-accent-orange hover:text-accent-coral text-sm font-medium transition-colors"
-                                >
-                                    Sair
-                                </button>
-                            </div>
+                        <div className="flex-1 flex justify-end gap-4">
+                            <button
+                                onClick={() => setShowUserPanel(true)}
+                                className="text-accent-orange hover:text-accent-coral text-sm font-medium transition-colors"
+                            >
+                                Meu Perfil
+                            </button>
+                            <button
+                                onClick={signOut}
+                                className="text-text-secondary hover:text-text-bright text-sm font-medium transition-colors"
+                            >
+                                Sair
+                            </button>
                         </div>
                     </div>
                     <p className="text-lg text-text-secondary max-w-2xl mx-auto">
@@ -94,6 +97,8 @@ const App: React.FC = () => {
              <footer className="text-center mt-12 text-text-muted text-sm">
                 <p>Powered by Gemini API & Supabase. Designed with passion.</p>
             </footer>
+
+            {showUserPanel && <UserPanel onClose={() => setShowUserPanel(false)} />}
         </div>
     );
 };
