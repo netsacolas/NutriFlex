@@ -11,7 +11,10 @@
       "Bash(git remote set-url:*)",
       "Bash(gh --version:*)",
       "Bash(where:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "Bash(curl -I https://keawapzxqoyesptpwpwav.supabase.co)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
