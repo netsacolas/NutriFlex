@@ -1,13 +1,8 @@
-import { GoogleGenAI } from '@google/genai';
 import type { UserProfile, WeightEntry, MealResult } from '../types';
+import logger from '../utils/logger';
+import { supabase } from './supabaseClient';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-if (!API_KEY) {
-  console.warn('⚠️ VITE_GEMINI_API_KEY não configurada');
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY || 'YOUR_API_KEY_HERE' });
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -91,19 +86,20 @@ export const nutritionChatService = {
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
-      console.log('📨 Chat - Mensagem recebida:', message);
-      console.log('🔑 API Key configurada:', !!API_KEY);
-      console.log('👤 Contexto do usuário:', context.profile?.full_name);
+      logger.debug('Chat message received');
 
-      if (!API_KEY) {
-        console.error('❌ API Key não configurada!');
-        return 'Desculpe, o serviço de chat está indisponível no momento. Configure a API Key do Gemini.';
+      // Verificar autenticação
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        logger.error('User not authenticated for chat');
+        return 'Você precisa estar logado para usar o chat.';
       }
 
       // Verificar se a mensagem é sobre nutrição/saúde
-      console.log('🔍 Verificando se mensagem é sobre nutrição...');
+      logger.debug('Checking if message is off-topic');
       const isOffTopic = await this.checkIfOffTopic(message);
-      console.log('✅ Resultado off-topic:', isOffTopic);
+      logger.debug('Off-topic result: ' + isOffTopic);
       if (isOffTopic) {
         return `Olá! Eu sou um assistente especializado em nutrição e saúde.
 
@@ -130,12 +126,7 @@ Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos d
 
       fullPrompt += `Usuário: ${message}\n\nNutriBot:`;
 
-      console.log('🤖 Enviando mensagem para Gemini...');
-      const result = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
-        contents: fullPrompt,
-        config: {
-          systemInstruction: `Você é NutriBot, um assistente nutricional especializado e amigável.
+      const systemInstruction = `Você é NutriBot, um assistente nutricional especializado e amigável.
 
 **Regras Fundamentais:**
 1. APENAS responda perguntas sobre nutrição, saúde, alimentação e bem-estar
@@ -159,25 +150,40 @@ Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos d
 - Profissional mas acessível
 - Empático e compreensivo
 
-Lembre-se: Você está aqui para ajudar o usuário a ter uma relação mais saudável com a alimentação!`,
+Lembre-se: Você está aqui para ajudar o usuário a ter uma relação mais saudável com a alimentação!`;
+
+      logger.debug('Sending message to Edge Function');
+      const token = session.access_token;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/gemini-generic`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'apikey': SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'nutrition-chat',
+          prompt: fullPrompt,
+          systemInstruction,
           temperature: 0.9,
           topP: 0.95,
-          maxOutputTokens: 800
-        }
+          maxOutputTokens: 800,
+        }),
       });
 
-      console.log('✅ Resposta recebida da Gemini');
-      const response = result.text.trim();
-      console.log('📝 Texto da resposta:', response.substring(0, 100) + '...');
+      if (!response.ok) {
+        logger.error('Edge Function error', { status: response.status });
+        throw new Error('Failed to get response from Edge Function');
+      }
 
-      return response;
+      const data = await response.json();
+      logger.debug('Response received from Edge Function');
+
+      return data.response?.trim() || 'Desculpe, não consegui gerar uma resposta.';
     } catch (error: any) {
-      console.error('Error in nutrition chat:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        response: error?.response?.data
-      });
+      logger.error('Error in nutrition chat', error);
 
       // Mensagem de erro mais específica
       if (error?.message?.includes('API key')) {

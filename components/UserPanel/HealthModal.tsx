@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { profileService } from '../../services/profileService';
 import { physicalActivityService } from '../../services/physicalActivityService';
+import { weightHistoryService } from '../../services/weightHistoryService';
 import { getBMIInfo } from '../../utils/bmiUtils';
-import { ActivityHistory } from './ActivityHistory';
 import { NutritionChat } from './NutritionChat';
 import { searchActivities, calculateCaloriesBurned, getActivityMET } from '../../data/activitiesDatabase';
+import logger from '../../utils/logger';
 import type { UserProfile, ActivityIntensity } from '../../types';
 
 export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -27,12 +28,18 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [caloriesBurned, setCaloriesBurned] = useState('');
   const [addingActivity, setAddingActivity] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [showActivityHistory, setShowActivityHistory] = useState(false);
   const [activitySuggestions, setActivitySuggestions] = useState<string[]>([]);
   const [showActivitySuggestions, setShowActivitySuggestions] = useState(false);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(-1);
   const activityInputRef = useRef<HTMLInputElement>(null);
   const activitySuggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Estados para Registro de Pesagem
+  const [newWeight, setNewWeight] = useState('');
+  const [weightObservation, setWeightObservation] = useState('');
+  const [addingWeight, setAddingWeight] = useState(false);
+  const [weightAnalysis, setWeightAnalysis] = useState<string | null>(null);
+  const [showWeightAnalysis, setShowWeightAnalysis] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -161,9 +168,105 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setActivityType('');
       setDuration('');
       setCaloriesBurned('');
-      setShowActivityHistory(true);
     }
     setAddingActivity(false);
+  };
+
+  const handleAddWeight = async () => {
+    if (!newWeight) {
+      setError('Preencha o peso.');
+      return;
+    }
+
+    const weightValue = parseFloat(newWeight);
+    if (weightValue < 20 || weightValue > 300) {
+      setError('Peso deve estar entre 20 e 300 kg.');
+      return;
+    }
+
+    setAddingWeight(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // 1. Buscar histórico de peso para análise
+      const { data: weightHistory } = await weightHistoryService.getWeightHistory();
+      const lastWeight = weightHistory && weightHistory.length > 0 ? weightHistory[0] : null;
+
+      // 2. Buscar refeições e atividades desde a última pesagem
+      const lastWeightDate = lastWeight?.created_at ? new Date(lastWeight.created_at) : null;
+
+      // 3. Adicionar peso ao banco
+      const { error: addError } = await weightHistoryService.addWeightEntry(
+        weightValue,
+        height ? parseFloat(height) : null,
+        weightObservation || undefined
+      );
+
+      if (addError) {
+        setError('Erro ao registrar peso.');
+        setAddingWeight(false);
+        return;
+      }
+
+      // 4. Gerar análise com IA
+      setSuccess('Peso registrado! Gerando análise...');
+
+      // Importar o serviço de análise
+      const { weightAnalysisService } = await import('../../services/weightAnalysisService');
+
+      // Preparar dados para análise
+      const currentEntry = {
+        weight: weightValue,
+        height: height ? parseFloat(height) : null,
+        notes: weightObservation || null,
+        measured_at: new Date().toISOString(),
+        bmi: weight && height ? parseFloat(weight) / Math.pow(parseFloat(height) / 100, 2) : null,
+      };
+
+      const previousEntry = lastWeight ? {
+        weight: lastWeight.weight,
+        height: lastWeight.height || null,
+        notes: lastWeight.notes || null,
+        measured_at: lastWeight.measured_at,
+        bmi: lastWeight.bmi || null,
+      } : null;
+
+      const allHistory = (weightHistory || []).map(w => ({
+        weight: w.weight,
+        height: w.height || null,
+        notes: w.notes || null,
+        measured_at: w.measured_at,
+        bmi: w.bmi || null,
+      }));
+
+      const analysis = await weightAnalysisService.generateWeightAnalysis(
+        currentEntry,
+        previousEntry,
+        allHistory,
+        {
+          full_name: profile?.full_name || null,
+          age: profile?.age || null,
+          gender: profile?.gender || null,
+        }
+      );
+
+      // 5. Exibir análise
+      setWeightAnalysis(analysis);
+      setShowWeightAnalysis(true);
+      setSuccess('Peso registrado com sucesso!');
+      setNewWeight('');
+      setWeightObservation('');
+
+      // Atualizar peso no perfil
+      setWeight(weightValue.toString());
+
+    } catch (error) {
+      logger.error('Error adding weight', error);
+      setError('Erro ao processar registro de peso.');
+    } finally {
+      setAddingWeight(false);
+    }
   };
 
   const currentBMI = weight && height ? getBMIInfo(parseFloat(weight), parseFloat(height)) : null;
@@ -199,6 +302,40 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <div className="p-4 max-h-[75vh] overflow-y-auto">
             {error && <div className="bg-error/10 border border-error text-error px-3 py-2 rounded-lg mb-3 text-sm">{error}</div>}
             {success && <div className="bg-success/10 border border-success text-success px-3 py-2 rounded-lg mb-3 text-sm">{success}</div>}
+
+            {/* Análise da IA - Aparece acima do grid para não deslocar outros cards */}
+            {showWeightAnalysis && weightAnalysis && (
+              <div className="mb-4">
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-500/50 rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🤖</span>
+                      <h3 className="text-sm font-bold text-blue-400">Análise Personalizada</h3>
+                    </div>
+                    <button
+                      onClick={() => setShowWeightAnalysis(false)}
+                      className="text-text-secondary hover:text-text-bright transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="prose prose-sm prose-invert max-w-none">
+                    <div className="text-text-primary text-sm whitespace-pre-line leading-relaxed">
+                      {weightAnalysis}
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-border-color">
+                    <button
+                      onClick={() => setShowChat(true)}
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>💬</span>
+                      Conversar Mais com a IA
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="space-y-4">
@@ -351,12 +488,56 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <button onClick={handleAddActivity} disabled={addingActivity} className="w-full bg-accent-orange text-white font-semibold px-4 py-2 rounded-lg hover:bg-accent-coral text-sm disabled:opacity-50">{addingActivity ? 'Adicionando...' : '➕ Adicionar'}</button>
                   </div>
                 </div>
-                <button onClick={() => setShowActivityHistory(!showActivityHistory)} className="w-full bg-secondary-bg text-text-primary font-semibold px-4 py-2 rounded-lg border border-border-color hover:bg-hover-bg text-sm">{showActivityHistory ? '▼' : '▶'} Histórico</button>
-                {showActivityHistory && (
-                  <div className="bg-secondary-bg p-3 rounded-lg border border-border-color">
-                    <ActivityHistory />
+
+                <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
+                  <h3 className="text-sm font-semibold text-text-bright mb-3">⚖️ Registrar Pesagem</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-text-secondary mb-1">Peso (kg)</label>
+                      <input
+                        type="number"
+                        value={newWeight}
+                        onChange={(e) => setNewWeight(e.target.value)}
+                        className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-blue-500 focus:outline-none"
+                        placeholder="Ex: 70.5"
+                        step="0.1"
+                        min="20"
+                        max="300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-secondary mb-1">Observação (opcional)</label>
+                      <textarea
+                        value={weightObservation}
+                        onChange={(e) => setWeightObservation(e.target.value)}
+                        className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-blue-500 focus:outline-none resize-none"
+                        placeholder="Ex: Me senti bem hoje, fiz exercícios..."
+                        rows={3}
+                        maxLength={200}
+                      />
+                      <div className="text-xs text-text-muted mt-1 text-right">
+                        {weightObservation.length}/200
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleAddWeight}
+                      disabled={addingWeight}
+                      className="w-full bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {addingWeight ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                          Processando...
+                        </>
+                      ) : (
+                        <>
+                          <span>⚖️</span>
+                          Registrar e Analisar
+                        </>
+                      )}
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
