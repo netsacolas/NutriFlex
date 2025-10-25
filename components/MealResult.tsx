@@ -1,0 +1,234 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { MealResult, Portion } from '../types';
+import { LightbulbIcon, CheckCircleIcon, BarChartIcon } from './icons';
+
+interface MealResultProps {
+  result: MealResult;
+}
+
+const MacroChart: React.FC<{ data: MealResult['totalMacros'] }> = ({ data }) => {
+  const chartData = [
+    { name: 'Carboidratos', value: data.carbs * 4, grams: data.carbs, color: '#fb923c', darkColor: '#f97316' }, // Laranja vibrante
+    { name: 'Proteínas', value: data.protein * 4, grams: data.protein, color: '#10b981', darkColor: '#059669' }, // Verde forte
+    { name: 'Gorduras', value: data.fat * 9, grams: data.fat, color: '#fbbf24', darkColor: '#f59e0b' }, // Amarelo-laranja
+  ];
+
+  const totalCalories = chartData.reduce((acc, entry) => acc + entry.value, 0);
+
+  // Calcular porcentagens
+  const percentages = chartData.map(entry => ({
+    ...entry,
+    percentage: Math.round((entry.value / totalCalories) * 100)
+  }));
+
+  return (
+    <div className="w-full space-y-4">
+      <div className="w-full h-56 relative">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              fill="#8884d8"
+              paddingAngle={5}
+              dataKey="value"
+              isAnimationActive={true}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                  backgroundColor: '#2d2d30',
+                  border: '1px solid #464647',
+                  borderRadius: '0.5rem'
+              }}
+              formatter={(value: number, name: string) => [`${Math.round(value)} kcal`, name]}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-3xl font-bold text-text-bright transition-all">{Math.round(totalCalories)}</span>
+          <span className="text-sm text-text-secondary">kcal</span>
+        </div>
+      </div>
+
+      {/* Legendas com porcentagens */}
+      <div className="space-y-2 px-2">
+        {percentages.map((entry, index) => (
+          <div key={index} className="flex items-center justify-between bg-secondary-bg/50 rounded-lg p-3 border border-border-color hover:border-green-500/50 transition-all">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-4 h-4 rounded-full shadow-lg"
+                style={{
+                  backgroundColor: entry.color,
+                  boxShadow: `0 0 8px ${entry.color}`
+                }}
+              />
+              <span className="text-text-primary font-medium">{entry.name}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-green-400 font-bold text-lg">{entry.percentage}%</span>
+              <span className="text-text-secondary text-sm">
+                {Math.round(entry.grams)}g • {Math.round(entry.value)} kcal
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
+    const [editedResult, setEditedResult] = useState<MealResult>(result);
+
+    const originalPortionsMap = useMemo(() => {
+        const map = new Map<string, Portion>();
+        result.portions.forEach(p => map.set(p.foodName, p));
+        return map;
+    }, [result]);
+
+    useEffect(() => {
+        setEditedResult(result);
+    }, [result]);
+
+    const handleGramsChange = (foodName: string, newGramsStr: string) => {
+        const newGrams = parseInt(newGramsStr, 10) || 0;
+        const originalPortion = originalPortionsMap.get(foodName);
+        if (!originalPortion || originalPortion.grams === 0) return;
+
+        setEditedResult(prevResult => {
+            // Recalculate portion
+            const updatedPortions = prevResult.portions.map(p => {
+                if (p.foodName === foodName) {
+                    const ratio = newGrams / originalPortion.grams;
+                    return {
+                        ...p,
+                        grams: newGrams,
+                        homeMeasure: 'Personalizado',
+                        calories: Math.round(originalPortion.calories * ratio),
+                        macros: {
+                            protein: parseFloat((originalPortion.macros.protein * ratio).toFixed(1)),
+                            carbs: parseFloat((originalPortion.macros.carbs * ratio).toFixed(1)),
+                            fat: parseFloat((originalPortion.macros.fat * ratio).toFixed(1)),
+                        }
+                    };
+                }
+                return p;
+            });
+            
+            // Recalculate totals
+            const newTotalMacros = updatedPortions.reduce((acc, p) => {
+                acc.protein += p.macros.protein;
+                acc.carbs += p.macros.carbs;
+                acc.fat += p.macros.fat;
+                return acc;
+            }, { protein: 0, carbs: 0, fat: 0, fiber: prevResult.totalMacros.fiber }); // Fiber remains from original calculation
+
+            const newTotalCalories = updatedPortions.reduce((acc, p) => acc + p.calories, 0);
+
+            return {
+                ...prevResult,
+                portions: updatedPortions,
+                totalCalories: newTotalCalories,
+                totalMacros: {
+                    protein: parseFloat(newTotalMacros.protein.toFixed(1)),
+                    carbs: parseFloat(newTotalMacros.carbs.toFixed(1)),
+                    fat: parseFloat(newTotalMacros.fat.toFixed(1)),
+                    fiber: newTotalMacros.fiber, // Keep original
+                },
+            };
+        });
+    };
+    
+  return (
+    <div className="bg-card-bg rounded-xl p-6 md:p-8 w-full max-w-4xl mx-auto border border-border-color shadow-lg mt-8 animate-slide-up">
+        <h2 className="text-2xl md:text-3xl font-bold text-text-bright mb-6">
+            ✨ Suas Porções Calculadas
+        </h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-3 space-y-4">
+                <h3 className="text-xl font-semibold text-text-primary mb-2">Ajuste suas Porções:</h3>
+                {editedResult.portions.map(item => (
+                    <div key={item.foodName} className="bg-secondary-bg p-4 rounded-lg border border-border-color transition-all duration-200">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="text-lg font-bold text-text-bright">{item.foodName}</p>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        value={item.grams}
+                                        onChange={(e) => handleGramsChange(item.foodName, e.target.value)}
+                                        className="w-24 bg-hover-bg text-accent-coral font-semibold text-lg p-1 rounded border border-border-color focus:ring-1 focus:ring-accent-orange focus:outline-none"
+                                        aria-label={`Grams for ${item.foodName}`}
+                                    />
+                                    <span className="text-accent-coral font-semibold text-lg">g</span>
+                                </div>
+                                <p className="text-text-secondary text-sm mt-1">({item.homeMeasure})</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-lg font-bold text-text-primary">{item.calories} kcal</p>
+                                <p className="text-xs text-text-muted">
+                                    P:{item.macros.protein}g C:{item.macros.carbs}g G:{item.macros.fat}g
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="lg:col-span-2 space-y-6">
+                <div>
+                   <h3 className="flex items-center gap-2 text-xl font-semibold text-text-primary mb-2">
+                       <BarChartIcon className="w-6 h-6 text-accent-peach" />
+                       Análise Nutricional
+                   </h3>
+                   <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
+                      <MacroChart data={editedResult.totalMacros} />
+                      <div className="grid grid-cols-3 gap-2 text-center mt-4">
+                          <div><span className="font-bold text-protein">{Math.round(editedResult.totalMacros.protein)}g</span><p className="text-xs text-text-muted">Proteína</p></div>
+                          <div><span className="font-bold text-carbs">{Math.round(editedResult.totalMacros.carbs)}g</span><p className="text-xs text-text-muted">Carbs</p></div>
+                          <div><span className="font-bold text-fat">{Math.round(editedResult.totalMacros.fat)}g</span><p className="text-xs text-text-muted">Gordura</p></div>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-secondary-bg p-3 rounded-lg text-center border border-border-color">
+                        <p className="text-xs text-text-secondary">Fibras <span className="text-text-muted">(original)</span></p>
+                        <p className="text-xl font-bold text-fiber">{Math.round(editedResult.totalMacros.fiber)}g</p>
+                    </div>
+                     <div className="bg-secondary-bg p-3 rounded-lg text-center border border-border-color">
+                        <p className="text-xs text-text-secondary">Índice Glicêmico <span className="text-text-muted">(original)</span></p>
+                        <p className="text-xl font-bold text-warning">{editedResult.glycemicData.index}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         {editedResult.suggestions && editedResult.suggestions.length > 0 && (
+            <div className="mt-8">
+                <h3 className="flex items-center gap-2 text-xl font-semibold text-text-primary mb-3">
+                   <LightbulbIcon className="w-6 h-6 text-accent-peach" />
+                   Sugestões
+                </h3>
+                <div className="bg-secondary-bg p-4 rounded-lg border border-border-color space-y-2">
+                    {editedResult.suggestions.map((tip, index) => (
+                        <div key={index} className="flex items-start gap-2 text-text-secondary">
+                           <CheckCircleIcon className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                           <span>{tip}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+    </div>
+  );
+};
