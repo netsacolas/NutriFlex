@@ -2,10 +2,13 @@
 import React, { useState, useCallback } from 'react';
 import { MealPlanner } from './components/MealPlanner';
 import { MealResultDisplay } from './components/MealResult';
+import { AuthFlow } from './components/Auth/AuthFlow';
 import { calculateMealPortions } from './services/geminiService';
+import { useAuth } from './contexts/AuthContext';
 import type { MealResult, MealType } from './types';
 
 const App: React.FC = () => {
+    const { user, loading: authLoading, signOut } = useAuth();
     const [mealResult, setMealResult] = useState<MealResult | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -26,18 +29,54 @@ const App: React.FC = () => {
         }
     }, []);
 
+    // Loading state durante verificação de autenticação
+    if (authLoading) {
+        return (
+            <div className="min-h-screen bg-primary-bg flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-accent-orange mx-auto mb-4"></div>
+                    <p className="text-text-secondary">Carregando...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Se não estiver autenticado, mostrar fluxo de autenticação
+    if (!user) {
+        return <AuthFlow />;
+    }
+
+    // Usuário autenticado - mostrar aplicação principal
     return (
         <div className="min-h-screen bg-primary-bg text-text-primary font-sans p-4 md:p-8">
             <main className="max-w-7xl mx-auto">
                 <header className="text-center mb-8 md:mb-12">
-                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent-orange to-accent-coral text-transparent bg-clip-text pb-2">
-                        NutriFlex AI
-                    </h1>
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex-1"></div>
+                        <div className="flex-1 text-center">
+                            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent-orange to-accent-coral text-transparent bg-clip-text pb-2">
+                                NutriFlex AI
+                            </h1>
+                        </div>
+                        <div className="flex-1 flex justify-end">
+                            <div className="text-right">
+                                <p className="text-text-secondary text-sm mb-2">
+                                    Olá, {user.user_metadata?.full_name || user.email}
+                                </p>
+                                <button
+                                    onClick={signOut}
+                                    className="text-accent-orange hover:text-accent-coral text-sm font-medium transition-colors"
+                                >
+                                    Sair
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <p className="text-lg text-text-secondary max-w-2xl mx-auto">
                         A dieta que se adapta a você. Escolha os alimentos, defina sua meta de calorias e a IA calcula as porções perfeitas.
                     </p>
                 </header>
-                
+
                 <MealPlanner onCalculate={handleCalculate} isLoading={isLoading} />
 
                 {error && (
@@ -51,9 +90,9 @@ const App: React.FC = () => {
                     <MealResultDisplay result={mealResult} />
                 )}
             </main>
-            
+
              <footer className="text-center mt-12 text-text-muted text-sm">
-                <p>Powered by Gemini API. Designed with passion.</p>
+                <p>Powered by Gemini API & Supabase. Designed with passion.</p>
             </footer>
         </div>
     );

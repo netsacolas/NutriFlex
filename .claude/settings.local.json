@@ -7,7 +7,11 @@
       "Bash(git init:*)",
       "Bash(git remote add:*)",
       "Bash(git add:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(gh --version:*)",
+      "Bash(where:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
