@@ -14,7 +14,9 @@
       "Bash(npm install:*)",
       "Bash(cat:*)",
       "Bash(curl -I https://keawapzxqoyesptpwpwav.supabase.co)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

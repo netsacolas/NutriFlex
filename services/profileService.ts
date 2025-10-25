@@ -17,6 +17,20 @@ export const profileService = {
         .eq('id', user.id)
         .single();
 
+      if (error) {
+        console.error('Error getting profile:', error);
+        // Se a tabela não existe, retornar mensagem específica
+        if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('does not exist')) {
+          return {
+            data: null,
+            error: {
+              message: 'Tabela de perfis não encontrada. Execute a migration SQL no Supabase.',
+              code: 'TABLE_NOT_FOUND'
+            }
+          };
+        }
+      }
+
       return { data, error };
     } catch (error) {
       console.error('Error getting profile:', error);

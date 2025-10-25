@@ -24,15 +24,43 @@ export const UserPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     loadProfile();
   }, []);
 
+  // Função para formatar telefone brasileiro
+  const formatPhone = (value: string): string => {
+    // Remove tudo que não é dígito
+    const numbers = value.replace(/\D/g, '');
+
+    // Aplica a máscara (XX) XXXXX-XXXX
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 7) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    } else if (numbers.length <= 11) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    }
+    // Limita a 11 dígitos
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    setPhone(formatted);
+  };
+
   const loadProfile = async () => {
     setLoading(true);
     const { data, error } = await profileService.getProfile();
     if (data) {
       setProfile(data);
       setFullName(data.full_name || '');
-      setPhone(data.phone || '');
+      setPhone(formatPhone(data.phone || ''));
     } else if (error) {
-      setError('Erro ao carregar perfil');
+      console.error('Profile load error:', error);
+      // Mensagem específica se a tabela não existe
+      if (error.code === 'TABLE_NOT_FOUND') {
+        setError('⚠️ Tabela de perfis não encontrada. Você precisa executar a migration SQL no Supabase. Veja o arquivo supabase/migrations/001_create_profiles_table.sql');
+      } else {
+        setError(`Erro ao carregar perfil: ${error.message || 'Erro desconhecido'}`);
+      }
     }
     setLoading(false);
   };
@@ -104,7 +132,20 @@ export const UserPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
                 <div>
                   <label className="block text-text-primary font-medium mb-2">Telefone</label>
-                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={!isEditing} placeholder="(00) 00000-0000" className="w-full bg-secondary-bg text-text-bright px-4 py-2 rounded-lg border border-border-color focus:ring-2 focus:ring-accent-orange focus:outline-none disabled:text-text-muted" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    disabled={!isEditing}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className="w-full bg-secondary-bg text-text-bright px-4 py-2 rounded-lg border border-border-color focus:ring-2 focus:ring-accent-orange focus:outline-none disabled:text-text-muted"
+                  />
+                  {isEditing && (
+                    <p className="text-xs text-text-secondary mt-1">
+                      Digite apenas números. Formato: (XX) XXXXX-XXXX
+                    </p>
+                  )}
                 </div>
               </div>
 

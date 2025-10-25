@@ -32,6 +32,8 @@ export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 // User Profile types
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 export type ActivityLevel = 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extra_active';
+export type BMICategory = 'underweight' | 'normal' | 'overweight' | 'obesity_1' | 'obesity_2' | 'obesity_3';
+export type GoalType = 'weight_loss' | 'weight_gain' | 'maintain_weight' | 'muscle_gain' | 'custom';
 
 export interface UserProfile {
     id: string;
@@ -39,6 +41,8 @@ export interface UserProfile {
     phone: string | null;
     avatar_url: string | null;
     date_of_birth: string | null;
+    age: number | null;
+    birth_date: string | null;
     gender: Gender | null;
     weight: number | null; // em kg
     height: number | null; // em cm
@@ -48,4 +52,67 @@ export interface UserProfile {
     health_goals: string[] | null;
     created_at: string;
     updated_at: string;
+}
+
+export interface WeightEntry {
+    id: string;
+    user_id: string;
+    weight: number; // em kg
+    height: number | null; // em cm
+    bmi: number | null;
+    bmi_category: BMICategory | null;
+    measured_at: string;
+    notes: string | null;
+    ai_analysis: string | null;
+    created_at: string;
+}
+
+export interface Goal {
+    id: string;
+    user_id: string;
+    goal_type: GoalType;
+    target_weight: number | null;
+    target_date: string | null;
+    description: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    completed_at: string | null;
+}
+
+export interface Achievement {
+    id: string;
+    user_id: string;
+    achievement_type: string;
+    title: string;
+    description: string | null;
+    icon: string | null;
+    achieved_at: string;
+    metadata: Record<string, any> | null;
+}
+
+export interface BMIInfo {
+    value: number;
+    category: BMICategory;
+    label: string;
+    color: string;
+    description: string;
+}
+
+// Meal Consumption History
+export interface MealConsumption {
+    id: string;
+    user_id: string;
+    meal_type: MealType;
+    consumed_at: string;
+    total_calories: number;
+    total_protein: number | null;
+    total_carbs: number | null;
+    total_fat: number | null;
+    total_fiber: number | null;
+    glycemic_index: number | null;
+    glycemic_load: number | null;
+    portions: Portion[];
+    notes: string | null;
+    created_at: string;
 }

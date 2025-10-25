@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { MealResult, Portion } from '../types';
+import { MealResult, Portion, MealType } from '../types';
 import { LightbulbIcon, CheckCircleIcon, BarChartIcon } from './icons';
+import { SaveMealModal } from './SaveMealModal';
 
 interface MealResultProps {
   result: MealResult;
+  mealType: MealType;
+  onSaveSuccess?: () => void;
 }
 
 const MacroChart: React.FC<{ data: MealResult['totalMacros'], totalCalories: number }> = ({ data, totalCalories }) => {
@@ -83,9 +86,11 @@ const MacroChart: React.FC<{ data: MealResult['totalMacros'], totalCalories: num
   );
 };
 
-export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
+export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType, onSaveSuccess }) => {
     const [editedResult, setEditedResult] = useState<MealResult>(result);
     const [inputValues, setInputValues] = useState<Map<string, string>>(new Map());
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     const originalPortionsMap = useMemo(() => {
         const map = new Map<string, Portion>();
@@ -223,9 +228,23 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
     
   return (
     <div className="bg-card-bg rounded-xl p-6 md:p-8 w-full max-w-4xl mx-auto border border-border-color shadow-lg mt-8 animate-slide-up">
-        <h2 className="text-2xl md:text-3xl font-bold text-text-bright mb-6">
-            ✨ Suas Porções Calculadas
-        </h2>
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-text-bright">
+                ✨ Suas Porções Calculadas
+            </h2>
+            <button
+                onClick={() => setShowSaveModal(true)}
+                className="bg-success text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+            >
+                💾 Salvar como Consumo
+            </button>
+        </div>
+
+        {saveSuccess && (
+            <div className="bg-success/10 border border-success text-success px-4 py-3 rounded-lg mb-4 animate-fade-in">
+                ✅ Refeição salva no histórico com sucesso!
+            </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div className="lg:col-span-3 space-y-4">
@@ -322,6 +341,24 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
                     ))}
                 </div>
             </div>
+        )}
+
+        {/* Modal de Salvamento */}
+        {showSaveModal && (
+            <SaveMealModal
+                mealResult={editedResult}
+                mealType={mealType}
+                onClose={() => setShowSaveModal(false)}
+                onSuccess={() => {
+                    setSaveSuccess(true);
+                    setTimeout(() => {
+                        setSaveSuccess(false);
+                        if (onSaveSuccess) {
+                            onSaveSuccess();
+                        }
+                    }, 2000);
+                }}
+            />
         )}
     </div>
   );

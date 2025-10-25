@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { MealPlanner } from './components/MealPlanner';
 import { MealResultDisplay } from './components/MealResult';
 import { AuthFlow } from './components/Auth/AuthFlow';
-import { UserPanel } from './components/UserPanel/UserPanel';
+import { UserPanelNew } from './components/UserPanel/UserPanelNew';
 import { calculateMealPortions } from './services/geminiService';
 import { useAuth } from './contexts/AuthContext';
 import type { MealResult, MealType } from './types';
@@ -11,6 +11,7 @@ import type { MealResult, MealType } from './types';
 const App: React.FC = () => {
     const { user, loading: authLoading, signOut } = useAuth();
     const [mealResult, setMealResult] = useState<MealResult | null>(null);
+    const [currentMealType, setCurrentMealType] = useState<MealType>('lunch');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showUserPanel, setShowUserPanel] = useState(false);
@@ -19,6 +20,7 @@ const App: React.FC = () => {
         setIsLoading(true);
         setError(null);
         setMealResult(null);
+        setCurrentMealType(mealType);
 
         try {
             const result = await calculateMealPortions(foods, targetCalories, mealType);
@@ -90,7 +92,11 @@ const App: React.FC = () => {
                 )}
 
                 {mealResult && !isLoading && (
-                    <MealResultDisplay result={mealResult} />
+                    <MealResultDisplay
+                        result={mealResult}
+                        mealType={currentMealType}
+                        onSaveSuccess={() => setMealResult(null)}
+                    />
                 )}
             </main>
 
@@ -98,7 +104,7 @@ const App: React.FC = () => {
                 <p>Powered by Gemini API & Supabase. Designed with passion.</p>
             </footer>
 
-            {showUserPanel && <UserPanel onClose={() => setShowUserPanel(false)} />}
+            {showUserPanel && <UserPanelNew onClose={() => setShowUserPanel(false)} />}
         </div>
     );
 };
