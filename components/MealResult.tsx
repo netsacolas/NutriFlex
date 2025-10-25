@@ -117,21 +117,36 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
                             protein: parseFloat((originalPortion.macros.protein * ratio).toFixed(1)),
                             carbs: parseFloat((originalPortion.macros.carbs * ratio).toFixed(1)),
                             fat: parseFloat((originalPortion.macros.fat * ratio).toFixed(1)),
-                        }
+                            fiber: originalPortion.macros.fiber ? parseFloat((originalPortion.macros.fiber * ratio).toFixed(1)) : 0,
+                        },
+                        glycemicIndex: originalPortion.glycemicIndex // GI doesn't change with portion
                     };
                 }
                 return p;
             });
-            
+
             // Recalculate totals
             const newTotalMacros = updatedPortions.reduce((acc, p) => {
                 acc.protein += p.macros.protein;
                 acc.carbs += p.macros.carbs;
                 acc.fat += p.macros.fat;
+                acc.fiber += p.macros.fiber || 0;
                 return acc;
-            }, { protein: 0, carbs: 0, fat: 0, fiber: prevResult.totalMacros.fiber }); // Fiber remains from original calculation
+            }, { protein: 0, carbs: 0, fat: 0, fiber: 0 });
 
             const newTotalCalories = updatedPortions.reduce((acc, p) => acc + p.calories, 0);
+
+            // Recalculate weighted average glycemic index
+            const totalCarbs = updatedPortions.reduce((sum, p) => sum + p.macros.carbs, 0);
+            const weightedGI = totalCarbs > 0
+                ? updatedPortions.reduce((sum, p) => {
+                    const weight = p.macros.carbs / totalCarbs;
+                    return sum + ((p.glycemicIndex || 0) * weight);
+                }, 0)
+                : prevResult.glycemicData.index;
+
+            // Recalculate glycemic load: (GI * carbs) / 100
+            const newGlycemicLoad = (weightedGI * totalCarbs) / 100;
 
             return {
                 ...prevResult,
@@ -141,7 +156,11 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
                     protein: parseFloat(newTotalMacros.protein.toFixed(1)),
                     carbs: parseFloat(newTotalMacros.carbs.toFixed(1)),
                     fat: parseFloat(newTotalMacros.fat.toFixed(1)),
-                    fiber: newTotalMacros.fiber, // Keep original
+                    fiber: parseFloat(newTotalMacros.fiber.toFixed(1)),
+                },
+                glycemicData: {
+                    index: Math.round(weightedGI),
+                    load: parseFloat(newGlycemicLoad.toFixed(1)),
                 },
             };
         });
@@ -202,12 +221,16 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-secondary-bg p-3 rounded-lg text-center border border-border-color">
-                        <p className="text-xs text-text-secondary">Fibras <span className="text-text-muted">(original)</span></p>
+                        <p className="text-xs text-text-secondary">Fibras</p>
                         <p className="text-xl font-bold text-fiber">{Math.round(editedResult.totalMacros.fiber)}g</p>
                     </div>
                      <div className="bg-secondary-bg p-3 rounded-lg text-center border border-border-color">
-                        <p className="text-xs text-text-secondary">Índice Glicêmico <span className="text-text-muted">(original)</span></p>
+                        <p className="text-xs text-text-secondary">Índice Glicêmico</p>
                         <p className="text-xl font-bold text-warning">{editedResult.glycemicData.index}</p>
+                    </div>
+                    <div className="bg-secondary-bg p-3 rounded-lg text-center border border-border-color col-span-2">
+                        <p className="text-xs text-text-secondary">Carga Glicêmica</p>
+                        <p className="text-xl font-bold text-info">{editedResult.glycemicData.load}</p>
                     </div>
                 </div>
             </div>

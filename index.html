@@ -39,7 +39,8 @@
             animation: {
               'fade-in': 'fadeIn 0.5s ease-in-out',
               'slide-up': 'slideUp 0.3s ease-out',
-              'pulse-soft': 'pulseSoft 2s infinite'
+              'pulse-soft': 'pulseSoft 2s infinite',
+              'shimmer': 'shimmer 2s infinite'
             },
             keyframes: {
               fadeIn: {
@@ -53,6 +54,10 @@
               pulseSoft: {
                 '0%, 100%': { transform: 'scale(1)', opacity: 1 },
                 '50%': { transform: 'scale(1.02)', opacity: 0.95 },
+              },
+              shimmer: {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' },
               },
             }
           }

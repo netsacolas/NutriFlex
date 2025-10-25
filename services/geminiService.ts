@@ -2,11 +2,13 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { MealResult, MealType } from '../types';
 
-if (!process.env.API_KEY) {
-  console.warn("API_KEY environment variable not set. Using a placeholder. Please set your API key.");
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!API_KEY) {
+  console.warn("VITE_GEMINI_API_KEY environment variable not set. Using a placeholder. Please set your API key.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'YOUR_API_KEY_HERE' });
+const ai = new GoogleGenAI({ apiKey: API_KEY || 'YOUR_API_KEY_HERE' });
 
 const responseSchema = {
     type: Type.OBJECT,
@@ -46,11 +48,13 @@ const responseSchema = {
                             protein: { type: Type.NUMBER, description: "Protein in grams for this portion." },
                             carbs: { type: Type.NUMBER, description: "Carbohydrates in grams for this portion." },
                             fat: { type: Type.NUMBER, description: "Fat in grams for this portion." },
+                            fiber: { type: Type.NUMBER, description: "Fiber in grams for this portion." },
                         },
-                         required: ["protein", "carbs", "fat"],
+                         required: ["protein", "carbs", "fat", "fiber"],
                     },
+                    glycemicIndex: { type: Type.NUMBER, description: "Glycemic index of this specific food item." },
                 },
-                required: ["foodName", "grams", "homeMeasure", "calories", "macros"],
+                required: ["foodName", "grams", "homeMeasure", "calories", "macros", "glycemicIndex"],
             },
         },
         suggestions: {
@@ -94,7 +98,12 @@ DISTRIBUIÇÃO DE MACRONUTRIENTES OBRIGATÓRIA:
 - Carboidratos: ${carbGrams}g (34% das calorias = ${carbCalories} kcal)
 
 Ajuste as porções de cada alimento para atingir EXATAMENTE essa distribuição de macronutrientes. Priorize essa distribuição acima de tudo.
-Forneça quantidades precisas em gramas, medidas caseiras comuns (em português brasileiro), e uma análise nutricional completa.
+Forneça quantidades precisas em gramas, medidas caseiras comuns (em português brasileiro), e uma análise nutricional completa incluindo:
+- Calorias totais
+- Macros totais (proteína, carboidratos, gordura, fibras em gramas)
+- Índice glicêmico médio da refeição
+- Carga glicêmica total da refeição
+- Porções detalhadas de cada alimento com suas calorias e macros
 
 IMPORTANTE - SUGESTÕES PERSONALIZADAS:
 Analise os alimentos específicos escolhidos pelo usuário (${foods.join(', ')}) e forneça de 3 a 5 sugestões PERSONALIZADAS que incluam:
@@ -106,18 +115,34 @@ Analise os alimentos específicos escolhidos pelo usuário (${foods.join(', ')})
 
 As sugestões devem ser práticas, específicas para os alimentos escolhidos, e focadas em melhorar qualidade nutricional e reduzir calorias quando possível.`;
 
+        console.log("🔍 Enviando prompt para Gemini AI...");
+        console.log("📊 Calorias alvo:", targetCalories);
+        console.log("🍽️ Alimentos:", foods);
+        console.log("🎯 Distribuição macro:", { proteinGrams, fatGrams, carbGrams });
+
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash-exp',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',
                 responseSchema: responseSchema,
-                systemInstruction: "Você é o NutriFlex AI, um nutricionista especialista. Sua tarefa é calcular os tamanhos precisos das porções para uma lista de alimentos específica para atingir uma meta de calorias para uma refeição. Você também deve fornecer uma análise nutricional detalhada, incluindo macros, fibras, índice glicêmico e carga glicêmica.\n\nREGRA MAIS IMPORTANTE - DISTRIBUIÇÃO DE MACRONUTRIENTES:\nA distribuição DEVE seguir OBRIGATORIAMENTE: 33% de proteína, 33% de gordura, 34% de carboidratos (em relação às calorias totais). Ajuste as porções de cada alimento para atingir essa distribuição o mais próximo possível. Esta é a PRIORIDADE MÁXIMA.\n\nSUGESTÕES PERSONALIZADAS (EXTREMAMENTE IMPORTANTE):\nAs sugestões devem ser TOTALMENTE PERSONALIZADAS baseadas nos alimentos ESPECÍFICOS que o usuário escolheu. NÃO forneça dicas genéricas. Analise cada alimento da lista e forneça:\n- Substituições específicas para tornar menos calórico (ex: se tem 'frango frito', sugira 'frango grelhado'; se tem 'arroz branco', sugira 'arroz integral ou couve-flor')\n- Combinações inteligentes entre os alimentos escolhidos ou novos ingredientes que potencializam nutrientes\n- Vegetais específicos que combinam com os alimentos do prato para aumentar volume com poucas calorias\n- Métodos de preparo mais saudáveis aplicáveis aos alimentos da lista\n- Temperos e ervas que agregam sabor sem calorias\nSeja específico, prático e relevante aos alimentos listados.\n\nOUTRAS REGRAS:\n- Todas as respostas devem ser em PORTUGUÊS BRASILEIRO\n- As medidas caseiras (homeMeasure) devem usar termos brasileiros como 'colher de sopa', 'xícara', 'unidade', 'filé pequeno', 'concha', 'escumadeira', 'pires', etc.\n- Seja sempre preciso e útil\n- Responda sempre no formato JSON especificado",
+                systemInstruction: "Você é o NutriFlex AI, um nutricionista especialista. Sua tarefa é calcular os tamanhos precisos das porções para uma lista de alimentos específica para atingir uma meta de calorias para uma refeição. Você também deve fornecer uma análise nutricional COMPLETA E DETALHADA, incluindo macros, fibras, índice glicêmico e carga glicêmica.\n\nREGRA MAIS IMPORTANTE - DISTRIBUIÇÃO DE MACRONUTRIENTES:\nA distribuição DEVE seguir OBRIGATORIAMENTE: 33% de proteína, 33% de gordura, 34% de carboidratos (em relação às calorias totais). Ajuste as porções de cada alimento para atingir essa distribuição o mais próximo possível. Esta é a PRIORIDADE MÁXIMA.\n\nANÁLISE NUTRICIONAL COMPLETA (OBRIGATÓRIO):\n- Calcule TODAS as calorias totais da refeição com precisão\n- Calcule TODOS os macros totais (proteína, carboidratos, gordura, fibras) em gramas\n- Forneça o índice glicêmico MÉDIO ponderado de todos os alimentos\n- Calcule a carga glicêmica TOTAL da refeição\n- Para CADA alimento, forneça porção em gramas, medida caseira, calorias e macros detalhados\n\nSUGESTÕES PERSONALIZADAS (EXTREMAMENTE IMPORTANTE):\nAs sugestões devem ser TOTALMENTE PERSONALIZADAS baseadas nos alimentos ESPECÍFICOS que o usuário escolheu. NÃO forneça dicas genéricas. Analise cada alimento da lista e forneça:\n- Substituições específicas para tornar menos calórico (ex: se tem 'frango frito', sugira 'frango grelhado'; se tem 'arroz branco', sugira 'arroz integral ou couve-flor')\n- Combinações inteligentes entre os alimentos escolhidos ou novos ingredientes que potencializam nutrientes\n- Vegetais específicos que combinam com os alimentos do prato para aumentar volume com poucas calorias\n- Métodos de preparo mais saudáveis aplicáveis aos alimentos da lista\n- Temperos e ervas que agregam sabor sem calorias\nSeja específico, prático e relevante aos alimentos listados.\n\nOUTRAS REGRAS:\n- Todas as respostas devem ser em PORTUGUÊS BRASILEIRO\n- As medidas caseiras (homeMeasure) devem usar termos brasileiros como 'colher de sopa', 'xícara', 'unidade', 'filé pequeno', 'concha', 'escumadeira', 'pires', etc.\n- Seja sempre preciso e útil\n- Responda sempre no formato JSON especificado\n- NÃO simplifique ou omita nenhuma análise nutricional",
+                temperature: 0.7,
+                topP: 0.8,
+                maxOutputTokens: 2048,
             },
         });
-        
+
         const jsonText = response.text.trim();
         const result = JSON.parse(jsonText) as MealResult;
+
+        console.log("✅ Resposta recebida da IA");
+        console.log("📈 Calorias calculadas:", result.totalCalories);
+        console.log("💪 Macros:", result.totalMacros);
+        console.log("🔢 IG médio:", result.glycemicData.index);
+        console.log("📊 CG total:", result.glycemicData.load);
+        console.log("💡 Sugestões:", result.suggestions.length);
+
         return result;
 
     } catch (error) {

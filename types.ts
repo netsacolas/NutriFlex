@@ -10,7 +10,8 @@ export interface Portion extends MacroNutrients {
     grams: number;
     homeMeasure: string;
     calories: number;
-    macros: MacroNutrients;
+    macros: MacroNutrients & { fiber?: number };
+    glycemicIndex?: number;
 }
 
 export interface GlycemicData {

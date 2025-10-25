@@ -39,7 +39,7 @@ const App: React.FC = () => {
                 </header>
                 
                 <MealPlanner onCalculate={handleCalculate} isLoading={isLoading} />
-                
+
                 {error && (
                      <div className="mt-8 max-w-2xl mx-auto bg-red-900/50 border border-error text-error p-4 rounded-lg text-center animate-fade-in">
                         <p className="font-semibold">Oops! Algo deu errado.</p>
