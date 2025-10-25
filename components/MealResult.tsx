@@ -7,20 +7,18 @@ interface MealResultProps {
   result: MealResult;
 }
 
-const MacroChart: React.FC<{ data: MealResult['totalMacros'] }> = ({ data }) => {
-  const chartData = [
+const MacroChart: React.FC<{ data: MealResult['totalMacros'], totalCalories: number }> = ({ data, totalCalories }) => {
+  const chartData = useMemo(() => [
     { name: 'Carboidratos', value: data.carbs * 4, grams: data.carbs, color: '#fb923c', darkColor: '#f97316' }, // Laranja vibrante
     { name: 'Proteínas', value: data.protein * 4, grams: data.protein, color: '#10b981', darkColor: '#059669' }, // Verde forte
     { name: 'Gorduras', value: data.fat * 9, grams: data.fat, color: '#fbbf24', darkColor: '#f59e0b' }, // Amarelo-laranja
-  ];
-
-  const totalCalories = chartData.reduce((acc, entry) => acc + entry.value, 0);
+  ], [data.carbs, data.protein, data.fat]);
 
   // Calcular porcentagens
-  const percentages = chartData.map(entry => ({
+  const percentages = useMemo(() => chartData.map(entry => ({
     ...entry,
     percentage: Math.round((entry.value / totalCalories) * 100)
-  }));
+  })), [chartData, totalCalories]);
 
   return (
     <div className="w-full space-y-4">
@@ -53,7 +51,7 @@ const MacroChart: React.FC<{ data: MealResult['totalMacros'] }> = ({ data }) => 
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-3xl font-bold text-text-bright transition-all">{Math.round(totalCalories)}</span>
+          <span className="text-3xl font-bold text-text-bright transition-all">{totalCalories}</span>
           <span className="text-sm text-text-secondary">kcal</span>
         </div>
       </div>
@@ -87,6 +85,7 @@ const MacroChart: React.FC<{ data: MealResult['totalMacros'] }> = ({ data }) => 
 
 export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
     const [editedResult, setEditedResult] = useState<MealResult>(result);
+    const [inputValues, setInputValues] = useState<Map<string, string>>(new Map());
 
     const originalPortionsMap = useMemo(() => {
         const map = new Map<string, Portion>();
@@ -96,57 +95,113 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
 
     useEffect(() => {
         setEditedResult(result);
+        // Inicializar valores dos inputs
+        const newInputValues = new Map<string, string>();
+        result.portions.forEach(p => {
+            newInputValues.set(p.foodName, p.grams.toString());
+        });
+        setInputValues(newInputValues);
     }, [result]);
 
     const handleGramsChange = (foodName: string, newGramsStr: string) => {
-        const newGrams = parseInt(newGramsStr, 10) || 0;
+        // Atualizar o valor do input imediatamente (permitindo vazio)
+        setInputValues(prev => {
+            const newMap = new Map(prev);
+            newMap.set(foodName, newGramsStr);
+            return newMap;
+        });
+
+        // Se estiver vazio, não calcular ainda
+        if (newGramsStr === '') {
+            return;
+        }
+
+        // Validar input
+        const newGrams = parseInt(newGramsStr, 10);
+
+        // Se for inválido, não fazer nada
+        if (isNaN(newGrams)) {
+            return;
+        }
+
+        // Permitir 0 para "remover" o alimento temporariamente
         const originalPortion = originalPortionsMap.get(foodName);
         if (!originalPortion || originalPortion.grams === 0) return;
 
         setEditedResult(prevResult => {
-            // Recalculate portion
-            const updatedPortions = prevResult.portions.map(p => {
-                if (p.foodName === foodName) {
-                    const ratio = newGrams / originalPortion.grams;
+            // Atualizar APENAS o alimento modificado, mantendo os outros como estão
+            const updatedPortions = prevResult.portions.map(portion => {
+                if (portion.foodName !== foodName) {
+                    // Não é o alimento sendo editado, retornar sem mudanças
+                    return portion;
+                }
+
+                // É o alimento sendo editado - calcular do ORIGINAL
+                if (newGrams === 0) {
                     return {
-                        ...p,
-                        grams: newGrams,
+                        ...portion,
+                        grams: 0,
                         homeMeasure: 'Personalizado',
-                        calories: Math.round(originalPortion.calories * ratio),
+                        calories: 0,
                         macros: {
-                            protein: parseFloat((originalPortion.macros.protein * ratio).toFixed(1)),
-                            carbs: parseFloat((originalPortion.macros.carbs * ratio).toFixed(1)),
-                            fat: parseFloat((originalPortion.macros.fat * ratio).toFixed(1)),
-                            fiber: originalPortion.macros.fiber ? parseFloat((originalPortion.macros.fiber * ratio).toFixed(1)) : 0,
+                            protein: 0,
+                            carbs: 0,
+                            fat: 0,
+                            fiber: 0,
                         },
-                        glycemicIndex: originalPortion.glycemicIndex // GI doesn't change with portion
+                        glycemicIndex: originalPortion.glycemicIndex
                     };
                 }
-                return p;
+
+                // Calcular proporção baseado no ORIGINAL
+                const ratio = newGrams / originalPortion.grams;
+
+                return {
+                    ...portion,
+                    grams: newGrams,
+                    homeMeasure: newGrams === originalPortion.grams ? originalPortion.homeMeasure : 'Personalizado',
+                    calories: Math.round(originalPortion.calories * ratio),
+                    macros: {
+                        protein: parseFloat((originalPortion.macros.protein * ratio).toFixed(1)),
+                        carbs: parseFloat((originalPortion.macros.carbs * ratio).toFixed(1)),
+                        fat: parseFloat((originalPortion.macros.fat * ratio).toFixed(1)),
+                        fiber: originalPortion.macros.fiber ? parseFloat((originalPortion.macros.fiber * ratio).toFixed(1)) : 0,
+                    },
+                    glycemicIndex: originalPortion.glycemicIndex
+                };
             });
 
-            // Recalculate totals
+            // Recalculate totals (ignorando alimentos com 0g)
             const newTotalMacros = updatedPortions.reduce((acc, p) => {
-                acc.protein += p.macros.protein;
-                acc.carbs += p.macros.carbs;
-                acc.fat += p.macros.fat;
-                acc.fiber += p.macros.fiber || 0;
+                if (p.grams > 0) {
+                    acc.protein += p.macros.protein;
+                    acc.carbs += p.macros.carbs;
+                    acc.fat += p.macros.fat;
+                    acc.fiber += p.macros.fiber || 0;
+                }
                 return acc;
             }, { protein: 0, carbs: 0, fat: 0, fiber: 0 });
 
-            const newTotalCalories = updatedPortions.reduce((acc, p) => acc + p.calories, 0);
+            const newTotalCalories = updatedPortions.reduce((acc, p) => {
+                if (p.grams > 0) {
+                    acc += p.calories;
+                }
+                return acc;
+            }, 0);
 
-            // Recalculate weighted average glycemic index
-            const totalCarbs = updatedPortions.reduce((sum, p) => sum + p.macros.carbs, 0);
+            // Recalculate weighted average glycemic index (apenas com porções > 0)
+            const portionsWithCarbs = updatedPortions.filter(p => p.grams > 0 && p.macros.carbs > 0);
+            const totalCarbs = portionsWithCarbs.reduce((sum, p) => sum + p.macros.carbs, 0);
+
             const weightedGI = totalCarbs > 0
-                ? updatedPortions.reduce((sum, p) => {
+                ? portionsWithCarbs.reduce((sum, p) => {
                     const weight = p.macros.carbs / totalCarbs;
                     return sum + ((p.glycemicIndex || 0) * weight);
                 }, 0)
-                : prevResult.glycemicData.index;
+                : 0;
 
             // Recalculate glycemic load: (GI * carbs) / 100
-            const newGlycemicLoad = (weightedGI * totalCarbs) / 100;
+            const newGlycemicLoad = totalCarbs > 0 ? (weightedGI * totalCarbs) / 100 : 0;
 
             return {
                 ...prevResult,
@@ -183,8 +238,20 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="number"
-                                        value={item.grams}
+                                        min="0"
+                                        step="1"
+                                        value={inputValues.get(item.foodName) || ''}
                                         onChange={(e) => handleGramsChange(item.foodName, e.target.value)}
+                                        onBlur={(e) => {
+                                            // Se vazio ao perder foco, restaurar valor atual da porção
+                                            if (e.target.value === '' || e.target.value === null) {
+                                                setInputValues(prev => {
+                                                    const newMap = new Map(prev);
+                                                    newMap.set(item.foodName, item.grams.toString());
+                                                    return newMap;
+                                                });
+                                            }
+                                        }}
                                         className="w-24 bg-hover-bg text-accent-coral font-semibold text-lg p-1 rounded border border-border-color focus:ring-1 focus:ring-accent-orange focus:outline-none"
                                         aria-label={`Grams for ${item.foodName}`}
                                     />
@@ -210,7 +277,11 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result }) => {
                        Análise Nutricional
                    </h3>
                    <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-                      <MacroChart data={editedResult.totalMacros} />
+                      <MacroChart
+                        key={`${editedResult.totalCalories}-${editedResult.totalMacros.protein}-${editedResult.totalMacros.carbs}-${editedResult.totalMacros.fat}`}
+                        data={editedResult.totalMacros}
+                        totalCalories={editedResult.totalCalories}
+                      />
                       <div className="grid grid-cols-3 gap-2 text-center mt-4">
                           <div><span className="font-bold text-protein">{Math.round(editedResult.totalMacros.protein)}g</span><p className="text-xs text-text-muted">Proteína</p></div>
                           <div><span className="font-bold text-carbs">{Math.round(editedResult.totalMacros.carbs)}g</span><p className="text-xs text-text-muted">Carbs</p></div>
