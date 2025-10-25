@@ -22,10 +22,22 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToSignUp, onSwitchToForgot
       const { error } = await signIn(email, password);
 
       if (error) {
-        setError(error.message || 'Erro ao fazer login. Verifique suas credenciais.');
+        console.error('SignIn error:', error);
+        if (error.message?.includes('fetch')) {
+          setError('Erro de conexão com o servidor. Verifique se o Supabase está configurado corretamente.');
+        } else if (error.message?.includes('Invalid login credentials')) {
+          setError('Email ou senha incorretos.');
+        } else {
+          setError(error.message || 'Erro ao fazer login. Verifique suas credenciais.');
+        }
       }
-    } catch (err) {
-      setError('Erro inesperado ao fazer login.');
+    } catch (err: any) {
+      console.error('SignIn catch error:', err);
+      if (err?.message?.includes('fetch')) {
+        setError('Erro de conexão. Verifique: 1) Supabase URL está correta 2) Email provider está habilitado no Supabase 3) Sua conexão com internet');
+      } else {
+        setError('Erro inesperado ao fazer login: ' + (err?.message || 'Desconhecido'));
+      }
     } finally {
       setLoading(false);
     }
