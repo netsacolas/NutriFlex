@@ -76,6 +76,53 @@
             transform: translateY(-8px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
+        /* Elementos decorativos */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.3;
+            animation: blob 7s infinite;
+        }
+        @keyframes blob {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        /* Ícones coloridos */
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 1.5rem;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .icon-circle::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, currentColor, transparent);
+            opacity: 0.3;
+            z-index: -1;
+        }
+        /* Pattern de fundo */
+        .pattern-dots {
+            background-image: radial-gradient(circle, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
     </style>
 </head>
 <body class="bg-white text-gray-900">
@@ -96,8 +143,13 @@
     </header>
 
     <!-- Seção Hero -->
-    <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
+    <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <!-- Elementos decorativos de fundo -->
+        <div class="absolute top-0 left-0 w-96 h-96 bg-teal-400 blob" style="top: 10%; left: 5%;"></div>
+        <div class="absolute w-72 h-72 bg-violet-400 blob" style="top: 60%; right: 10%;"></div>
+        <div class="absolute w-80 h-80 bg-pink-300 blob" style="bottom: 10%; left: 40%;"></div>
+
+        <div class="max-w-7xl mx-auto relative z-10">
             <div class="grid lg:grid-cols-2 gap-12 items-center">
                 <!-- Lado Esquerdo -->
                 <div class="animate-fade-in">
@@ -171,36 +223,39 @@
 
             <div class="grid md:grid-cols-3 gap-8">
                 <!-- Card 1 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
-                    <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mb-6">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover relative">
+                    <div class="absolute -top-6 left-8 w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        1
                     </div>
-                    <h3 class="text-2xl font-bold mb-4">Defina suas metas</h3>
-                    <p class="text-gray-600 leading-relaxed">Escolha o tipo de refeição e determine quantas calorias deseja consumir</p>
+                    <div class="icon-circle bg-gradient-to-br from-teal-400 to-teal-600 text-white">
+                        🎯
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-center">Defina suas metas</h3>
+                    <p class="text-gray-600 leading-relaxed text-center">Escolha o tipo de refeição e determine quantas calorias deseja consumir</p>
                 </div>
 
                 <!-- Card 2 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
-                    <div class="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-full flex items-center justify-center mb-6">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
+                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover relative">
+                    <div class="absolute -top-6 left-8 w-12 h-12 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        2
                     </div>
-                    <h3 class="text-2xl font-bold mb-4">Selecione os alimentos</h3>
-                    <p class="text-gray-600 leading-relaxed">Adicione os ingredientes que você gosta e deseja incluir na refeição</p>
+                    <div class="icon-circle bg-gradient-to-br from-violet-400 to-violet-600 text-white">
+                        🥗
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-center">Selecione os alimentos</h3>
+                    <p class="text-gray-600 leading-relaxed text-center">Adicione os ingredientes que você gosta e deseja incluir na refeição</p>
                 </div>
 
                 <!-- Card 3 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
-                    <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mb-6">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-                        </svg>
+                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover relative">
+                    <div class="absolute -top-6 left-8 w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        3
                     </div>
-                    <h3 class="text-2xl font-bold mb-4">Receba seu plano</h3>
-                    <p class="text-gray-600 leading-relaxed">Nossa IA calcula as porções exatas para atingir 40% carboidratos, 30% proteína e 30% gordura</p>
+                    <div class="icon-circle bg-gradient-to-br from-pink-400 to-pink-600 text-white">
+                        ✨
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-center">Receba seu plano</h3>
+                    <p class="text-gray-600 leading-relaxed text-center">Nossa IA calcula as porções exatas para atingir 40% carboidratos, 30% proteína e 30% gordura</p>
                 </div>
             </div>
         </div>
@@ -384,46 +439,30 @@
 
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Benefício 1 -->
-                <div class="bg-white rounded-2xl p-6 text-center card-hover">
-                    <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Economia de Tempo</h3>
+                <div class="bg-white rounded-2xl p-8 text-center card-hover border-2 border-transparent hover:border-teal-200">
+                    <div class="text-6xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold mb-2 bg-gradient-to-r from-teal-600 to-teal-800 text-transparent bg-clip-text">Economia de Tempo</h3>
                     <p class="text-gray-600">Pare de calcular porções manualmente</p>
                 </div>
 
                 <!-- Benefício 2 -->
-                <div class="bg-white rounded-2xl p-6 text-center card-hover">
-                    <div class="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Resultados Reais</h3>
+                <div class="bg-white rounded-2xl p-8 text-center card-hover border-2 border-transparent hover:border-violet-200">
+                    <div class="text-6xl mb-4">🏆</div>
+                    <h3 class="text-xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-violet-800 text-transparent bg-clip-text">Resultados Reais</h3>
                     <p class="text-gray-600">Alcance suas metas nutricionais</p>
                 </div>
 
                 <!-- Benefício 3 -->
-                <div class="bg-white rounded-2xl p-6 text-center card-hover">
-                    <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Flexibilidade Total</h3>
+                <div class="bg-white rounded-2xl p-8 text-center card-hover border-2 border-transparent hover:border-pink-200">
+                    <div class="text-6xl mb-4">🎨</div>
+                    <h3 class="text-xl font-bold mb-2 bg-gradient-to-r from-pink-600 to-pink-800 text-transparent bg-clip-text">Flexibilidade Total</h3>
                     <p class="text-gray-600">Coma o que você gosta, na medida certa</p>
                 </div>
 
                 <!-- Benefício 4 -->
-                <div class="bg-white rounded-2xl p-6 text-center card-hover">
-                    <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Suporte Inteligente</h3>
+                <div class="bg-white rounded-2xl p-8 text-center card-hover border-2 border-transparent hover:border-teal-200">
+                    <div class="text-6xl mb-4">🤖</div>
+                    <h3 class="text-xl font-bold mb-2 bg-gradient-to-r from-teal-600 to-violet-600 text-transparent bg-clip-text">Suporte Inteligente</h3>
                     <p class="text-gray-600">IA disponível 24 horas por dia</p>
                 </div>
             </div>
@@ -431,8 +470,8 @@
     </section>
 
     <!-- Seção de Preços -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
+    <section class="py-20 px-4 sm:px-6 lg:px-8 pattern-dots relative">
+        <div class="max-w-7xl mx-auto relative z-10">
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold mb-4">Planos e Preços</h2>
                 <p class="text-xl text-gray-600">Escolha o melhor plano para sua jornada nutricional</p>
@@ -599,8 +638,14 @@
     </section>
 
     <!-- Seção CTA Final -->
-    <section class="py-24 px-4 sm:px-6 lg:px-8 gradient-bg">
-        <div class="max-w-4xl mx-auto text-center">
+    <section class="py-24 px-4 sm:px-6 lg:px-8 gradient-bg relative overflow-hidden">
+        <!-- Elementos decorativos -->
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute top-10 left-10 w-20 h-20 border-4 border-white rounded-full animate-pulse"></div>
+            <div class="absolute bottom-20 right-20 w-32 h-32 border-4 border-white rounded-full animate-pulse" style="animation-delay: 0.5s;"></div>
+            <div class="absolute top-1/2 left-1/4 w-16 h-16 border-4 border-white rounded-full animate-pulse" style="animation-delay: 1s;"></div>
+        </div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
             <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
                 Pronto para transformar sua alimentação?
             </h2>
