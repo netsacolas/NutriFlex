@@ -1,4 +1,4 @@
-# 🔒 Relatório de Auditoria de Segurança - NutriFlex AI
+# 🔒 Relatório de Auditoria de Segurança - NutriMais AI
 
 **Data**: 25 de Outubro de 2025
 **Versão da Aplicação**: 1.0.0

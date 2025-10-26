@@ -1,4 +1,4 @@
-# 📋 Próximos Passos - NutriFlex AI
+# 📋 Próximos Passos - NutriMais AI
 
 ## ✅ O que já está implementado:
 

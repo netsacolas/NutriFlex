@@ -74,7 +74,7 @@ const App: React.FC = () => {
             <main className="max-w-7xl mx-auto">
                 <header className="text-center mb-8 md:mb-12">
                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent-orange to-accent-coral text-transparent bg-clip-text pb-2 mb-6">
-                        NutriFlex AI
+                        NutriMais AI
                     </h1>
                     <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8">
                         A dieta que se adapta a você. Escolha os alimentos, defina sua meta de calorias e a IA calcula as porções perfeitas.

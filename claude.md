@@ -1,12 +1,12 @@
-# NutriFlex AI - Documentação Técnica
+# NutriMais AI - Documentação Técnica
 
 ## Visão Geral
 
-**NutriFlex AI** é uma aplicação web inteligente de diário alimentar que simplifica o planejamento nutricional. Os usuários definem suas metas de calorias para cada refeição, escolhem os alimentos desejados, e a IA calcula automaticamente as porções ideais para atingir uma dieta balanceada com distribuição de macronutrientes 40% carboidratos, 30% proteína e 30% gordura.
+**NutriMais AI** é uma aplicação web inteligente de diário alimentar que simplifica o planejamento nutricional. Os usuários definem suas metas de calorias para cada refeição, escolhem os alimentos desejados, e a IA calcula automaticamente as porções ideais para atingir uma dieta balanceada com distribuição de macronutrientes 40% carboidratos, 30% proteína e 30% gordura.
 
 ### Links Importantes
 - **AI Studio App**: https://ai.studio/apps/drive/1Dbi9jO-Jmlmz2eT3Ldk05Q6NHUO1xVD8
-- **Repository**: https://github.com/netsacolas/NutriFlex.git
+- **Repository**: https://github.com/netsacolas/NutriMais.git
 - **Repository Banner**: ![Banner](https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6)
 
 ---
@@ -33,7 +33,7 @@
 ## Arquitetura do Projeto
 
 ```
-NutriFlex/
+NutriMais/
 ├── index.html                          # Entry point HTML com config Tailwind
 ├── index.tsx                           # Entry point React + root render
 ├── App.tsx                             # Componente principal da aplicação
@@ -914,8 +914,8 @@ VITE_GEMINI_API_KEY=your_api_key_here
 
 ```bash
 # 1. Clonar repositório
-git clone https://github.com/netsacolas/NutriFlex.git
-cd NutriFlex
+git clone https://github.com/netsacolas/NutriMais.git
+cd NutriMais
 
 # 2. Instalar dependências
 npm install
@@ -1185,7 +1185,7 @@ Para questões sobre o **Gemini API**, consulte:
 - [Documentação Oficial](https://ai.google.dev/docs)
 - [AI Studio](https://ai.studio)
 
-**Repositório GitHub**: https://github.com/netsacolas/NutriFlex.git
+**Repositório GitHub**: https://github.com/netsacolas/NutriMais.git
 
 ---
 

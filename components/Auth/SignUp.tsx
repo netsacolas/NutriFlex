@@ -68,7 +68,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onSwitchToLogin }) => {
     <div className="w-full max-w-md mx-auto bg-card-bg p-8 rounded-xl border border-border-color shadow-lg animate-fade-in">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-text-bright mb-2">Criar Conta</h2>
-        <p className="text-text-secondary">Junte-se ao NutriFlex AI</p>
+        <p className="text-text-secondary">Junte-se ao NutriMais AI</p>
       </div>
 
       {error && (

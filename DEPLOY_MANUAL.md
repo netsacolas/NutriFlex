@@ -1,6 +1,6 @@
 # 🚀 Deploy Manual - Guia Passo a Passo
 
-**Projeto**: NutriFlex AI
+**Projeto**: NutriMais AI
 **Data**: 25 de Outubro de 2025
 **Objetivo**: Ativar sistema de segurança com Edge Function
 

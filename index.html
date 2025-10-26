@@ -1,46 +1,37 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NutriFlex AI</title>
+    <title>NutriMais AI - Planeje sua alimentação com inteligência artificial</title>
+    <meta name="description" content="Defina suas metas de calorias, escolha os alimentos que você gosta, e deixe nossa IA calcular as porções perfeitas para uma dieta equilibrada">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              'primary-bg': '#1e1e1e',
-              'secondary-bg': '#2d2d30',
-              'card-bg': '#252526',
-              'hover-bg': '#3e3e42',
-              'border-color': '#464647',
-              'text-primary': '#cccccc',
-              'text-secondary': '#969696',
-              'text-muted': '#6b6b6b',
-              'text-bright': '#ffffff',
-              'accent-orange': '#ff6b35',
-              'accent-coral': '#ff8c61',
-              'accent-peach': '#ffb088',
-              'success': '#4ade80',
-              'warning': '#fbbf24',
-              'error': '#f87171',
-              'info': '#60a5fa',
-              'protein': '#60a5fa',
-              'carbs': '#fbbf24',
-              'fat': '#f87171',
-              'fiber': '#4ade80'
-            },
-            backgroundImage: {
-              'gradient-primary': 'linear-gradient(135deg, #ff6b35 0%, #ff8c61 100%)',
-              'gradient-dark': 'linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%)'
+              'teal': {
+                300: '#5eead4',
+                400: '#2dd4bf',
+                500: '#14b8a6',
+                600: '#0d9488',
+              },
+              'violet': {
+                400: '#a78bfa',
+                500: '#8b5cf6',
+                600: '#7c3aed',
+              },
+              'pink': {
+                300: '#f9a8d4',
+                400: '#f472b6',
+                500: '#ec4899',
+              }
             },
             animation: {
-              'fade-in': 'fadeIn 0.5s ease-in-out',
-              'slide-up': 'slideUp 0.3s ease-out',
-              'pulse-soft': 'pulseSoft 2s infinite',
-              'shimmer': 'shimmer 2s infinite'
+              'fade-in': 'fadeIn 0.8s ease-in-out',
+              'slide-up': 'slideUp 0.6s ease-out',
+              'float': 'float 3s ease-in-out infinite',
             },
             keyframes: {
               fadeIn: {
@@ -48,37 +39,640 @@
                 '100%': { opacity: 1 },
               },
               slideUp: {
-                '0%': { transform: 'translateY(20px)', opacity: 0 },
+                '0%': { transform: 'translateY(40px)', opacity: 0 },
                 '100%': { transform: 'translateY(0)', opacity: 1 },
               },
-              pulseSoft: {
-                '0%, 100%': { transform: 'scale(1)', opacity: 1 },
-                '50%': { transform: 'scale(1.02)', opacity: 0.95 },
-              },
-              shimmer: {
-                '0%': { transform: 'translateX(-100%)' },
-                '100%': { transform: 'translateX(100%)' },
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-20px)' },
               },
             }
           }
         }
       }
     </script>
-<script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "recharts": "https://aistudiocdn.com/recharts@^3.3.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #14b8a6 0%, #8b5cf6 50%, #ec4899 100%);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #14b8a6 0%, #8b5cf6 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #14b8a6 0%, #8b5cf6 100%);
+            transition: all 0.3s ease;
+        }
+        .gradient-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
-<body class="bg-primary-bg">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+<body class="bg-white text-gray-900">
+
+    <!-- Cabeçalho Fixo -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">
+                    <span class="text-white text-xl font-bold">N</span>
+                </div>
+                <span class="text-2xl font-bold gradient-text">NutriMais AI</span>
+            </div>
+            <a href="/login.html" class="px-6 py-2.5 rounded-full gradient-bg text-white font-semibold hover:shadow-lg transition-all duration-300">
+                Entrar
+            </a>
+        </div>
+    </header>
+
+    <!-- Seção Hero -->
+    <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Lado Esquerdo -->
+                <div class="animate-fade-in">
+                    <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6">
+                        Planeje sua alimentação com <span class="gradient-text">inteligência artificial</span>
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        Defina suas metas de calorias, escolha os alimentos que você gosta, e deixe nossa IA calcular as porções perfeitas para uma dieta equilibrada
+                    </p>
+                    <a href="/login.html" class="inline-block gradient-button text-white px-8 py-4 rounded-full text-lg font-bold shadow-lg">
+                        Começar Agora
+                    </a>
+                    <p class="text-sm text-gray-500 mt-4">Gratuito e sem complicações</p>
+                </div>
+
+                <!-- Lado Direito -->
+                <div class="relative animate-float">
+                    <div class="bg-gradient-to-br from-teal-50 to-violet-50 rounded-3xl p-8 shadow-2xl">
+                        <div class="bg-white rounded-2xl p-6 mb-4 shadow-md">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-teal-400 to-violet-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-2xl">🍽️</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">Almoço</p>
+                                    <p class="text-sm text-gray-500">600 kcal</p>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center bg-teal-50 px-4 py-2 rounded-lg">
+                                    <span class="text-sm font-medium">Arroz integral</span>
+                                    <span class="text-sm text-teal-600 font-bold">150g</span>
+                                </div>
+                                <div class="flex justify-between items-center bg-violet-50 px-4 py-2 rounded-lg">
+                                    <span class="text-sm font-medium">Frango grelhado</span>
+                                    <span class="text-sm text-violet-600 font-bold">120g</span>
+                                </div>
+                                <div class="flex justify-between items-center bg-pink-50 px-4 py-2 rounded-lg">
+                                    <span class="text-sm font-medium">Brócolis</span>
+                                    <span class="text-sm text-pink-600 font-bold">100g</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-teal-100 rounded-xl p-3">
+                                <p class="text-2xl font-bold text-teal-700">40%</p>
+                                <p class="text-xs text-gray-600">Carboidratos</p>
+                            </div>
+                            <div class="bg-violet-100 rounded-xl p-3">
+                                <p class="text-2xl font-bold text-violet-700">30%</p>
+                                <p class="text-xs text-gray-600">Proteína</p>
+                            </div>
+                            <div class="bg-pink-100 rounded-xl p-3">
+                                <p class="text-2xl font-bold text-pink-700">30%</p>
+                                <p class="text-xs text-gray-600">Gordura</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Como Funciona -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Como Funciona</h2>
+                <p class="text-xl text-gray-600">Simples, rápido e inteligente em 3 passos</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Defina suas metas</h3>
+                    <p class="text-gray-600 leading-relaxed">Escolha o tipo de refeição e determine quantas calorias deseja consumir</p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-full flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Selecione os alimentos</h3>
+                    <p class="text-gray-600 leading-relaxed">Adicione os ingredientes que você gosta e deseja incluir na refeição</p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Receba seu plano</h3>
+                    <p class="text-gray-600 leading-relaxed">Nossa IA calcula as porções exatas para atingir 40% carboidratos, 30% proteína e 30% gordura</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Recursos Principais -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto space-y-32">
+
+            <!-- Recurso 1 -->
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1">
+                    <div class="bg-gradient-to-br from-teal-50 to-violet-50 rounded-3xl p-8 shadow-xl">
+                        <div class="bg-white rounded-2xl p-6">
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="h-4 bg-gradient-to-r from-teal-200 to-violet-200 rounded w-3/4"></div>
+                                <div class="h-4 bg-gradient-to-r from-violet-200 to-pink-200 rounded w-full"></div>
+                                <div class="h-4 bg-gradient-to-r from-teal-200 to-pink-200 rounded w-5/6"></div>
+                                <div class="mt-6 grid grid-cols-3 gap-3">
+                                    <div class="h-20 bg-teal-100 rounded-lg"></div>
+                                    <div class="h-20 bg-violet-100 rounded-lg"></div>
+                                    <div class="h-20 bg-pink-100 rounded-lg"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-1 lg:order-2">
+                    <h2 class="text-4xl font-bold mb-6">Inteligência Artificial Nutricional</h2>
+                    <p class="text-xl text-gray-600 leading-relaxed">
+                        Utilizamos o poder do Google Gemini para analisar centenas de combinações e encontrar as porções ideais para cada alimento, garantindo uma refeição balanceada e nutritiva
+                    </p>
+                </div>
+            </div>
+
+            <!-- Recurso 2 -->
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-4xl font-bold mb-6">Acompanhe sua Evolução</h2>
+                    <p class="text-xl text-gray-600 leading-relaxed">
+                        Registre suas refeições, atividades físicas e pesagens. Visualize gráficos detalhados da sua jornada rumo a uma vida mais saudável
+                    </p>
+                </div>
+                <div>
+                    <div class="bg-gradient-to-br from-violet-50 to-pink-50 rounded-3xl p-8 shadow-xl">
+                        <div class="bg-white rounded-2xl p-6">
+                            <h3 class="font-bold text-lg mb-4 text-gray-900">Progresso Semanal</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm text-gray-600">Calorias</span>
+                                        <span class="text-sm font-bold text-teal-600">85%</span>
+                                    </div>
+                                    <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm text-gray-600">Proteínas</span>
+                                        <span class="text-sm font-bold text-violet-600">92%</span>
+                                    </div>
+                                    <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full" style="width: 92%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm text-gray-600">Atividades</span>
+                                        <span class="text-sm font-bold text-pink-600">78%</span>
+                                    </div>
+                                    <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-pink-400 to-pink-600 rounded-full" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recurso 3 -->
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1">
+                    <div class="bg-gradient-to-br from-pink-50 to-teal-50 rounded-3xl p-8 shadow-xl">
+                        <div class="bg-white rounded-2xl p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-violet-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="h-3 bg-gradient-to-r from-pink-200 to-violet-200 rounded w-2/3"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex gap-3">
+                                    <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-3 bg-teal-100 rounded w-full"></div>
+                                        <div class="h-3 bg-teal-100 rounded w-4/5"></div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 justify-end">
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-3 bg-violet-100 rounded w-full ml-auto"></div>
+                                        <div class="h-3 bg-violet-100 rounded w-3/4 ml-auto"></div>
+                                    </div>
+                                    <div class="w-10 h-10 bg-gradient-to-br from-violet-400 to-pink-500 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-1 lg:order-2">
+                    <h2 class="text-4xl font-bold mb-6">Assistente Nutricional Personalizado</h2>
+                    <p class="text-xl text-gray-600 leading-relaxed">
+                        Converse com nosso assistente de IA disponível a qualquer momento para tirar dúvidas sobre nutrição, receber dicas personalizadas e ajustar seu planejamento
+                    </p>
+                </div>
+            </div>
+
+            <!-- Recurso 4 -->
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-4xl font-bold mb-6">Banco de Atividades Físicas</h2>
+                    <p class="text-xl text-gray-600 leading-relaxed">
+                        Mais de 116 atividades físicas catalogadas com cálculo automático de calorias queimadas. Registre desde uma caminhada até treinos intensos
+                    </p>
+                </div>
+                <div>
+                    <div class="bg-gradient-to-br from-teal-50 to-violet-50 rounded-3xl p-8 shadow-xl">
+                        <div class="bg-white rounded-2xl p-6 space-y-3">
+                            <div class="flex items-center justify-between p-4 bg-teal-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">🏃</span>
+                                    <div>
+                                        <p class="font-semibold text-gray-900">Corrida</p>
+                                        <p class="text-sm text-gray-500">30 min</p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-teal-600">240 kcal</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-violet-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">🏋️</span>
+                                    <div>
+                                        <p class="font-semibold text-gray-900">Musculação</p>
+                                        <p class="text-sm text-gray-500">45 min</p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-violet-600">180 kcal</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-pink-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">🚴</span>
+                                    <div>
+                                        <p class="font-semibold text-gray-900">Ciclismo</p>
+                                        <p class="text-sm text-gray-500">60 min</p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-pink-600">320 kcal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Seção Benefícios -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Por que escolher o NutriMais?</h2>
+                <p class="text-xl text-gray-600">Benefícios que transformam sua rotina alimentar</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Benefício 1 -->
+                <div class="bg-white rounded-2xl p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Economia de Tempo</h3>
+                    <p class="text-gray-600">Pare de calcular porções manualmente</p>
+                </div>
+
+                <!-- Benefício 2 -->
+                <div class="bg-white rounded-2xl p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Resultados Reais</h3>
+                    <p class="text-gray-600">Alcance suas metas nutricionais</p>
+                </div>
+
+                <!-- Benefício 3 -->
+                <div class="bg-white rounded-2xl p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Flexibilidade Total</h3>
+                    <p class="text-gray-600">Coma o que você gosta, na medida certa</p>
+                </div>
+
+                <!-- Benefício 4 -->
+                <div class="bg-white rounded-2xl p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Suporte Inteligente</h3>
+                    <p class="text-gray-600">IA disponível 24 horas por dia</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção de Preços -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Planos e Preços</h2>
+                <p class="text-xl text-gray-600">Escolha o melhor plano para sua jornada nutricional</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
+                <!-- Plano Mensal -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-gray-200 card-hover">
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Mensal</h3>
+                        <div class="flex items-center justify-center gap-2 mb-4">
+                            <span class="text-gray-500 text-lg line-through">R$ 29,90</span>
+                        </div>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span class="text-gray-600 text-2xl">R$</span>
+                            <span class="text-5xl font-bold bg-gradient-to-r from-teal-600 to-violet-600 text-transparent bg-clip-text">19,90</span>
+                            <span class="text-gray-500 text-lg">/mês</span>
+                        </div>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-teal-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Planejamento ilimitado de refeições</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-teal-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Assistente IA 24/7</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-teal-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Históricos completos</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-teal-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Suporte prioritário</span>
+                        </li>
+                    </ul>
+                    <a href="/login.html" class="block w-full text-center bg-gradient-to-r from-teal-500 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300">
+                        Começar Agora
+                    </a>
+                </div>
+
+                <!-- Plano Trimestral (Destaque) -->
+                <div class="bg-white rounded-2xl p-8 shadow-2xl border-2 border-violet-500 card-hover relative transform md:scale-105">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <span class="bg-gradient-to-r from-violet-500 to-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
+                            MAIS POPULAR
+                        </span>
+                    </div>
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Trimestral</h3>
+                        <div class="flex items-center justify-center gap-2 mb-4">
+                            <span class="text-gray-500 text-lg line-through">R$ 59,70</span>
+                            <span class="bg-pink-100 text-pink-600 px-2 py-1 rounded-full text-xs font-bold">ECONOMIZE 21%</span>
+                        </div>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span class="text-gray-600 text-2xl">R$</span>
+                            <span class="text-5xl font-bold bg-gradient-to-r from-violet-600 to-pink-600 text-transparent bg-clip-text">47,00</span>
+                            <span class="text-gray-500 text-lg">/trimestre</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2">R$ 15,67/mês</p>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-violet-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600"><strong>Tudo do plano Mensal</strong></span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-violet-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Relatórios avançados</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-violet-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Planos semanais personalizados</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-violet-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Economia de 21%</span>
+                        </li>
+                    </ul>
+                    <a href="/login.html" class="block w-full text-center gradient-button text-white py-3 rounded-xl font-semibold shadow-lg">
+                        Escolher este Plano
+                    </a>
+                </div>
+
+                <!-- Plano Anual -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-gray-200 card-hover">
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Anual</h3>
+                        <div class="flex items-center justify-center gap-2 mb-4">
+                            <span class="text-gray-500 text-lg line-through">R$ 238,80</span>
+                            <span class="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs font-bold">ECONOMIZE 25%</span>
+                        </div>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span class="text-gray-600 text-2xl">R$</span>
+                            <span class="text-5xl font-bold bg-gradient-to-r from-pink-600 to-teal-600 text-transparent bg-clip-text">179,00</span>
+                            <span class="text-gray-500 text-lg">/ano</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2">R$ 14,92/mês</p>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-pink-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600"><strong>Tudo do plano Trimestral</strong></span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-pink-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Exportação de dados (PDF/Excel)</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-pink-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Acesso antecipado a novos recursos</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-pink-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-600">Maior economia (25%)</span>
+                        </li>
+                    </ul>
+                    <a href="/login.html" class="block w-full text-center bg-gradient-to-r from-pink-500 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300">
+                        Melhor Valor
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Garantia -->
+            <div class="mt-12 text-center">
+                <div class="inline-flex items-center gap-3 bg-green-50 px-6 py-4 rounded-full">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <div class="text-left">
+                        <p class="font-bold text-green-900">Garantia de 7 dias</p>
+                        <p class="text-sm text-green-700">Não gostou? Devolvemos seu dinheiro, sem perguntas!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção CTA Final -->
+    <section class="py-24 px-4 sm:px-6 lg:px-8 gradient-bg">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                Pronto para transformar sua alimentação?
+            </h2>
+            <p class="text-xl text-white/90 mb-10">
+                Junte-se a milhares de pessoas que já estão planejando refeições inteligentes
+            </p>
+            <a href="/login.html" class="inline-block bg-white text-violet-600 px-10 py-5 rounded-full text-xl font-bold shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
+                Criar Minha Conta Grátis
+            </a>
+            <p class="text-white/80 mt-6 text-sm">Sem cartão de crédito. Sem compromisso.</p>
+        </div>
+    </section>
+
+    <!-- Rodapé -->
+    <footer class="bg-gray-900 text-gray-300 py-16 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-3 gap-12 mb-12">
+                <!-- Coluna 1 -->
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">
+                            <span class="text-white text-xl font-bold">N</span>
+                        </div>
+                        <span class="text-2xl font-bold text-white">NutriMais AI</span>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed">
+                        Planejamento alimentar inteligente ao seu alcance
+                    </p>
+                </div>
+
+                <!-- Coluna 2 -->
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">Links Rápidos</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#como-funciona" class="text-gray-400 hover:text-white transition-colors">Como Funciona</a></li>
+                        <li><a href="#recursos" class="text-gray-400 hover:text-white transition-colors">Recursos</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Privacidade</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Termos de Uso</a></li>
+                    </ul>
+                </div>
+
+                <!-- Coluna 3 -->
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">Contato</h3>
+                    <p class="text-gray-400 mb-4">suporte@nutrimais.com</p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-br hover:from-teal-400 hover:to-violet-500 transition-all duration-300">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-br hover:from-teal-400 hover:to-violet-500 transition-all duration-300">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-br hover:from-teal-400 hover:to-violet-500 transition-all duration-300">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-8 text-center">
+                <p class="text-gray-400 text-sm">
+                    © 2025 NutriMais AI - Todos os direitos reservados
+                </p>
+            </div>
+        </div>
+    </footer>
+
 </body>
 </html>

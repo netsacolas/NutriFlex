@@ -1,4 +1,4 @@
-# ✅ Migração Completa para Edge Functions - NutriFlex AI
+# ✅ Migração Completa para Edge Functions - NutriMais AI
 
 **Data**: 25 de Outubro de 2025
 **Status**: 🟢 **CONCLUÍDO COM SUCESSO**

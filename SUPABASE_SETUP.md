@@ -1,4 +1,4 @@
-# Configuração do Supabase para NutriFlex AI
+# Configuração do Supabase para NutriMais AI
 
 ## Passos necessários para habilitar autenticação
 

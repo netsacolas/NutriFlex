@@ -1,4 +1,4 @@
-# ✅ Melhorias de Segurança Implementadas - NutriFlex AI
+# ✅ Melhorias de Segurança Implementadas - NutriMais AI
 
 **Data de Implementação**: 25 de Outubro de 2025
 **Score de Segurança**: 35/100 → **85/100** 🎉

@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NutriMais AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'primary-bg': '#1e1e1e',
+              'secondary-bg': '#2d2d30',
+              'card-bg': '#252526',
+              'hover-bg': '#3e3e42',
+              'border-color': '#464647',
+              'text-primary': '#cccccc',
+              'text-secondary': '#969696',
+              'text-muted': '#6b6b6b',
+              'text-bright': '#ffffff',
+              'accent-orange': '#ff6b35',
+              'accent-coral': '#ff8c61',
+              'accent-peach': '#ffb088',
+              'success': '#4ade80',
+              'warning': '#fbbf24',
+              'error': '#f87171',
+              'info': '#60a5fa',
+              'protein': '#60a5fa',
+              'carbs': '#fbbf24',
+              'fat': '#f87171',
+              'fiber': '#4ade80'
+            },
+            backgroundImage: {
+              'gradient-primary': 'linear-gradient(135deg, #ff6b35 0%, #ff8c61 100%)',
+              'gradient-dark': 'linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%)'
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-in-out',
+              'slide-up': 'slideUp 0.3s ease-out',
+              'pulse-soft': 'pulseSoft 2s infinite',
+              'shimmer': 'shimmer 2s infinite'
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(20px)', opacity: 0 },
+                '100%': { transform: 'translateY(0)', opacity: 1 },
+              },
+              pulseSoft: {
+                '0%, 100%': { transform: 'scale(1)', opacity: 1 },
+                '50%': { transform: 'scale(1.02)', opacity: 0.95 },
+              },
+              shimmer: {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' },
+              },
+            }
+          }
+        }
+      }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-primary-bg">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
