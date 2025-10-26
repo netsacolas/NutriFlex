@@ -30,7 +30,12 @@
       "Bash(del:*)",
       "Bash(if exist nul del /F /Q nul)",
       "Bash(move index.html login.html)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run validate:pwa:*)",
+      "Bash(npm run build:*)",
+      "Bash(cmd.exe /c \"taskkill /PID 24472 /F\")",
+      "Bash(if exist .vite rmdir /s /q .vite)",
+      "Bash(if exist node_modules.vite rmdir /s /q node_modules.vite)"
     ],
     "deny": [],
     "ask": []

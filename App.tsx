@@ -1,5 +1,6 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
+import { PWAManager } from './components/PWAComponents';
+import { initBackgroundSync, SyncStatusBadge } from './utils/backgroundSync';
 import { MealPlanner } from './components/MealPlanner';
 import { MealResultDisplay } from './components/MealResult';
 import { AuthFlow } from './components/Auth/AuthFlow';
@@ -22,6 +23,12 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeModal, setActiveModal] = useState<ModalType>(null);
     const [isUserAdmin, setIsUserAdmin] = useState(false);
+
+    // Inicializar PWA e sistema de sincronização
+    useEffect(() => {
+        console.log('🚀 Inicializando PWA...');
+        initBackgroundSync();
+    }, []);
 
     // Verificar se usuário é admin
     useEffect(() => {
@@ -70,8 +77,13 @@ const App: React.FC = () => {
 
     // Usuário autenticado - mostrar aplicação principal
     return (
-        <div className="min-h-screen bg-primary-bg text-text-primary font-sans p-4 md:p-8">
-            <main className="max-w-7xl mx-auto">
+        <>
+            {/* Componentes PWA */}
+            <PWAManager />
+            <SyncStatusBadge />
+
+            <div className="min-h-screen bg-primary-bg text-text-primary font-sans p-4 md:p-8">
+                <main className="max-w-7xl mx-auto">
                 <header className="text-center mb-8 md:mb-12">
                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent-orange to-accent-coral text-transparent bg-clip-text pb-2 mb-6">
                         NutriMais AI
@@ -157,6 +169,7 @@ const App: React.FC = () => {
                 />
             )}
         </div>
+        </>
     );
 };
 

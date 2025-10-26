@@ -86,6 +86,66 @@ export default defineConfig(({ mode }) => {
             drop_debugger: true, // Remove debugger statements
           },
         },
+        // PWA optimizations
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // Separar vendors para melhor cache
+              'react-vendor': ['react', 'react-dom'],
+              'charts': ['recharts'],
+              'supabase': ['@supabase/supabase-js'],
+              'gemini': ['@google/genai'],
+            },
+          },
+        },
+      },
+      // PWA Configuration
+      pwa: {
+        registerType: 'autoUpdate',
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 ano
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'gstatic-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 ano
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/cdn\.tailwindcss\.com\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'tailwind-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 1 semana
+                },
+              },
+            },
+          ],
+        },
       },
     };
 });
