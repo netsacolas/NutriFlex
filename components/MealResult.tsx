@@ -8,6 +8,7 @@ interface MealResultProps {
   result: MealResult;
   mealType: MealType;
   onSaveSuccess?: () => void;
+  onClose: () => void;
 }
 
 const MacroChart: React.FC<{ data: MealResult['totalMacros'], totalCalories: number }> = ({ data, totalCalories }) => {
@@ -86,7 +87,7 @@ const MacroChart: React.FC<{ data: MealResult['totalMacros'], totalCalories: num
   );
 };
 
-export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType, onSaveSuccess }) => {
+export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType, onSaveSuccess, onClose }) => {
     const [editedResult, setEditedResult] = useState<MealResult>(result);
     const [inputValues, setInputValues] = useState<Map<string, string>>(new Map());
     const [showSaveModal, setShowSaveModal] = useState(false);
@@ -227,26 +228,46 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType,
     };
     
   return (
-    <div className="bg-card-bg rounded-xl p-6 md:p-8 w-full max-w-4xl mx-auto border border-border-color shadow-lg mt-8 animate-slide-up">
-        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-text-bright">
-                ✨ Suas Porções Calculadas
-            </h2>
-            <button
-                onClick={() => setShowSaveModal(true)}
-                className="bg-success text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
-            >
-                💾 Salvar como Consumo
-            </button>
-        </div>
+    <>
+        {/* Backdrop */}
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            {/* Modal Container */}
+            <div className="bg-card-bg rounded-xl w-full max-w-6xl my-8 border border-border-color shadow-2xl animate-slide-up">
+                {/* Header com X */}
+                <div className="sticky top-0 bg-gradient-to-r from-accent-orange to-accent-coral p-6 rounded-t-xl flex justify-between items-center z-10">
+                    <h2 className="text-2xl md:text-3xl font-bold text-white">
+                        ✨ Suas Porções Calculadas
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="text-white hover:bg-white/20 rounded-lg p-2 transition-all"
+                        aria-label="Fechar modal"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
 
-        {saveSuccess && (
-            <div className="bg-success/10 border border-success text-success px-4 py-3 rounded-lg mb-4 animate-fade-in">
-                ✅ Refeição salva no histórico com sucesso!
-            </div>
-        )}
+                {/* Content */}
+                <div className="p-6 md:p-8 max-h-[calc(100vh-200px)] overflow-y-auto">
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    {saveSuccess && (
+                        <div className="bg-success/10 border border-success text-success px-4 py-3 rounded-lg mb-4 animate-fade-in">
+                            ✅ Refeição salva no histórico com sucesso!
+                        </div>
+                    )}
+
+                    <div className="flex justify-end mb-6">
+                        <button
+                            onClick={() => setShowSaveModal(true)}
+                            className="bg-success text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                        >
+                            💾 Salvar como Consumo
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div className="lg:col-span-3 space-y-4">
                 <h3 className="text-xl font-semibold text-text-primary mb-2">Ajuste suas Porções:</h3>
                 {editedResult.portions.map(item => (
@@ -326,22 +347,25 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType,
             </div>
         </div>
 
-         {editedResult.suggestions && editedResult.suggestions.length > 0 && (
-            <div className="mt-8">
-                <h3 className="flex items-center gap-2 text-xl font-semibold text-text-primary mb-3">
-                   <LightbulbIcon className="w-6 h-6 text-accent-peach" />
-                   Sugestões
-                </h3>
-                <div className="bg-secondary-bg p-4 rounded-lg border border-border-color space-y-2">
-                    {editedResult.suggestions.map((tip, index) => (
-                        <div key={index} className="flex items-start gap-2 text-text-secondary">
-                           <CheckCircleIcon className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-                           <span>{tip}</span>
+                    {editedResult.suggestions && editedResult.suggestions.length > 0 && (
+                        <div className="mt-8">
+                            <h3 className="flex items-center gap-2 text-xl font-semibold text-text-primary mb-3">
+                               <LightbulbIcon className="w-6 h-6 text-accent-peach" />
+                               Sugestões
+                            </h3>
+                            <div className="bg-secondary-bg p-4 rounded-lg border border-border-color space-y-2">
+                                {editedResult.suggestions.map((tip, index) => (
+                                    <div key={index} className="flex items-start gap-2 text-text-secondary">
+                                       <CheckCircleIcon className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                                       <span>{tip}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
-        )}
+        </div>
 
         {/* Modal de Salvamento */}
         {showSaveModal && (
@@ -360,6 +384,6 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType,
                 }}
             />
         )}
-    </div>
+    </>
   );
 };

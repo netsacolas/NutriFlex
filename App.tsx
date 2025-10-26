@@ -117,14 +117,6 @@ const App: React.FC = () => {
                         <p className="text-sm">{error}</p>
                     </div>
                 )}
-
-                {mealResult && !isLoading && (
-                    <MealResultDisplay
-                        result={mealResult}
-                        mealType={currentMealType}
-                        onSaveSuccess={() => setMealResult(null)}
-                    />
-                )}
             </main>
 
              <footer className="text-center mt-12 text-text-muted text-sm">
@@ -136,6 +128,16 @@ const App: React.FC = () => {
             {activeModal === 'health' && <HealthModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'costs' && <CostAnalysisModal isOpen={true} onClose={() => setActiveModal(null)} />}
             {activeModal === 'history' && <HistoryModal onClose={() => setActiveModal(null)} />}
+
+            {/* Modal de Resultado de Refeição */}
+            {mealResult && !isLoading && (
+                <MealResultDisplay
+                    result={mealResult}
+                    mealType={currentMealType}
+                    onSaveSuccess={() => setMealResult(null)}
+                    onClose={() => setMealResult(null)}
+                />
+            )}
         </div>
     );
 };
