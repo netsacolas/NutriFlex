@@ -277,11 +277,16 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType,
                                 <p className="text-lg font-bold text-text-bright">{item.foodName}</p>
                                 <div className="flex items-center gap-2">
                                     <input
-                                        type="number"
-                                        min="0"
-                                        step="1"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={inputValues.get(item.foodName) || ''}
-                                        onChange={(e) => handleGramsChange(item.foodName, e.target.value)}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            // Permitir vazio ou apenas números
+                                            if (value === '' || /^\d+$/.test(value)) {
+                                                handleGramsChange(item.foodName, value);
+                                            }
+                                        }}
                                         onBlur={(e) => {
                                             // Se vazio ao perder foco, restaurar valor atual da porção
                                             if (e.target.value === '' || e.target.value === null) {

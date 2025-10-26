@@ -26,6 +26,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
     const { user } = useAuth();
     const [mealType, setMealType] = useState<MealType>('lunch');
     const [targetCalories, setTargetCalories] = useState(600);
+    const [calorieInputValue, setCalorieInputValue] = useState('600');
     const [currentFood, setCurrentFood] = useState('');
     const [selectedFoods, setSelectedFoods] = useState<string[]>(['Arroz branco', 'Feijão preto']);
     const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -105,6 +106,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
             const newCalories = calorieMap[mealType];
             logger.debug(`Updating calories for ${mealType}: ${newCalories}`);
             setTargetCalories(newCalories);
+            setCalorieInputValue(newCalories.toString());
         } else {
             logger.debug('Profile not loaded yet, using default values');
         }
@@ -291,10 +293,27 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                         Meta de Calorias (kcal)
                     </label>
                     <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         id="calories"
-                        value={targetCalories}
-                        onChange={(e) => setTargetCalories(parseInt(e.target.value, 10) || 0)}
+                        value={calorieInputValue}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            // Permitir campo vazio ou apenas dígitos
+                            if (value === '' || /^\d+$/.test(value)) {
+                                setCalorieInputValue(value);
+                                const numValue = parseInt(value, 10);
+                                if (!isNaN(numValue) && numValue > 0) {
+                                    setTargetCalories(numValue);
+                                }
+                            }
+                        }}
+                        onBlur={() => {
+                            // Se o campo estiver vazio ou inválido ao perder foco, restaurar valor
+                            if (calorieInputValue === '' || parseInt(calorieInputValue, 10) <= 0) {
+                                setCalorieInputValue(targetCalories.toString());
+                            }
+                        }}
                         className="w-full bg-secondary-bg text-text-bright text-xl p-3 rounded-lg border border-border-color focus:ring-2 focus:ring-green-500 focus:outline-none transition-shadow"
                         placeholder="Ex: 600"
                     />

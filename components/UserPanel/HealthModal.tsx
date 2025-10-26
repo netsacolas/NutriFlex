@@ -379,17 +379,62 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs text-text-secondary mb-1">Peso (kg)</label>
-                        <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="70" step="0.1" />
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={weight}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              setWeight(val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') setWeight('');
+                          }}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color"
+                          placeholder="70"
+                        />
                       </div>
                       <div>
                         <label className="block text-xs text-text-secondary mb-1">Altura (cm)</label>
-                        <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="170" />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={height}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d+$/.test(val)) {
+                              setHeight(val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') setHeight('');
+                          }}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color"
+                          placeholder="170"
+                        />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs text-text-secondary mb-1">Idade</label>
-                        <input type="number" value={age} onChange={(e) => setAge(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="30" />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={age}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d+$/.test(val)) {
+                              setAge(val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') setAge('');
+                          }}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color"
+                          placeholder="30"
+                        />
                       </div>
                       <div>
                         <label className="block text-xs text-text-secondary mb-1">Sexo</label>
