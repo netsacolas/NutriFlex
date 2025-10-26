@@ -140,14 +140,14 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 pt-12 pb-20 rounded-b-3xl shadow-xl">
+      <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 pt-12 pb-6 shadow-lg">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-white text-2xl font-bold">
+              <h1 className="text-white text-2xl font-bold mb-2">
                 {getGreeting()}, {profile?.full_name || 'Usuário'}!
               </h1>
-              <p className="text-white/80 text-sm mt-1">
+              <p className="text-white/80">
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
             </div>
@@ -163,54 +163,53 @@ const HomePage: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* Main Stats Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 -mb-10 relative">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-gray-900 font-semibold">Resumo de Hoje</h2>
-              <FireIcon className="w-6 h-6 text-orange-500" />
-            </div>
-
-            {/* Calorie Progress */}
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Calorias Consumidas</span>
-                <span className="font-semibold text-gray-900">
-                  {calorieProgress.consumed} / {calorieProgress.goal} kcal
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full transition-all duration-500"
-                  style={{ width: `${calorieProgress.percentage}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {calorieProgress.percentage.toFixed(0)}% da meta diária
-              </p>
-            </div>
-
-            {/* Macros Grid */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-600">Proteína</p>
-                <p className="text-lg font-bold text-blue-600">{todaysSummary.totalProtein.toFixed(0)}g</p>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-600">Carboidratos</p>
-                <p className="text-lg font-bold text-orange-600">{todaysSummary.totalCarbs.toFixed(0)}g</p>
-              </div>
-              <div className="bg-yellow-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-600">Gorduras</p>
-                <p className="text-lg font-bold text-yellow-600">{todaysSummary.totalFat.toFixed(0)}g</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 mt-16">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Main Stats Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-gray-900 font-semibold">Resumo de Hoje</h2>
+            <FireIcon className="w-6 h-6 text-orange-500" />
+          </div>
+
+          {/* Calorie Progress */}
+          <div className="mb-6">
+            <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <span>Calorias Consumidas</span>
+              <span className="font-semibold text-gray-900">
+                {calorieProgress.consumed} / {calorieProgress.goal} kcal
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full transition-all duration-500"
+                style={{ width: `${calorieProgress.percentage}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {calorieProgress.percentage.toFixed(0)}% da meta diária
+            </p>
+          </div>
+
+          {/* Macros Grid */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <p className="text-xs text-gray-600">Proteína</p>
+              <p className="text-lg font-bold text-blue-600">{todaysSummary.totalProtein.toFixed(0)}g</p>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-3 text-center">
+              <p className="text-xs text-gray-600">Carboidratos</p>
+              <p className="text-lg font-bold text-orange-600">{todaysSummary.totalCarbs.toFixed(0)}g</p>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-3 text-center">
+              <p className="text-xs text-gray-600">Gorduras</p>
+              <p className="text-lg font-bold text-yellow-600">{todaysSummary.totalFat.toFixed(0)}g</p>
+            </div>
+          </div>
+        </div>
         {/* Quick Actions */}
         <div className="mb-8">
           <Link
