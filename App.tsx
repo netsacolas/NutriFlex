@@ -60,22 +60,9 @@ const App: React.FC = () => {
         <div className="min-h-screen bg-primary-bg text-text-primary font-sans p-4 md:p-8">
             <main className="max-w-7xl mx-auto">
                 <header className="text-center mb-8 md:mb-12">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex-1"></div>
-                        <div className="flex-1 text-center">
-                            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent-orange to-accent-coral text-transparent bg-clip-text pb-2">
-                                NutriFlex AI
-                            </h1>
-                        </div>
-                        <div className="flex-1 flex justify-end">
-                            <button
-                                onClick={signOut}
-                                className="bg-secondary-bg text-text-secondary hover:text-error hover:border-error px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-border-color"
-                            >
-                                Sair
-                            </button>
-                        </div>
-                    </div>
+                    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent-orange to-accent-coral text-transparent bg-clip-text pb-2 mb-6">
+                        NutriFlex AI
+                    </h1>
                     <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8">
                         A dieta que se adapta a você. Escolha os alimentos, defina sua meta de calorias e a IA calcula as porções perfeitas.
                     </p>
@@ -113,6 +100,14 @@ const App: React.FC = () => {
                             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                             <span className="text-2xl">💰</span>
                             <span className="relative z-10">Custos</span>
+                        </button>
+                        <button
+                            onClick={signOut}
+                            className="group relative bg-gradient-to-br from-red-600 via-rose-600 to-pink-700 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                            <span className="text-2xl">🚪</span>
+                            <span className="relative z-10">Sair</span>
                         </button>
                     </div>
                 </header>
