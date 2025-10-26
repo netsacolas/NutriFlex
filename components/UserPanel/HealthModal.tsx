@@ -421,14 +421,44 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                           <SunriseIcon className="w-3 h-3 text-green-500" />
                           Café
                         </label>
-                        <input type="number" value={breakfastCal} onChange={(e) => setBreakfastCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="400" />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={breakfastCal}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d+$/.test(val)) {
+                              setBreakfastCal(val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') setBreakfastCal('0');
+                          }}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color"
+                          placeholder="400"
+                        />
                       </div>
                       <div>
                         <label className="block text-xs text-text-secondary mb-1 flex items-center gap-1">
                           <PlateIcon className="w-3 h-3 text-green-500" />
                           Almoço
                         </label>
-                        <input type="number" value={lunchCal} onChange={(e) => setLunchCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="600" />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={lunchCal}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d+$/.test(val)) {
+                              setLunchCal(val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') setLunchCal('0');
+                          }}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color"
+                          placeholder="600"
+                        />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -437,14 +467,44 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                           <MoonIcon className="w-3 h-3 text-green-500" />
                           Jantar
                         </label>
-                        <input type="number" value={dinnerCal} onChange={(e) => setDinnerCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="600" />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={dinnerCal}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d+$/.test(val)) {
+                              setDinnerCal(val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') setDinnerCal('0');
+                          }}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color"
+                          placeholder="600"
+                        />
                       </div>
                       <div>
                         <label className="block text-xs text-text-secondary mb-1 flex items-center gap-1">
                           <CookieIcon className="w-3 h-3 text-green-500" />
                           Lanche
                         </label>
-                        <input type="number" value={snackCal} onChange={(e) => setSnackCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-green-500 focus:outline-none" placeholder="200" />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={snackCal}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d+$/.test(val)) {
+                              setSnackCal(val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') setSnackCal('0');
+                          }}
+                          className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-green-500 focus:outline-none"
+                          placeholder="200"
+                        />
                       </div>
                     </div>
                     <div>
