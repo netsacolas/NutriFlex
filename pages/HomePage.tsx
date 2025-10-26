@@ -169,7 +169,7 @@ const HomePage: React.FC = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Main Stats Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-gray-900 font-semibold">Resumo de Hoje</h2>
             <FireIcon className="w-6 h-6 text-orange-500" />
@@ -229,7 +229,7 @@ const HomePage: React.FC = () => {
 
         {/* Today's Stats */}
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Refeições</p>
@@ -241,7 +241,7 @@ const HomePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Atividades</p>
@@ -267,7 +267,7 @@ const HomePage: React.FC = () => {
           {recentMeals.length > 0 ? (
             <div className="space-y-3">
               {recentMeals.map((meal) => (
-                <div key={meal.id} className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow">
+                <div key={meal.id} className="bg-white rounded-xl shadow-xl border border-gray-100 p-4 hover:shadow-2xl transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">
@@ -306,7 +306,7 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Daily Tip */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-xl">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-2xl">
           <div className="flex items-start">
             <SparklesIcon className="w-8 h-8 mr-3 flex-shrink-0" />
             <div>

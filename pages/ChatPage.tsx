@@ -552,8 +552,8 @@ INSTRUÇÕES PARA RESPOSTA:
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                    : 'bg-white shadow-md text-gray-800'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-xl'
+                    : 'bg-white shadow-xl border border-gray-100 text-gray-800'
                 }`}
               >
                 {message.role === 'assistant' && (
@@ -577,7 +577,7 @@ INSTRUÇÕES PARA RESPOSTA:
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="bg-white shadow-md rounded-2xl px-4 py-3">
+              <div className="bg-white shadow-xl border border-gray-100 rounded-2xl px-4 py-3">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>

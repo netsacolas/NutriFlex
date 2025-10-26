@@ -157,7 +157,7 @@ const ProfilePage: React.FC = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Avatar Card */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -219,7 +219,7 @@ const ProfilePage: React.FC = () => {
         )}
 
         {/* Personal Information */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Informações Pessoais</h2>
             {!isEditing ? (
@@ -315,7 +315,7 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {/* Security */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Segurança</h2>
 
           {!changingPassword ? (
@@ -390,7 +390,7 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {/* Account Actions */}
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Ações da Conta</h2>
 
           <div className="space-y-3">
