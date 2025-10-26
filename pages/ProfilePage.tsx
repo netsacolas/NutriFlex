@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 import {
   UserIcon,
-  ChatBubbleBottomCenterTextIcon,
-  ArrowRightIcon,
   CheckCircleIcon,
   ExclamationCircleIcon
 } from '../components/Layout/Icons';
@@ -390,23 +388,6 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* AI Assistant */}
-        <Link
-          to="/chat"
-          className="block bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-md p-6 mb-6 hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
-        >
-          <div className="flex items-center justify-between text-white">
-            <div className="flex items-center">
-              <ChatBubbleBottomCenterTextIcon className="w-8 h-8 mr-3" />
-              <div>
-                <h3 className="text-lg font-semibold">Assistente Nutricional</h3>
-                <p className="text-white/80 text-sm">Tire suas dúvidas com nossa IA</p>
-              </div>
-            </div>
-            <ArrowRightIcon className="w-6 h-6" />
-          </div>
-        </Link>
 
         {/* Account Actions */}
         <div className="bg-white rounded-xl shadow-md p-6">
