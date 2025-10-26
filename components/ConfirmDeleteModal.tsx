@@ -1,4 +1,5 @@
 import React from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface ConfirmDeleteModalProps {
   isOpen: boolean;
@@ -19,6 +20,9 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   itemName,
   isDeleting = false,
 }) => {
+  // Bloquear scroll quando modal estiver aberto
+  useScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   return (

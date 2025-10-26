@@ -5,6 +5,7 @@ import { weightHistoryService } from '../../services/weightHistoryService';
 import { getBMIInfo } from '../../utils/bmiUtils';
 import { NutritionChat } from './NutritionChat';
 import { searchActivities, calculateCaloriesBurned, getActivityMET } from '../../data/activitiesDatabase';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import logger from '../../utils/logger';
 import type { UserProfile, ActivityIntensity } from '../../types';
 import {
@@ -24,6 +25,9 @@ import {
 } from '../icons';
 
 export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  // Bloquear scroll quando modal estiver aberto
+  useScrollLock(true);
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

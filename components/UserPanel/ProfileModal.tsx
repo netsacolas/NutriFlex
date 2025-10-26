@@ -3,11 +3,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { profileService } from '../../services/profileService';
 import { avatarService } from '../../services/avatarService';
 import { authService } from '../../services/authService';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import type { UserProfile } from '../../types';
 
 type Tab = 'overview' | 'security';
 
 export const ProfileModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  // Bloquear scroll quando modal estiver aberto
+  useScrollLock(true);
+
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('overview');

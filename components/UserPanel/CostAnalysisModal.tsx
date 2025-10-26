@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import {
   getUserCostAnalysis,
   getRequestHistory,
@@ -34,6 +35,9 @@ interface CostAnalysisModalProps {
 type TabType = 'summary' | 'history';
 
 const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }) => {
+  // Bloquear scroll quando modal estiver aberto
+  useScrollLock(isOpen);
+
   const [activeTab, setActiveTab] = useState<TabType>('summary');
   const [analysis, setAnalysis] = useState<CostAnalysis | null>(null);
   const [history, setHistory] = useState<RequestRecord[]>([]);

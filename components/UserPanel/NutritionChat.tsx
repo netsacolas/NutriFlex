@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { nutritionChatService, ChatMessage, UserContext } from '../../services/nutritionChatService';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import logger from '../../utils/logger';
 
 interface Props {
@@ -8,6 +9,9 @@ interface Props {
 }
 
 export const NutritionChat: React.FC<Props> = ({ context, onClose }) => {
+  // Bloquear scroll quando modal estiver aberto
+  useScrollLock(true);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',

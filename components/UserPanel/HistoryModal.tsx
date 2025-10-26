@@ -3,10 +3,14 @@ import { MealHistory } from './MealHistory';
 import { WeightHistory } from './WeightHistory';
 import { PhysicalActivityHistory } from './PhysicalActivityHistory';
 import { NutritionChat } from './NutritionChat';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 type HistoryTab = 'meals' | 'weight' | 'activities';
 
 export const HistoryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  // Bloquear scroll quando modal estiver aberto
+  useScrollLock(true);
+
   const [activeTab, setActiveTab] = useState<HistoryTab>('meals');
   const [showChat, setShowChat] = useState(false);
 

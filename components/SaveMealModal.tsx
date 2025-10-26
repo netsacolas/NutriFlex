@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { mealConsumptionService } from '../services/mealConsumptionService';
+import { useScrollLock } from '../hooks/useScrollLock';
 import type { MealResult, MealType } from '../types';
 
 interface Props {
@@ -10,6 +11,9 @@ interface Props {
 }
 
 export const SaveMealModal: React.FC<Props> = ({ mealResult, mealType, onClose, onSuccess }) => {
+  // Bloquear scroll quando modal estiver aberto
+  useScrollLock(true);
+
   const now = new Date();
   const [date, setDate] = useState(now.toISOString().split('T')[0]);
   const [time, setTime] = useState(now.toTimeString().slice(0, 5));
