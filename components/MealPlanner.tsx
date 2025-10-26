@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import type { MealType, UserProfile } from '../types';
 import {
     PizzaIcon,
@@ -22,20 +23,29 @@ interface MealPlannerProps {
 }
 
 export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading }) => {
+    const { user } = useAuth();
     const [mealType, setMealType] = useState<MealType>('lunch');
     const [targetCalories, setTargetCalories] = useState(600);
     const [currentFood, setCurrentFood] = useState('');
-    const [selectedFoods, setSelectedFoods] = useState<string[]>(['Arroz branco', 'Feijão preto', 'Frango grelhado', 'Brócolis']);
+    const [selectedFoods, setSelectedFoods] = useState<string[]>(['Arroz branco', 'Feijão preto']);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [favoriteNotification, setFavoriteNotification] = useState<string | null>(null);
+
+    // Usar chave única por usuário para favoritos
+    const getFavoritesKey = () => {
+        return user?.id ? `favoriteFoods_${user.id}` : 'favoriteFoods_anonymous';
+    };
 
     const [favoriteFoods, setFavoriteFoods] = useState<string[]>(() => {
         try {
-            const savedFavorites = localStorage.getItem('favoriteFoods');
+            const key = getFavoritesKey();
+            const savedFavorites = localStorage.getItem(key);
+            logger.debug(`Loading favorites from key: ${key}`, savedFavorites);
             return savedFavorites ? JSON.parse(savedFavorites) : [];
         } catch (error) {
             logger.error("Failed to parse favorite foods from localStorage", error);
@@ -43,9 +53,30 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
         }
     });
 
+    // Salvar favoritos quando mudarem
     useEffect(() => {
-        localStorage.setItem('favoriteFoods', JSON.stringify(favoriteFoods));
-    }, [favoriteFoods]);
+        try {
+            const key = getFavoritesKey();
+            localStorage.setItem(key, JSON.stringify(favoriteFoods));
+            logger.debug(`Saved favorites to key: ${key}`, favoriteFoods);
+        } catch (error) {
+            logger.error("Failed to save favorite foods to localStorage", error);
+        }
+    }, [favoriteFoods, user?.id]);
+
+    // Recarregar favoritos quando o usuário mudar
+    useEffect(() => {
+        try {
+            const key = getFavoritesKey();
+            const savedFavorites = localStorage.getItem(key);
+            if (savedFavorites) {
+                setFavoriteFoods(JSON.parse(savedFavorites));
+                logger.debug(`Reloaded favorites for user change: ${key}`);
+            }
+        } catch (error) {
+            logger.error("Failed to reload favorites on user change", error);
+        }
+    }, [user?.id]);
 
     // Carregar perfil do usuário ao montar o componente
     useEffect(() => {
@@ -153,11 +184,18 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
     };
 
     const toggleFavorite = (foodToToggle: string) => {
-        setFavoriteFoods(prevFavorites =>
-            prevFavorites.includes(foodToToggle)
+        setFavoriteFoods(prevFavorites => {
+            const isRemoving = prevFavorites.includes(foodToToggle);
+            const newFavorites = isRemoving
                 ? prevFavorites.filter(f => f !== foodToToggle)
-                : [...prevFavorites, foodToToggle]
-        );
+                : [...prevFavorites, foodToToggle];
+
+            // Log para depuração
+            logger.debug(`${isRemoving ? 'Removed from' : 'Added to'} favorites: ${foodToToggle}`);
+            logger.debug('Current favorites:', newFavorites);
+
+            return newFavorites;
+        });
     };
 
     const addFavoriteToMeal = (foodToAdd: string) => {
@@ -323,7 +361,11 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                         {selectedFoods.map((food) => (
                             <div key={food} className="flex items-center gap-2 bg-secondary-bg text-text-primary px-3 py-1.5 rounded-full animate-fade-in">
                                 <span>{food}</span>
-                                <button onClick={() => toggleFavorite(food)} className="text-text-muted hover:text-green-400 transition-colors" title="Adicionar aos favoritos">
+                                <button
+                                    onClick={() => toggleFavorite(food)}
+                                    className={`transition-all duration-200 ${favoriteFoods.includes(food) ? 'text-yellow-400 transform scale-110' : 'text-text-muted hover:text-yellow-400'}`}
+                                    title={favoriteFoods.includes(food) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                >
                                     <StarIcon filled={favoriteFoods.includes(food)} className="w-4 h-4" />
                                 </button>
                                 <button onClick={() => removeFood(food)} className="text-text-muted hover:text-error transition-colors" title="Remover alimento">
