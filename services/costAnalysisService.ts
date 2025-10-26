@@ -415,6 +415,7 @@ export async function isAdmin(): Promise<boolean> {
 
 /**
  * Busca todos os usuários do sistema (apenas para admin)
+ * Busca direto de gemini_requests para garantir que todos os usuários com requests apareçam
  */
 export async function getAllUsers(): Promise<UserInfo[]> {
   try {
@@ -423,34 +424,52 @@ export async function getAllUsers(): Promise<UserInfo[]> {
       throw new Error('Unauthorized: Admin access required');
     }
 
-    const { data, error } = await supabase
+    // Buscar todos os user_ids únicos que fizeram requisições
+    const { data: requestUsers, error: requestError } = await supabase
+      .from('gemini_requests')
+      .select('user_id')
+      .order('user_id');
+
+    if (requestError) throw requestError;
+
+    // Obter IDs únicos
+    const uniqueUserIds = [...new Set(requestUsers?.map(r => r.user_id) || [])];
+
+    // Buscar dados de profiles para esses usuários
+    const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name')
-      .order('full_name', { ascending: true });
+      .in('id', uniqueUserIds);
 
-    if (error) throw error;
-
-    // Buscar emails da tabela auth.users via RPC ou juntar com dados que temos
-    // Por enquanto vamos buscar dados do auth
-    const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
-
-    if (authError) {
-      // Se não tiver permissão admin, usar apenas profiles
-      return data?.map(profile => ({
-        id: profile.id,
-        email: profile.id, // Fallback
-        full_name: profile.full_name,
-      })) || [];
+    if (profileError) {
+      console.warn('Error fetching profiles:', profileError);
     }
 
-    // Combinar dados de profiles com emails
-    const userMap = new Map(users.map(u => [u.id, u.email || '']));
+    // Criar map de profiles
+    const profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
 
-    return data?.map(profile => ({
-      id: profile.id,
-      email: userMap.get(profile.id) || profile.id,
-      full_name: profile.full_name,
-    })) || [];
+    // Tentar buscar emails via auth (pode falhar sem permissão admin)
+    let emailMap = new Map<string, string>();
+    try {
+      const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
+      if (!authError && users) {
+        emailMap = new Map(users.map(u => [u.id, u.email || '']));
+      }
+    } catch (authErr) {
+      console.warn('Could not fetch auth users:', authErr);
+    }
+
+    // Combinar todos os dados
+    const userList: UserInfo[] = uniqueUserIds.map(userId => ({
+      id: userId,
+      email: emailMap.get(userId) || userId,
+      full_name: profileMap.get(userId) || null,
+    }));
+
+    // Ordenar por email
+    userList.sort((a, b) => a.email.localeCompare(b.email));
+
+    return userList;
   } catch (error) {
     console.error('Error getting all users:', error);
     return [];
@@ -458,11 +477,29 @@ export async function getAllUsers(): Promise<UserInfo[]> {
 }
 
 /**
+ * Busca ID do usuário por email
+ */
+async function getUserIdByEmail(email: string): Promise<string | null> {
+  try {
+    const { data: { users }, error } = await supabase.auth.admin.listUsers();
+    if (error || !users) return null;
+
+    const user = users.find(u => u.email === email);
+    return user?.id || null;
+  } catch (error) {
+    console.error('Error getting user ID by email:', error);
+    return null;
+  }
+}
+
+/**
  * Busca análise de custos de todos os usuários (apenas para admin)
+ * @param periodDays - Período em dias
+ * @param userEmailOrId - Email ou ID do usuário (aceita ambos)
  */
 export async function getAllUsersCostAnalysis(
   periodDays: number = 30,
-  userId?: string
+  userEmailOrId?: string
 ): Promise<CostAnalysis | null> {
   try {
     const admin = await isAdmin();
@@ -475,6 +512,21 @@ export async function getAllUsersCostAnalysis(
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - periodDays);
 
+    // Determinar se é email ou ID
+    let userId: string | null = null;
+    if (userEmailOrId && userEmailOrId !== 'all') {
+      // Se contém @, é email - buscar o ID
+      if (userEmailOrId.includes('@')) {
+        userId = await getUserIdByEmail(userEmailOrId);
+        if (!userId) {
+          console.warn('User not found for email:', userEmailOrId);
+          return null;
+        }
+      } else {
+        userId = userEmailOrId;
+      }
+    }
+
     // Construir query base
     let query = supabase
       .from('gemini_requests')
@@ -483,7 +535,7 @@ export async function getAllUsersCostAnalysis(
       .lte('created_at', endDate.toISOString());
 
     // Se userId fornecido, filtrar por usuário específico
-    if (userId && userId !== 'all') {
+    if (userId) {
       query = query.eq('user_id', userId);
     }
 
@@ -579,14 +631,29 @@ export async function getAdminRequestHistory(
       throw new Error('Unauthorized: Admin access required');
     }
 
+    // Determinar userId a partir de email se necessário
+    let userId: string | null = null;
+    if (filters.userId && filters.userId !== 'all') {
+      // Se contém @, é email - buscar o ID
+      if (filters.userId.includes('@')) {
+        userId = await getUserIdByEmail(filters.userId);
+        if (!userId) {
+          console.warn('User not found for email:', filters.userId);
+          return { records: [], total: 0 };
+        }
+      } else {
+        userId = filters.userId;
+      }
+    }
+
     // Construir query base
     let query = supabase
       .from('gemini_requests')
       .select('id, user_id, request_type, created_at', { count: 'exact' });
 
-    // Se userId fornecido e não for 'all', filtrar por usuário
-    if (filters.userId && filters.userId !== 'all') {
-      query = query.eq('user_id', filters.userId);
+    // Se userId fornecido, filtrar por usuário
+    if (userId) {
+      query = query.eq('user_id', userId);
     }
 
     // Aplicar filtro de tipo

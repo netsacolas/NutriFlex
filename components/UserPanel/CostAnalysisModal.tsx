@@ -246,8 +246,8 @@ const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }
                 >
                   <option value="all">📊 Todos os Usuários</option>
                   {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.full_name || user.email}
+                    <option key={user.id} value={user.email}>
+                      {user.email} {user.full_name ? `(${user.full_name})` : ''}
                     </option>
                   ))}
                 </select>
@@ -271,15 +271,15 @@ const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }
                       <button
                         key={user.id}
                         onClick={() => {
-                          setSelectedUserId(user.id);
+                          setSelectedUserId(user.email);
                           setUserSearchTerm('');
                         }}
                         className="w-full text-left px-4 py-2 hover:bg-hover-bg transition-colors border-b border-border-color last:border-b-0"
                       >
                         <div className="font-medium text-text-primary">
-                          {user.full_name || 'Sem nome'}
+                          {user.email}
                         </div>
-                        <div className="text-xs text-text-muted">{user.email}</div>
+                        <div className="text-xs text-text-muted">{user.full_name || 'Sem nome'}</div>
                       </button>
                     ))}
                 </div>
