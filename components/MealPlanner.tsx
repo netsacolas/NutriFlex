@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { MealType, UserProfile } from '../types';
-import { PizzaIcon, TargetIcon, XIcon, ZapIcon, LoaderIcon, StarIcon } from './icons';
+import {
+    PizzaIcon,
+    TargetIcon,
+    XIcon,
+    ZapIcon,
+    LoaderIcon,
+    StarIcon,
+    SunriseIcon,
+    PlateIcon,
+    MoonIcon,
+    CookieIcon
+} from './icons';
 import { searchFoods } from '../data/foodDatabase';
 import { profileService } from '../services/profileService';
 import logger from '../utils/logger';
@@ -162,10 +173,26 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
     };
 
     const mealTypeConfig = {
-        breakfast: { icon: '☀️', label: 'Café da Manhã', color: 'from-yellow-500 to-orange-400' },
-        lunch: { icon: '🍽️', label: 'Almoço', color: 'from-orange-500 to-red-400' },
-        dinner: { icon: '🌙', label: 'Jantar', color: 'from-purple-500 to-indigo-500' },
-        snack: { icon: '🍪', label: 'Lanche', color: 'from-green-500 to-teal-400' },
+        breakfast: {
+            icon: SunriseIcon,
+            label: 'Café da Manhã',
+            color: 'from-green-500 to-emerald-400'
+        },
+        lunch: {
+            icon: PlateIcon,
+            label: 'Almoço',
+            color: 'from-emerald-500 to-green-400'
+        },
+        dinner: {
+            icon: MoonIcon,
+            label: 'Jantar',
+            color: 'from-teal-500 to-green-500'
+        },
+        snack: {
+            icon: CookieIcon,
+            label: 'Lanche',
+            color: 'from-lime-500 to-green-400'
+        },
     };
 
     return (
@@ -187,8 +214,8 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                                 onClick={() => setMealType(type)}
                                 className={`relative overflow-hidden p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
                                     isActive
-                                        ? 'border-accent-orange shadow-lg shadow-accent-orange/30'
-                                        : 'border-border-color hover:border-accent-orange/50'
+                                        ? 'border-green-500 shadow-lg shadow-green-500/30'
+                                        : 'border-border-color hover:border-green-500/50'
                                 }`}
                             >
                                 {/* Background gradient when active */}
@@ -197,9 +224,11 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                                 )}
 
                                 <div className="relative z-10 flex flex-col items-center gap-2">
-                                    <span className="text-3xl">{config.icon}</span>
+                                    <config.icon className={`w-8 h-8 ${
+                                        isActive ? 'text-green-500' : 'text-text-secondary'
+                                    }`} />
                                     <span className={`text-sm font-semibold ${
-                                        isActive ? 'text-accent-orange' : 'text-text-secondary'
+                                        isActive ? 'text-green-500' : 'text-text-secondary'
                                     }`}>
                                         {config.label}
                                     </span>
@@ -208,7 +237,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                                 {/* Active indicator */}
                                 {isActive && (
                                     <div className="absolute top-2 right-2">
-                                        <div className="w-3 h-3 bg-accent-orange rounded-full animate-pulse"></div>
+                                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                                     </div>
                                 )}
                             </button>
@@ -220,7 +249,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
             <div className="space-y-6">
                 <div>
                     <label htmlFor="calories" className="flex items-center gap-2 text-lg font-medium text-text-primary mb-2">
-                        <TargetIcon className="w-6 h-6 text-accent-coral" />
+                        <TargetIcon className="w-6 h-6 text-green-500" />
                         Meta de Calorias (kcal)
                     </label>
                     <input
@@ -228,14 +257,14 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                         id="calories"
                         value={targetCalories}
                         onChange={(e) => setTargetCalories(parseInt(e.target.value, 10) || 0)}
-                        className="w-full bg-secondary-bg text-text-bright text-xl p-3 rounded-lg border border-border-color focus:ring-2 focus:ring-accent-orange focus:outline-none transition-shadow"
+                        className="w-full bg-secondary-bg text-text-bright text-xl p-3 rounded-lg border border-border-color focus:ring-2 focus:ring-green-500 focus:outline-none transition-shadow"
                         placeholder="Ex: 600"
                     />
                 </div>
 
                 <div className="relative">
                     <label htmlFor="food-input" className="flex items-center gap-2 text-lg font-medium text-text-primary mb-2">
-                        <PizzaIcon className="w-6 h-6 text-accent-coral" />
+                        <PizzaIcon className="w-6 h-6 text-green-500" />
                         O que você vai comer?
                     </label>
                     <form onSubmit={handleSubmit} className="flex gap-3">
@@ -248,7 +277,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                                 onChange={(e) => setCurrentFood(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 onFocus={() => currentFood.trim() && setShowSuggestions(suggestions.length > 0)}
-                                className="w-full bg-secondary-bg text-text-bright p-3 rounded-lg border border-border-color focus:ring-2 focus:ring-accent-orange focus:outline-none transition-shadow"
+                                className="w-full bg-secondary-bg text-text-bright p-3 rounded-lg border border-border-color focus:ring-2 focus:ring-green-500 focus:outline-none transition-shadow"
                                 placeholder="Digite um alimento (ex: ovo, frango, arroz...)"
                                 autoComplete="off"
                             />
@@ -257,7 +286,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                             {showSuggestions && suggestions.length > 0 && (
                                 <div
                                     ref={suggestionsRef}
-                                    className="absolute z-50 w-full mt-2 bg-secondary-bg border-2 border-accent-orange/50 rounded-lg shadow-2xl shadow-accent-orange/20 max-h-64 overflow-y-auto animate-slide-up"
+                                    className="absolute z-50 w-full mt-2 bg-secondary-bg border-2 border-green-500/50 rounded-lg shadow-2xl shadow-green-500/20 max-h-64 overflow-y-auto animate-slide-up"
                                 >
                                     {suggestions.map((suggestion, index) => (
                                         <div
@@ -265,7 +294,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                                             onClick={() => handleAddFood(suggestion)}
                                             className={`px-4 py-3 cursor-pointer transition-all ${
                                                 index === selectedSuggestionIndex
-                                                    ? 'bg-accent-orange text-white font-semibold'
+                                                    ? 'bg-green-500 text-white font-semibold'
                                                     : 'hover:bg-hover-bg text-text-primary'
                                             } ${index !== suggestions.length - 1 ? 'border-b border-border-color' : ''}`}
                                         >
@@ -278,7 +307,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                                 </div>
                             )}
                         </div>
-                         <button type="submit" className="bg-accent-orange text-text-bright font-bold px-4 py-2 rounded-lg hover:bg-accent-coral transition-colors">
+                         <button type="submit" className="bg-green-500 text-white font-bold px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
                             Adicionar
                         </button>
                     </form>
@@ -294,7 +323,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                         {selectedFoods.map((food) => (
                             <div key={food} className="flex items-center gap-2 bg-secondary-bg text-text-primary px-3 py-1.5 rounded-full animate-fade-in">
                                 <span>{food}</span>
-                                <button onClick={() => toggleFavorite(food)} className="text-text-muted hover:text-yellow-400 transition-colors" title="Adicionar aos favoritos">
+                                <button onClick={() => toggleFavorite(food)} className="text-text-muted hover:text-green-400 transition-colors" title="Adicionar aos favoritos">
                                     <StarIcon filled={favoriteFoods.includes(food)} className="w-4 h-4" />
                                 </button>
                                 <button onClick={() => removeFood(food)} className="text-text-muted hover:text-error transition-colors" title="Remover alimento">
@@ -328,7 +357,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                 <button
                     onClick={handleCalculateClick}
                     disabled={isLoading || selectedFoods.length === 0}
-                    className="w-full flex items-center justify-center gap-3 bg-gradient-primary text-white text-lg font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-accent-orange/30 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                    className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-lg font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
                 >
                     {isLoading ? (
                         <>

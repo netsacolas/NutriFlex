@@ -7,6 +7,21 @@ import { NutritionChat } from './NutritionChat';
 import { searchActivities, calculateCaloriesBurned, getActivityMET } from '../../data/activitiesDatabase';
 import logger from '../../utils/logger';
 import type { UserProfile, ActivityIntensity } from '../../types';
+import {
+    TargetIcon,
+    ActivityIcon,
+    ScaleIcon,
+    BarChartIcon,
+    HeartIcon,
+    SunriseIcon,
+    PlateIcon,
+    MoonIcon,
+    CookieIcon,
+    ChatBubbleIcon,
+    SaveIcon,
+    LightbulbIcon,
+    PlusIcon
+} from '../icons';
 
 export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -291,11 +306,11 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <button onClick={onClose} className="absolute top-4 right-4 text-white text-2xl hover:opacity-80 transition-opacity z-10">&times;</button>
             <div className="flex items-center justify-between pr-8">
               <div className="flex items-center gap-2">
-                <span className="text-3xl">💪</span>
+                <HeartIcon className="w-8 h-8 text-white" />
                 <h2 className="text-xl font-bold text-white">Saúde & Bem-Estar</h2>
               </div>
               <button onClick={() => setShowChat(true)} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2">
-                <span className="text-lg">🤖</span>
+                <ChatBubbleIcon className="w-5 h-5 text-white" />
                 <span>Assistente de IA</span>
               </button>
             </div>
@@ -345,7 +360,7 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <div className="p-4 rounded-lg border-2" style={{ borderColor: currentBMI.color, background: `linear-gradient(135deg, ${currentBMI.color}10, ${currentBMI.color}05)` }}>
                     <div className="flex justify-between mb-2">
                       <h3 className="text-sm font-semibold text-text-bright">IMC</h3>
-                      <span className="text-xl">📊</span>
+                      <BarChartIcon className="w-6 h-6 text-green-500" />
                     </div>
                     <div className="text-center">
                       <div className="text-3xl font-bold" style={{ color: currentBMI.color }}>{currentBMI.value.toFixed(1)}</div>
@@ -387,7 +402,10 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
               <div className="space-y-4">
                 <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-                  <h3 className="text-sm font-semibold text-text-bright mb-3">🎯 Metas de Calorias</h3>
+                  <h3 className="text-sm font-semibold text-text-bright mb-3 flex items-center gap-2">
+                    <TargetIcon className="w-5 h-5 text-green-500" />
+                    Metas de Calorias
+                  </h3>
                   <div className="space-y-3">
                     <div>
                       <label className="block text-xs text-text-secondary mb-1">Refeições/dia</label>
@@ -395,22 +413,34 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-text-secondary mb-1">☀️ Café</label>
+                        <label className="block text-xs text-text-secondary mb-1 flex items-center gap-1">
+                          <SunriseIcon className="w-3 h-3 text-green-500" />
+                          Café
+                        </label>
                         <input type="number" value={breakfastCal} onChange={(e) => setBreakfastCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="400" />
                       </div>
                       <div>
-                        <label className="block text-xs text-text-secondary mb-1">🍽️ Almoço</label>
+                        <label className="block text-xs text-text-secondary mb-1 flex items-center gap-1">
+                          <PlateIcon className="w-3 h-3 text-green-500" />
+                          Almoço
+                        </label>
                         <input type="number" value={lunchCal} onChange={(e) => setLunchCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="600" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-text-secondary mb-1">🌙 Jantar</label>
+                        <label className="block text-xs text-text-secondary mb-1 flex items-center gap-1">
+                          <MoonIcon className="w-3 h-3 text-green-500" />
+                          Jantar
+                        </label>
                         <input type="number" value={dinnerCal} onChange={(e) => setDinnerCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color" placeholder="600" />
                       </div>
                       <div>
-                        <label className="block text-xs text-text-secondary mb-1">🍪 Lanche</label>
-                        <input type="number" value={snackCal} onChange={(e) => setSnackCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-accent-orange focus:outline-none" placeholder="200" />
+                        <label className="block text-xs text-text-secondary mb-1 flex items-center gap-1">
+                          <CookieIcon className="w-3 h-3 text-green-500" />
+                          Lanche
+                        </label>
+                        <input type="number" value={snackCal} onChange={(e) => setSnackCal(e.target.value)} className="w-full bg-hover-bg text-text-bright p-2 rounded text-sm border border-border-color focus:border-green-500 focus:outline-none" placeholder="200" />
                       </div>
                     </div>
                     <div>
@@ -429,12 +459,18 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </div>
                   </div>
                 </div>
-                <button onClick={handleSaveAll} className="w-full bg-green-500 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-green-600 text-sm">💾 Salvar Configurações</button>
+                <button onClick={handleSaveAll} className="w-full bg-green-500 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-green-600 text-sm flex items-center justify-center gap-2">
+                  <SaveIcon className="w-4 h-4" />
+                  Salvar Configurações
+                </button>
               </div>
 
               <div className="space-y-4">
                 <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-                  <h3 className="text-sm font-semibold text-text-bright mb-3">🏃 Registrar Atividade</h3>
+                  <h3 className="text-sm font-semibold text-text-bright mb-3 flex items-center gap-2">
+                    <ActivityIcon className="w-5 h-5 text-green-500" />
+                    Registrar Atividade
+                  </h3>
                   <div className="space-y-3">
                     <div className="relative">
                       <input
@@ -459,11 +495,14 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                               onClick={() => handleActivitySelect(suggestion)}
                               className={`px-3 py-2 cursor-pointer transition-all text-sm ${
                                 index === selectedActivityIndex
-                                  ? 'bg-accent-orange text-white font-semibold'
+                                  ? 'bg-green-500 text-white font-semibold'
                                   : 'hover:bg-secondary-bg text-text-primary'
                               } ${index !== activitySuggestions.length - 1 ? 'border-b border-border-color' : ''}`}
                             >
-                              🏃 {suggestion}
+                              <span className="flex items-center gap-2">
+                                <ActivityIcon className="w-3 h-3 text-green-500" />
+                                {suggestion}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -485,14 +524,27 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       </div>
                     </div>
                     {caloriesBurned && (
-                      <div className="text-xs text-text-muted italic">💡 Calorias calculadas automaticamente</div>
+                      <div className="text-xs text-text-muted italic flex items-center gap-1">
+                        <LightbulbIcon className="w-3 h-3 text-green-500" />
+                        Calorias calculadas automaticamente
+                      </div>
                     )}
-                    <button onClick={handleAddActivity} disabled={addingActivity} className="w-full bg-accent-orange text-white font-semibold px-4 py-2 rounded-lg hover:bg-accent-coral text-sm disabled:opacity-50">{addingActivity ? 'Adicionando...' : '➕ Adicionar'}</button>
+                    <button onClick={handleAddActivity} disabled={addingActivity} className="w-full bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                      {addingActivity ? 'Adicionando...' : (
+                        <>
+                          <PlusIcon className="w-4 h-4" />
+                          Adicionar
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
 
                 <div className="bg-secondary-bg p-4 rounded-lg border border-border-color">
-                  <h3 className="text-sm font-semibold text-text-bright mb-3">⚖️ Registrar Pesagem</h3>
+                  <h3 className="text-sm font-semibold text-text-bright mb-3 flex items-center gap-2">
+                    <ScaleIcon className="w-5 h-5 text-green-500" />
+                    Registrar Pesagem
+                  </h3>
                   <div className="space-y-3">
                     <div>
                       <label className="block text-xs text-text-secondary mb-1">Peso (kg)</label>
@@ -533,7 +585,7 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         </>
                       ) : (
                         <>
-                          <span>⚖️</span>
+                          <ScaleIcon className="w-4 h-4" />
                           Registrar e Analisar
                         </>
                       )}

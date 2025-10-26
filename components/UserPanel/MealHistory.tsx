@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { mealConsumptionService } from '../../services/mealConsumptionService';
 import type { MealConsumption, MealType } from '../../types';
+import {
+    SunriseIcon,
+    PlateIcon,
+    MoonIcon,
+    CookieIcon,
+    BarChartIcon
+} from '../icons';
 
 export const MealHistory: React.FC = () => {
   const [history, setHistory] = useState<MealConsumption[]>([]);
@@ -16,18 +23,18 @@ export const MealHistory: React.FC = () => {
     snack: 'Lanche'
   };
 
-  const mealTypeIcons: Record<MealType, string> = {
-    breakfast: '☀️',
-    lunch: '🍽️',
-    dinner: '🌙',
-    snack: '🍪'
+  const mealTypeIcons: Record<MealType, React.ReactNode> = {
+    breakfast: <SunriseIcon className="w-5 h-5 text-green-500" />,
+    lunch: <PlateIcon className="w-5 h-5 text-green-500" />,
+    dinner: <MoonIcon className="w-5 h-5 text-green-500" />,
+    snack: <CookieIcon className="w-5 h-5 text-green-500" />
   };
 
   const mealTypeColors: Record<MealType, string> = {
-    breakfast: 'bg-yellow-500/20 border-yellow-500',
-    lunch: 'bg-orange-500/20 border-orange-500',
-    dinner: 'bg-purple-500/20 border-purple-500',
-    snack: 'bg-green-500/20 border-green-500'
+    breakfast: 'bg-green-500/20 border-green-500',
+    lunch: 'bg-emerald-500/20 border-emerald-500',
+    dinner: 'bg-teal-500/20 border-teal-500',
+    snack: 'bg-lime-500/20 border-lime-500'
   };
 
   useEffect(() => {
@@ -77,7 +84,7 @@ export const MealHistory: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-orange"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
       </div>
     );
   }
@@ -93,7 +100,7 @@ export const MealHistory: React.FC = () => {
   if (history.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">🍽️</div>
+        <PlateIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-text-primary mb-2">Nenhuma refeição registrada</h3>
         <p className="text-text-secondary">
           Comece a salvar suas refeições para acompanhar seu histórico nutricional!
@@ -106,13 +113,16 @@ export const MealHistory: React.FC = () => {
     <div className="space-y-6">
       {/* Filter Controls */}
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-bold text-text-bright">📊 Histórico de Consumo</h3>
+        <h3 className="text-xl font-bold text-text-bright flex items-center gap-2">
+          <BarChartIcon className="w-6 h-6 text-green-500" />
+          Histórico de Consumo
+        </h3>
         <div className="flex gap-2">
           <button
             onClick={() => setFilterDays(7)}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               filterDays === 7
-                ? 'bg-accent-orange text-white'
+                ? 'bg-green-500 text-white'
                 : 'bg-secondary-bg text-text-primary hover:bg-hover-bg'
             }`}
           >
@@ -122,7 +132,7 @@ export const MealHistory: React.FC = () => {
             onClick={() => setFilterDays(30)}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               filterDays === 30
-                ? 'bg-accent-orange text-white'
+                ? 'bg-green-500 text-white'
                 : 'bg-secondary-bg text-text-primary hover:bg-hover-bg'
             }`}
           >
@@ -132,7 +142,7 @@ export const MealHistory: React.FC = () => {
             onClick={() => setFilterDays(90)}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               filterDays === 90
-                ? 'bg-accent-orange text-white'
+                ? 'bg-green-500 text-white'
                 : 'bg-secondary-bg text-text-primary hover:bg-hover-bg'
             }`}
           >
