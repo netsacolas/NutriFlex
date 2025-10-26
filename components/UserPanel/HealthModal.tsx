@@ -93,6 +93,7 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setLunchCal(data.lunch_calories?.toString() || '600');
       setDinnerCal(data.dinner_calories?.toString() || '600');
       setSnackCal(data.snack_calories?.toString() || '200');
+      setSnackQuantity(data.snack_quantity || 1);
     }
     setLoading(false);
   };
@@ -110,6 +111,7 @@ export const HealthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       lunch_calories: parseInt(lunchCal),
       dinner_calories: parseInt(dinnerCal),
       snack_calories: parseInt(snackCal),
+      snack_quantity: snackQuantity,
     });
     if (updateError) {
       setError('Erro ao salvar dados.');

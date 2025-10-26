@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { authService } from '../../services/authService';
+import logger from '../../utils/logger';
 
 interface LoginProps {
   onSwitchToSignUp: () => void;
@@ -12,18 +14,50 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToSignUp, onSwitchToForgot
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState('');
+
+  const handleResendConfirmation = async () => {
+    setResendingEmail(true);
+    setResendSuccess('');
+    setError('');
+
+    try {
+      const { error } = await authService.resendConfirmationEmail(email);
+
+      if (error) {
+        setError('Erro ao reenviar email de confirmação: ' + error.message);
+      } else {
+        setResendSuccess('Email de confirmação reenviado com sucesso! Verifique sua caixa de entrada.');
+        setShowResendConfirmation(false);
+      }
+    } catch (err: any) {
+      setError('Erro inesperado ao reenviar email: ' + (err?.message || 'Desconhecido'));
+    } finally {
+      setResendingEmail(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setResendSuccess('');
+    setShowResendConfirmation(false);
     setLoading(true);
 
     try {
       const { error } = await signIn(email, password);
 
       if (error) {
-        console.error('SignIn error:', error);
-        if (error.message?.includes('fetch')) {
+        logger.error('SignIn error', error);
+
+        // Detectar erro de email não confirmado
+        if (error.message?.toLowerCase().includes('email not confirmed') ||
+            error.message?.toLowerCase().includes('mail not confirmed')) {
+          setError('Email não confirmado. Por favor, confirme seu email antes de fazer login.');
+          setShowResendConfirmation(true);
+        } else if (error.message?.includes('fetch')) {
           setError('Erro de conexão com o servidor. Verifique se o Supabase está configurado corretamente.');
         } else if (error.message?.includes('Invalid login credentials')) {
           setError('Email ou senha incorretos.');
@@ -32,7 +66,7 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToSignUp, onSwitchToForgot
         }
       }
     } catch (err: any) {
-      console.error('SignIn catch error:', err);
+      logger.error('SignIn catch error', err);
       if (err?.message?.includes('fetch')) {
         setError('Erro de conexão. Verifique: 1) Supabase URL está correta 2) Email provider está habilitado no Supabase 3) Sua conexão com internet');
       } else {
@@ -51,8 +85,28 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToSignUp, onSwitchToForgot
       </div>
 
       {error && (
-        <div className="bg-error/10 border border-error text-error px-4 py-3 rounded-lg mb-6 text-sm">
+        <div className="bg-error/10 border border-error text-error px-4 py-3 rounded-lg mb-4 text-sm">
           {error}
+        </div>
+      )}
+
+      {resendSuccess && (
+        <div className="bg-success/10 border border-success text-success px-4 py-3 rounded-lg mb-4 text-sm">
+          {resendSuccess}
+        </div>
+      )}
+
+      {showResendConfirmation && (
+        <div className="bg-blue-500/10 border border-blue-500 text-blue-400 px-4 py-3 rounded-lg mb-4">
+          <p className="text-sm mb-3">Não recebeu o email de confirmação?</p>
+          <button
+            type="button"
+            onClick={handleResendConfirmation}
+            disabled={resendingEmail}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {resendingEmail ? 'Reenviando...' : 'Reenviar Email de Confirmação'}
+          </button>
         </div>
       )}
 

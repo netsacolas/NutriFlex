@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { User, AuthError } from '@supabase/supabase-js';
+import logger from '../utils/logger';
 
 export interface AuthResponse {
   user: User | null;
@@ -26,7 +27,7 @@ export const authService = {
 
       return { user: data.user, error: null };
     } catch (error) {
-      console.error('Sign up error:', error);
+      logger.error('Sign up error', error);
       return { user: null, error: error as AuthError };
     }
   },
@@ -45,7 +46,7 @@ export const authService = {
 
       return { user: data.user, error: null };
     } catch (error) {
-      console.error('Sign in error:', error);
+      logger.error('Sign in error', error);
       return { user: null, error: error as AuthError };
     }
   },
@@ -56,7 +57,7 @@ export const authService = {
       const { error } = await supabase.auth.signOut();
       return { error };
     } catch (error) {
-      console.error('Sign out error:', error);
+      logger.error('Sign out error', error);
       return { error: error as AuthError };
     }
   },
@@ -69,7 +70,7 @@ export const authService = {
       });
       return { error };
     } catch (error) {
-      console.error('Reset password error:', error);
+      logger.error('Reset password error', error);
       return { error: error as AuthError };
     }
   },
@@ -82,7 +83,21 @@ export const authService = {
       });
       return { error };
     } catch (error) {
-      console.error('Update password error:', error);
+      logger.error('Update password error', error);
+      return { error: error as AuthError };
+    }
+  },
+
+  // Reenviar email de confirmação
+  async resendConfirmationEmail(email: string): Promise<{ error: AuthError | null }> {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      return { error };
+    } catch (error) {
+      logger.error('Resend confirmation email error', error);
       return { error: error as AuthError };
     }
   },
@@ -93,7 +108,7 @@ export const authService = {
       const { data: { user } } = await supabase.auth.getUser();
       return user;
     } catch (error) {
-      console.error('Get current user error:', error);
+      logger.error('Get current user error', error);
       return null;
     }
   },
@@ -104,7 +119,7 @@ export const authService = {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     } catch (error) {
-      console.error('Get session error:', error);
+      logger.error('Get session error', error);
       return null;
     }
   },

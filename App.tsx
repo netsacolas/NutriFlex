@@ -6,11 +6,12 @@ import { AuthFlow } from './components/Auth/AuthFlow';
 import { ProfileModal } from './components/UserPanel/ProfileModal';
 import { HealthModal } from './components/UserPanel/HealthModal';
 import { HistoryModal } from './components/UserPanel/HistoryModal';
+import CostAnalysisModal from './components/UserPanel/CostAnalysisModal';
 import { calculateMealPortions } from './services/geminiService';
 import { useAuth } from './contexts/AuthContext';
 import type { MealResult, MealType } from './types';
 
-type ModalType = 'profile' | 'health' | 'history' | null;
+type ModalType = 'profile' | 'health' | 'history' | 'costs' | null;
 
 const App: React.FC = () => {
     const { user, loading: authLoading, signOut } = useAuth();
@@ -89,6 +90,13 @@ const App: React.FC = () => {
                                 <span className="hidden md:inline">Histórico</span>
                             </button>
                             <button
+                                onClick={() => setActiveModal('costs')}
+                                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                            >
+                                <span>💰</span>
+                                <span className="hidden md:inline">Custos</span>
+                            </button>
+                            <button
                                 onClick={signOut}
                                 className="bg-secondary-bg text-text-secondary hover:text-error hover:border-error px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-border-color"
                             >
@@ -126,6 +134,7 @@ const App: React.FC = () => {
             {/* Modals */}
             {activeModal === 'profile' && <ProfileModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'health' && <HealthModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'costs' && <CostAnalysisModal isOpen={true} onClose={() => setActiveModal(null)} />}
             {activeModal === 'history' && <HistoryModal onClose={() => setActiveModal(null)} />}
         </div>
     );

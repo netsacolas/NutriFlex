@@ -55,6 +55,7 @@ export interface UserProfile {
     lunch_calories: number | null;
     dinner_calories: number | null;
     snack_calories: number | null;
+    snack_quantity: number | null;
     created_at: string;
     updated_at: string;
 }
