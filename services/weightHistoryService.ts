@@ -71,6 +71,13 @@ export const weightHistoryService = {
   },
 
   /**
+   * Alias para getWeightHistory (compatibilidade)
+   */
+  async getUserWeightHistory(userId?: string): Promise<{ data: WeightEntry[] | null; error: any }> {
+    return this.getWeightHistory();
+  },
+
+  /**
    * Obter última pesagem
    */
   async getLatestWeight(): Promise<{ data: WeightEntry | null; error: any }> {

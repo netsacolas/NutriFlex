@@ -73,6 +73,9 @@ export interface WeightEntry {
     created_at: string;
 }
 
+// Alias para compatibilidade
+export type WeightHistory = WeightEntry;
+
 export interface Goal {
     id: string;
     user_id: string;
@@ -122,6 +125,9 @@ export interface MealConsumption {
     notes: string | null;
     created_at: string;
 }
+
+// Alias para compatibilidade
+export type MealHistory = MealConsumption;
 
 // Physical Activity types
 export type ActivityIntensity = 'low' | 'moderate' | 'high';

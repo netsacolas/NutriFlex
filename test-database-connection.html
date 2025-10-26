@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Conexão - NutriMais AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🔍 Diagnóstico de Conexões - NutriMais AI</h1>
+
+        <div class="space-y-4">
+            <button onclick="testSupabaseConnection()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold">
+                1. Testar Conexão Supabase
+            </button>
+
+            <button onclick="testGeminiRequestsTable()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold">
+                2. Verificar Tabela gemini_requests
+            </button>
+
+            <button onclick="testMealConsumptionTable()" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold">
+                3. Verificar Tabela meal_consumption
+            </button>
+
+            <button onclick="testPhysicalActivitiesTable()" class="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 rounded-lg font-semibold">
+                4. Verificar Tabela physical_activities
+            </button>
+
+            <button onclick="testEdgeFunction()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold">
+                5. Testar Edge Function gemini-proxy
+            </button>
+        </div>
+
+        <div id="results" class="mt-8 p-6 bg-gray-800 rounded-lg overflow-auto max-h-96">
+            <p class="text-gray-400">Aguardando testes...</p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+        let supabase;
+
+        // Aguardar carregamento do Supabase
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                log('✨ Sistema de diagnóstico pronto!', 'success');
+                log('Clique nos botões acima para testar cada componente', 'info');
+            }, 100);
+        });
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const colors = {
+                'info': 'text-blue-400',
+                'success': 'text-green-400',
+                'error': 'text-red-400',
+                'warning': 'text-yellow-400'
+            };
+            results.innerHTML += `<p class="${colors[type]}">${message}</p>`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        async function testSupabaseConnection() {
+            log('📡 Testando conexão com Supabase...', 'info');
+            try {
+                const { data, error } = await supabase.auth.getSession();
+                if (error) {
+                    log(`❌ Erro: ${error.message}`, 'error');
+                } else {
+                    log(`✅ Conexão OK! Usuário: ${data.session?.user?.email || 'Não logado'}`, 'success');
+                }
+            } catch (e) {
+                log(`❌ Erro: ${e.message}`, 'error');
+            }
+        }
+
+        async function testGeminiRequestsTable() {
+            log('🔍 Verificando tabela gemini_requests...', 'info');
+            try {
+                const { data, error, count } = await supabase
+                    .from('gemini_requests')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    if (error.code === '42P01') {
+                        log(`❌ Tabela gemini_requests NÃO EXISTE!`, 'error');
+                        log(`   Execute: supabase/migrations/005_add_gemini_requests_table.sql`, 'warning');
+                    } else {
+                        log(`❌ Erro: ${error.message} (code: ${error.code})`, 'error');
+                    }
+                } else {
+                    log(`✅ Tabela existe! Registros: ${count || 0}`, 'success');
+                }
+            } catch (e) {
+                log(`❌ Erro: ${e.message}`, 'error');
+            }
+        }
+
+        async function testMealConsumptionTable() {
+            log('🔍 Verificando tabela meal_consumption...', 'info');
+            try {
+                const { data, error, count } = await supabase
+                    .from('meal_consumption')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    if (error.code === '42P01') {
+                        log(`❌ Tabela meal_consumption NÃO EXISTE!`, 'error');
+                        log(`   Execute: supabase/migrations/003_create_meal_consumption_history.sql`, 'warning');
+                    } else {
+                        log(`❌ Erro: ${error.message} (code: ${error.code})`, 'error');
+                    }
+                } else {
+                    log(`✅ Tabela existe! Registros: ${count || 0}`, 'success');
+                }
+            } catch (e) {
+                log(`❌ Erro: ${e.message}`, 'error');
+            }
+        }
+
+        async function testPhysicalActivitiesTable() {
+            log('🔍 Verificando tabela physical_activities...', 'info');
+            try {
+                const { data, error, count } = await supabase
+                    .from('physical_activities')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    if (error.code === '42P01') {
+                        log(`❌ Tabela physical_activities NÃO EXISTE!`, 'error');
+                        log(`   Execute: supabase/migrations/004_add_physical_activities_and_meal_goals.sql`, 'warning');
+                    } else {
+                        log(`❌ Erro: ${error.message} (code: ${error.code})`, 'error');
+                    }
+                } else {
+                    log(`✅ Tabela existe! Registros: ${count || 0}`, 'success');
+                }
+            } catch (e) {
+                log(`❌ Erro: ${e.message}`, 'error');
+            }
+        }
+
+        async function testEdgeFunction() {
+            log('🚀 Testando Edge Function gemini-proxy...', 'info');
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!session) {
+                    log(`⚠️  Faça login primeiro para testar a Edge Function`, 'warning');
+                    return;
+                }
+
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/gemini-proxy`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        mealType: 'lunch',
+                        targetCalories: 600,
+                        foods: ['Arroz branco', 'Feijão preto', 'Frango grelhado']
+                    }),
+                });
+
+                log(`Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+
+                const text = await response.text();
+                try {
+                    const json = JSON.parse(text);
+                    log(`Resposta: ${JSON.stringify(json, null, 2)}`, response.ok ? 'success' : 'error');
+                } catch {
+                    log(`Resposta (texto): ${text}`, 'error');
+                }
+
+            } catch (e) {
+                log(`❌ Erro: ${e.message}`, 'error');
+            }
+        }
+
+    </script>
+</body>
+</html>

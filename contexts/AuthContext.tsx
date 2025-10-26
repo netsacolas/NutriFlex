@@ -27,10 +27,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Verificar sessão atual ao carregar
-    authService.getSession().then((session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    authService.getSession()
+      .then((session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error getting session:", error);
+        setLoading(false); // Important: set loading to false even on error
+      });
 
     // Listener para mudanças de autenticação
     const { data: { subscription } } = authService.onAuthStateChange((user) => {

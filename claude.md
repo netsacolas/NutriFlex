@@ -563,7 +563,7 @@ interface ConfirmDeleteModalProps {
 ### 9. NutritionChat - Assistente de IA Nutricional
 [components/UserPanel/NutritionChat.tsx](components/UserPanel/NutritionChat.tsx)
 
-**Responsabilidade**: Chat interativo com Gemini AI para orientação nutricional.
+**Responsabilidade**: Chat interativo com Gemini AI para orientação nutricional contextualizada por horário.
 
 **Contexto Fornecido à IA**:
 ```typescript
@@ -575,23 +575,83 @@ interface ChatContext {
 ```
 
 **Funcionalidades**:
+- **🕐 Consciência Temporal**: Detecta horário atual (manhã/tarde/noite)
+- **Saudação Dinâmica**: "Bom dia", "Boa tarde" ou "Boa noite" conforme horário
+- **Contexto de Refeição**: Mensagens personalizadas sobre a refeição apropriada ao período
 - Histórico de mensagens (usuário e assistente)
 - Streaming de respostas (digitação em tempo real)
 - Contexto completo do usuário:
+  - **Horário atual e período do dia**
   - Dados pessoais (peso, altura, idade, sexo)
   - IMC calculado
   - Metas de calorias por refeição
   - Histórico de peso (últimos 10 registros)
   - Refeições recentes (últimos 20 registros)
-- Sugestões personalizadas baseadas em dados reais
+- Sugestões personalizadas baseadas em dados reais **e horário atual**
 - Design com gradiente roxo-rosa no header
+
+**Sistema de Detecção de Horário** ([nutritionChatService.ts:23-45](services/nutritionChatService.ts#L23-L45)):
+```typescript
+getTimeOfDayInfo(): {
+  period: 'manhã' | 'tarde' | 'noite'
+  greeting: 'Bom dia' | 'Boa tarde' | 'Boa noite'
+  mealContext: string
+}
+
+// Períodos:
+// Manhã: 5h - 12h → Café da manhã
+// Tarde: 12h - 18h → Almoço/Lanches
+// Noite: 18h - 5h → Jantar
+```
+
+**Mensagem Inicial Contextualizada**:
+```
+${timeInfo.greeting}! 👋 Sou seu assistente nutricional personalizado!
+
+${timeInfo.mealContext}
+
+Posso ajudar você com dicas de alimentação, análise de hábitos,
+sugestões de refeições e muito mais.
+
+Como posso ajudar você hoje?
+```
 
 **Persona da IA**:
 - Nutricionista especializado
 - Linguagem acessível e amigável
 - Respostas baseadas em evidências científicas
 - Considera histórico e perfil do usuário
+- **Adapta sugestões ao horário atual (NUNCA sugere café da manhã à noite)**
 - Sugestões práticas e personalizadas
+
+**System Instruction Reforçado** ([nutritionChatService.ts:161-192](services/nutritionChatService.ts#L161-L192)):
+```
+🕐 **CONTEXTO TEMPORAL CRÍTICO - LEIA COM ATENÇÃO:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ HORÁRIO ATUAL: ${period.toUpperCase()} (${greeting})
+📝 CONTEXTO DA REFEIÇÃO: ${mealContext}
+
+⚠️ REGRAS OBRIGATÓRIAS SOBRE HORÁRIO:
+1. NUNCA sugira café da manhã se for tarde ou noite
+2. NUNCA sugira jantar se for manhã
+3. NUNCA sugira almoço se for noite
+4. SEMPRE adapte suas sugestões ao período atual
+5. Se o usuário perguntar "o que comer?", responda baseado no horário atual
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Formato de Resposta:**
+- SEMPRE inicie suas respostas considerando o horário atual
+- Se for pergunta sobre alimentação, mencione explicitamente o período do dia
+- Exemplo manhã: "Como é manhã, sugiro um café da manhã com..."
+- Exemplo tarde: "Para esta hora da tarde, recomendo..."
+- Exemplo noite: "Já que é noite, o ideal seria um jantar leve..."
+```
+
+**Lembrete Visual no Prompt** ([nutritionChatService.ts:159](services/nutritionChatService.ts#L159)):
+Antes de cada resposta, a IA recebe:
+```
+⏰ LEMBRETE: Agora é ${period} (${greeting.toLowerCase()}). ${mealContext}
+```
 
 ---
 
@@ -1458,6 +1518,42 @@ npm run dev
 
 ## Histórico de Alterações
 
+### Update 2025-10-26 (Horário Atual)
+**Assistente Nutricional com Consciência Temporal**
+
+- **Sistema de Detecção de Horário**:
+  - Nova função `getTimeOfDayInfo()` que detecta período do dia (manhã/tarde/noite)
+  - Retorna saudação apropriada ("Bom dia", "Boa tarde", "Boa noite")
+  - Contexto de refeição específico para cada período
+  - Períodos definidos: Manhã (5h-12h), Tarde (12h-18h), Noite (18h-5h)
+
+- **Mensagem Inicial Contextualizada**:
+  - Saudação dinâmica baseada no horário atual
+  - Mensagem personalizada sobre refeição apropriada ao período
+  - Experiência mais natural e humanizada
+
+- **Context Awareness na IA**:
+  - Horário atual incluído no contexto do usuário
+  - System instruction reforçado com ênfase visual (emojis, linhas separadoras)
+  - Regras obrigatórias sobre horário (NUNCA café da manhã à noite, etc)
+  - Formato de resposta prescritivo com exemplos concretos
+
+- **Lembrete Visual no Prompt**:
+  - Cada mensagem do usuário recebe lembrete do horário atual
+  - ⏰ LEMBRETE: Agora é [período] ([saudação]). [contexto da refeição]
+  - Aumenta significativamente a aderência da IA ao contexto temporal
+
+- **Melhorias no System Instruction**:
+  - Seção "CONTEXTO TEMPORAL CRÍTICO" com destaque visual
+  - 5 regras obrigatórias sobre horário
+  - Exemplos de como formatar respostas por período
+  - Ênfase com MAIÚSCULAS e emojis para chamar atenção
+
+- **Arquivos Modificados**:
+  - [services/nutritionChatService.ts](services/nutritionChatService.ts): Lógica de detecção de horário e prompts
+  - [components/UserPanel/NutritionChat.tsx](components/UserPanel/NutritionChat.tsx): Mensagem inicial dinâmica
+  - [CLAUDE.md](CLAUDE.md): Documentação atualizada
+
 ### Commit ca9d03d (2025-10-26)
 **Funcionando com PWA - Inicial**
 
@@ -1742,7 +1838,7 @@ Projeto privado (`"private": true` em package.json).
 ---
 
 **Última atualização**: 2025-10-26
-**Versão**: 1.1.0 (PWA)
+**Versão**: 1.2.0 (PWA + Temporal Awareness)
 **Funcionalidades**:
 - ✅ Sistema completo de autenticação (Supabase)
 - ✅ Planejamento de refeições com IA (Gemini)
@@ -1750,6 +1846,9 @@ Projeto privado (`"private": true` em package.json).
 - ✅ Registro e histórico de atividades físicas
 - ✅ Histórico de refeições e pesagens
 - ✅ Assistente nutricional com IA
+- ✅ **🕐 Consciência temporal (detecta manhã/tarde/noite)**
+- ✅ **Saudações dinâmicas baseadas no horário**
+- ✅ **Sugestões de refeições contextualizadas ao período do dia**
 - ✅ Banco de 116 atividades físicas
 - ✅ Cálculo automático de calorias (MET values)
 - ✅ Gráficos de evolução de peso

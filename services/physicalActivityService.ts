@@ -126,4 +126,9 @@ export const physicalActivityService = {
       avgDuration: Math.round(totalMinutes / activities.length),
     };
   },
+
+  // Alias method for compatibility
+  async getUserActivities(days: number = 30): Promise<{ data: PhysicalActivity[] | null; error: any }> {
+    return this.getActivities(days);
+  },
 };

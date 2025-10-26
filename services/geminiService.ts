@@ -14,6 +14,7 @@
 import { MealResult, MealType } from '../types';
 import logger from '../utils/logger';
 import { supabase } from './supabaseClient';
+import { calculateMealPortionsDirect } from './geminiDirect';
 
 /**
  * URL da Edge Function no Supabase
@@ -41,13 +42,23 @@ export const calculateMealPortions = async (
     mealType: MealType
 ): Promise<MealResult> => {
     try {
+        logger.info('🚀 calculateMealPortions called', {
+            foods: foods,
+            targetCalories: targetCalories,
+            mealType: mealType,
+            foodsType: Array.isArray(foods) ? 'array' : typeof foods,
+            foodsLength: foods?.length
+        });
+
         // 1. Verificar autenticação
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError || !session) {
-            logger.error('User not authenticated', sessionError);
+            logger.error('❌ User not authenticated', sessionError);
             throw new Error('Você precisa estar logado para calcular refeições.');
         }
+
+        logger.debug('✅ User authenticated', { userId: session.user.id });
 
         // 2. Preparar payload para Edge Function
         const payload = {
@@ -56,10 +67,11 @@ export const calculateMealPortions = async (
             foods,
         };
 
-        logger.info('Calling Edge Function gemini-proxy', {
+        logger.info('📦 Calling Edge Function gemini-proxy', {
             mealType,
             targetCalories,
-            foodsCount: foods.length
+            foodsCount: foods.length,
+            payload: JSON.stringify(payload).substring(0, 200)
         });
 
         // 3. Chamar Edge Function (proxy seguro) usando fetch diretamente
@@ -83,12 +95,19 @@ export const calculateMealPortions = async (
             body: JSON.stringify(payload),
         });
 
+        logger.debug('📡 Edge Function response received', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
+        });
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            logger.error('Edge Function HTTP error', {
+            logger.error('❌ Edge Function HTTP error', {
                 status: response.status,
                 statusText: response.statusText,
-                error: errorData
+                error: errorData,
+                fullErrorData: JSON.stringify(errorData)
             });
 
             // Rate limit excedido
@@ -106,14 +125,48 @@ export const calculateMealPortions = async (
                 );
             }
 
+            // Erro 500: Tentar fallback direto
+            if (response.status === 500) {
+                logger.warn('⚠️ Edge Function falhou (500). Tentando fallback direto...', {
+                    foods: foods,
+                    targetCalories: targetCalories,
+                    mealType: mealType
+                });
+                try {
+                    const fallbackResult = await calculateMealPortionsDirect(foods, targetCalories, mealType);
+                    logger.info('✅ Fallback direto funcionou!', {
+                        portionsCount: fallbackResult.portions?.length,
+                        totalCalories: fallbackResult.totalCalories
+                    });
+                    return fallbackResult;
+                } catch (fallbackError) {
+                    logger.error('❌ Fallback também falhou', {
+                        error: fallbackError,
+                        message: fallbackError instanceof Error ? fallbackError.message : 'Unknown error',
+                        stack: fallbackError instanceof Error ? fallbackError.stack : undefined
+                    });
+                    throw new Error('Falha ao calcular as porções. Por favor, tente novamente.');
+                }
+            }
+
             throw new Error('Falha ao calcular as porções. Por favor, tente novamente.');
         }
 
         const data = await response.json();
+        logger.debug('✅ Edge Function response parsed', {
+            hasData: !!data,
+            hasPortions: !!data?.portions,
+            portionsCount: data?.portions?.length,
+            totalCalories: data?.totalCalories
+        });
 
         // 4. Validar resposta
         if (!data || !data.portions || data.portions.length === 0) {
-            logger.error('Invalid response from Edge Function', data);
+            logger.error('❌ Invalid response from Edge Function', {
+                data: data,
+                dataType: typeof data,
+                dataKeys: data ? Object.keys(data) : []
+            });
             throw new Error(
                 'Resposta inválida da IA. Por favor, tente novamente.'
             );

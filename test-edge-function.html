@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Edge Function - Gemini Proxy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🔍 Teste Detalhado - Edge Function gemini-proxy</h1>
+
+        <div class="grid grid-cols-2 gap-6">
+            <!-- Status Panel -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">Status</h2>
+                <div id="status" class="space-y-2">
+                    <p class="text-gray-400">Aguardando teste...</p>
+                </div>
+            </div>
+
+            <!-- Response Panel -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">Resposta</h2>
+                <div id="response" class="space-y-2 overflow-auto max-h-96">
+                    <p class="text-gray-400">Nenhuma resposta ainda...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Buttons -->
+        <div class="mt-6 space-x-4">
+            <button onclick="testEdgeFunction()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold">
+                🚀 Testar Edge Function
+            </button>
+            <button onclick="checkAuth()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold">
+                🔐 Verificar Autenticação
+            </button>
+            <button onclick="clearLogs()" class="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-semibold">
+                🗑️ Limpar Logs
+            </button>
+        </div>
+
+        <!-- Request Details -->
+        <div class="mt-6 bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-bold mb-4">Detalhes da Requisição</h2>
+            <pre id="requestDetails" class="text-sm text-gray-300 overflow-auto"></pre>
+        </div>
+
+        <!-- Error Details -->
+        <div id="errorPanel" class="mt-6 bg-red-900/30 border border-red-600 rounded-lg p-6 hidden">
+            <h2 class="text-xl font-bold mb-4 text-red-400">❌ Erro Detectado</h2>
+            <pre id="errorDetails" class="text-sm text-red-300 overflow-auto whitespace-pre-wrap"></pre>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function logStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const colors = {
+                'info': 'text-blue-400',
+                'success': 'text-green-400',
+                'error': 'text-red-400',
+                'warning': 'text-yellow-400'
+            };
+            status.innerHTML += `<p class="${colors[type]}">${message}</p>`;
+        }
+
+        function logResponse(data) {
+            const response = document.getElementById('response');
+            response.innerHTML = `<pre class="text-sm">${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        function showError(error) {
+            const errorPanel = document.getElementById('errorPanel');
+            const errorDetails = document.getElementById('errorDetails');
+            errorPanel.classList.remove('hidden');
+            errorDetails.textContent = JSON.stringify(error, null, 2);
+        }
+
+        function clearLogs() {
+            document.getElementById('status').innerHTML = '<p class="text-gray-400">Logs limpos...</p>';
+            document.getElementById('response').innerHTML = '<p class="text-gray-400">Nenhuma resposta ainda...</p>';
+            document.getElementById('errorPanel').classList.add('hidden');
+            document.getElementById('requestDetails').textContent = '';
+        }
+
+        async function checkAuth() {
+            clearLogs();
+            logStatus('🔐 Verificando autenticação...', 'info');
+
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) {
+                    logStatus(`❌ Erro ao verificar sessão: ${error.message}`, 'error');
+                    showError(error);
+                    return;
+                }
+
+                if (!session) {
+                    logStatus('⚠️ Usuário não está logado!', 'warning');
+                    logStatus('Por favor, faça login primeiro na aplicação principal', 'warning');
+                    return;
+                }
+
+                logStatus('✅ Usuário autenticado!', 'success');
+                logStatus(`📧 Email: ${session.user.email}`, 'info');
+                logStatus(`🆔 User ID: ${session.user.id}`, 'info');
+                logStatus(`🔑 Token presente: ${session.access_token.substring(0, 20)}...`, 'info');
+
+                logResponse({
+                    authenticated: true,
+                    user: {
+                        id: session.user.id,
+                        email: session.user.email
+                    },
+                    tokenLength: session.access_token.length
+                });
+
+            } catch (e) {
+                logStatus(`❌ Erro: ${e.message}`, 'error');
+                showError(e);
+            }
+        }
+
+        async function testEdgeFunction() {
+            clearLogs();
+            logStatus('🚀 Iniciando teste da Edge Function...', 'info');
+
+            try {
+                // 1. Verificar autenticação
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+                if (sessionError || !session) {
+                    logStatus('❌ Usuário não autenticado!', 'error');
+                    logStatus('Por favor, faça login primeiro', 'warning');
+                    return;
+                }
+
+                logStatus('✅ Usuário autenticado', 'success');
+
+                // 2. Preparar payload
+                const payload = {
+                    mealType: 'lunch',
+                    targetCalories: 600,
+                    foods: ['Arroz branco', 'Feijão preto', 'Frango grelhado']
+                };
+
+                logStatus('📦 Payload preparado', 'info');
+
+                // 3. Mostrar detalhes da requisição
+                document.getElementById('requestDetails').textContent = JSON.stringify({
+                    url: `${SUPABASE_URL}/functions/v1/gemini-proxy`,
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + session.access_token.substring(0, 20) + '...',
+                        'apikey': SUPABASE_ANON_KEY.substring(0, 20) + '...',
+                        'Content-Type': 'application/json'
+                    },
+                    body: payload
+                }, null, 2);
+
+                // 4. Chamar Edge Function
+                logStatus('🌐 Chamando Edge Function...', 'info');
+
+                const startTime = Date.now();
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/gemini-proxy`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const endTime = Date.now();
+
+                logStatus(`⏱️ Tempo de resposta: ${endTime - startTime}ms`, 'info');
+                logStatus(`📡 Status HTTP: ${response.status} ${response.statusText}`,
+                    response.ok ? 'success' : 'error');
+
+                // 5. Processar resposta
+                const contentType = response.headers.get('content-type');
+                let responseData;
+
+                if (contentType && contentType.includes('application/json')) {
+                    responseData = await response.json();
+                } else {
+                    responseData = await response.text();
+                }
+
+                if (response.ok) {
+                    logStatus('✅ Requisição bem-sucedida!', 'success');
+                    logResponse(responseData);
+                } else {
+                    logStatus('❌ Requisição falhou!', 'error');
+                    logStatus(`Detalhes: ${JSON.stringify(responseData)}`, 'error');
+                    showError({
+                        status: response.status,
+                        statusText: response.statusText,
+                        body: responseData
+                    });
+                }
+
+                // 6. Análise do erro
+                if (!response.ok) {
+                    if (response.status === 500) {
+                        logStatus('', 'error');
+                        logStatus('🔍 ANÁLISE DO ERRO 500:', 'warning');
+
+                        if (responseData.error && responseData.error.includes('API key missing')) {
+                            logStatus('❌ CAUSA: GEMINI_API_KEY não configurada!', 'error');
+                            logStatus('', 'info');
+                            logStatus('📋 SOLUÇÃO:', 'warning');
+                            logStatus('1. Acesse: https://aistudio.google.com/app/apikey', 'info');
+                            logStatus('2. Copie sua API Key', 'info');
+                            logStatus('3. Vá em: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/settings/vault/secrets', 'info');
+                            logStatus('4. Adicione secret: GEMINI_API_KEY', 'info');
+                        } else if (responseData.error && responseData.error.includes('Gemini API')) {
+                            logStatus('❌ CAUSA: Erro na chamada à API do Gemini', 'error');
+                            logStatus('Possíveis motivos:', 'info');
+                            logStatus('- API Key inválida', 'info');
+                            logStatus('- Quota excedida', 'info');
+                            logStatus('- Região bloqueada', 'info');
+                        } else {
+                            logStatus('❌ CAUSA: Erro desconhecido no servidor', 'error');
+                            logStatus('Verifique os logs da Edge Function:', 'info');
+                            logStatus('https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/logs/edge-functions', 'info');
+                        }
+                    } else if (response.status === 401) {
+                        logStatus('❌ Erro de autenticação', 'error');
+                    } else if (response.status === 429) {
+                        logStatus('❌ Rate limit excedido (20 req/hora)', 'error');
+                    }
+                }
+
+            } catch (e) {
+                logStatus(`❌ Erro de rede: ${e.message}`, 'error');
+                showError({
+                    type: 'NetworkError',
+                    message: e.message,
+                    stack: e.stack
+                });
+            }
+        }
+
+        // Auto-check auth on load
+        window.addEventListener('load', () => {
+            setTimeout(checkAuth, 500);
+        });
+    </script>
+</body>
+</html>

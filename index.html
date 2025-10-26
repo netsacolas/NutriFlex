@@ -46,27 +46,6 @@
 
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-bg': '#1e1e1e',
-                        'secondary-bg': '#2d2d30',
-                        'card-bg': '#252526',
-                        'hover-bg': '#3e3e42',
-                        'text-primary': '#cccccc',
-                        'text-secondary': '#969696',
-                        'text-muted': '#6b6b6b',
-                        'text-bright': '#ffffff',
-                        'accent-orange': '#ff6b35',
-                        'accent-coral': '#ff8c61',
-                        'accent-peach': '#ffb088',
-                    }
-                }
-            }
-        }
-    </script>
 
     <style>
         body {
@@ -106,6 +85,36 @@
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInFromRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slideIn {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .animate-slideInFromRight {
+            animation: slideInFromRight 0.3s ease-out;
+        }
+
         .loading-text {
             color: #cccccc;
             font-size: 16px;
@@ -122,51 +131,19 @@
 
     <script type="module" src="/index.tsx"></script>
 
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker Registration - TEMPORARIAMENTE DESABILITADO -->
     <script>
+        // Service Worker desabilitado durante desenvolvimento para evitar problemas de cache
+        console.log('⚠️ Service Worker desabilitado durante desenvolvimento');
+
+        // Desregistrar service workers existentes
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', async () => {
-                try {
-                    const registration = await navigator.serviceWorker.register('/sw.js', {
-                        scope: '/'
-                    });
-
-                    console.log('✅ Service Worker registrado com sucesso!', registration.scope);
-
-                    // Verificar atualizações
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        console.log('🔄 Nova versão do Service Worker encontrada!');
-
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Nova versão disponível
-                                console.log('✨ Nova versão disponível! Recarregue a página.');
-
-                                // Mostrar notificação ao usuário (opcional)
-                                if (confirm('Nova versão do NutriMais AI disponível! Deseja atualizar agora?')) {
-                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                    window.location.reload();
-                                }
-                            }
-                        });
-                    });
-
-                    // Recarregar quando novo SW assumir controle
-                    let refreshing = false;
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        if (!refreshing) {
-                            refreshing = true;
-                            window.location.reload();
-                        }
-                    });
-
-                } catch (error) {
-                    console.error('❌ Erro ao registrar Service Worker:', error);
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('✅ Service Worker desregistrado');
                 }
             });
-        } else {
-            console.warn('⚠️ Service Workers não são suportados neste navegador');
         }
     </script>
 </body>

@@ -124,6 +124,11 @@ export const authService = {
     }
   },
 
+  // Alias para getSession para compatibilidade
+  async getCurrentSession() {
+    return this.getSession();
+  },
+
   // Listener para mudanças de autenticação
   onAuthStateChange(callback: (user: User | null) => void) {
     return supabase.auth.onAuthStateChange((_event, session) => {
