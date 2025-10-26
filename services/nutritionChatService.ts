@@ -18,12 +18,41 @@ export interface UserContext {
 
 export const nutritionChatService = {
   /**
+   * Obtém o período do dia e saudação apropriada
+   */
+  getTimeOfDayInfo(): { period: string; greeting: string; mealContext: string } {
+    const hour = new Date().getHours();
+
+    if (hour >= 5 && hour < 12) {
+      return {
+        period: 'manhã',
+        greeting: 'Bom dia',
+        mealContext: 'É manhã, momento ideal para um café da manhã nutritivo que dará energia para o dia.'
+      };
+    } else if (hour >= 12 && hour < 18) {
+      return {
+        period: 'tarde',
+        greeting: 'Boa tarde',
+        mealContext: 'É tarde, hora de pensar em almoço ou lanches que mantenham sua energia até o jantar.'
+      };
+    } else {
+      return {
+        period: 'noite',
+        greeting: 'Boa noite',
+        mealContext: 'É noite, momento de considerar um jantar leve e nutritivo para uma boa noite de sono.'
+      };
+    }
+  },
+
+  /**
    * Cria o contexto do usuário para a IA
    */
   buildUserContext(context: UserContext): string {
     const { profile, weightHistory, recentMeals } = context;
+    const timeInfo = this.getTimeOfDayInfo();
 
-    let contextText = '**Informações do Usuário:**\n\n';
+    let contextText = `**Horário Atual:**\n- Período: ${timeInfo.period}\n- ${timeInfo.mealContext}\n\n`;
+    contextText += '**Informações do Usuário:**\n\n';
 
     if (profile) {
       contextText += `- Nome: ${profile.full_name || 'Não informado'}\n`;
@@ -114,6 +143,9 @@ Posso ajudar você com:
 Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos de bem-estar. Como posso ajudar você hoje?`;
       }
 
+      // Obter informação de horário
+      const timeInfo = this.getTimeOfDayInfo();
+
       // Montar contexto do usuário
       const userContextText = this.buildUserContext(context);
 
@@ -124,9 +156,29 @@ Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos d
         fullPrompt += `${msg.role === 'user' ? 'Usuário' : 'NutriBot'}: ${msg.content}\n\n`;
       });
 
-      fullPrompt += `Usuário: ${message}\n\nNutriBot:`;
+      fullPrompt += `Usuário: ${message}\n\n⏰ LEMBRETE: Agora é ${timeInfo.period} (${timeInfo.greeting.toLowerCase()}). ${timeInfo.mealContext}\n\nNutriBot:`;
 
       const systemInstruction = `Você é NutriBot, um assistente nutricional especializado e amigável.
+
+🕐 **CONTEXTO TEMPORAL CRÍTICO - LEIA COM ATENÇÃO:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ HORÁRIO ATUAL: ${timeInfo.period.toUpperCase()} (${timeInfo.greeting})
+📝 CONTEXTO DA REFEIÇÃO: ${timeInfo.mealContext}
+
+⚠️ REGRAS OBRIGATÓRIAS SOBRE HORÁRIO:
+1. NUNCA sugira café da manhã se for tarde ou noite
+2. NUNCA sugira jantar se for manhã
+3. NUNCA sugira almoço se for noite
+4. SEMPRE adapte suas sugestões ao período atual
+5. Se o usuário perguntar "o que comer?", responda baseado no horário atual
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Formato de Resposta:**
+- SEMPRE inicie suas respostas considerando o horário atual
+- Se for pergunta sobre alimentação, mencione explicitamente o período do dia
+- Exemplo manhã: "Como é manhã, sugiro um café da manhã com..."
+- Exemplo tarde: "Para esta hora da tarde, recomendo..."
+- Exemplo noite: "Já que é noite, o ideal seria um jantar leve..."
 
 **Regras Fundamentais:**
 1. APENAS responda perguntas sobre nutrição, saúde, alimentação e bem-estar
@@ -136,6 +188,8 @@ Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos d
 5. Forneça informações baseadas em evidências científicas
 6. Incentive hábitos saudáveis sem ser extremista
 7. Nunca dê diagnósticos médicos - sempre sugira consultar profissionais quando necessário
+8. **CRUCIAL**: Sempre leve em conta o horário atual ao fazer sugestões de refeições ou dicas
+9. **OBRIGATÓRIO**: Mencione o período do dia nas suas respostas quando relevante
 
 **Seu Propósito:**
 - Educar sobre nutrição e alimentação saudável
@@ -143,6 +197,7 @@ Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos d
 - Analisar padrões alimentares e oferecer insights
 - Sugerir melhorias graduais e sustentáveis
 - Celebrar conquistas e encorajar em desafios
+- Dar orientações contextualizadas ao momento do dia
 
 **Tom:**
 - Amigável e acolhedor
@@ -150,7 +205,7 @@ Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos d
 - Profissional mas acessível
 - Empático e compreensivo
 
-Lembre-se: Você está aqui para ajudar o usuário a ter uma relação mais saudável com a alimentação!`;
+Lembre-se: Você está aqui para ajudar o usuário a ter uma relação mais saudável com a alimentação, sempre considerando o contexto temporal!`;
 
       logger.debug('Sending message to Edge Function');
       const token = session.access_token;

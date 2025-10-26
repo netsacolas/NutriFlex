@@ -12,10 +12,13 @@ export const NutritionChat: React.FC<Props> = ({ context, onClose }) => {
   // Bloquear scroll quando modal estiver aberto
   useScrollLock(true);
 
+  // Obter saudação baseada no horário
+  const timeInfo = nutritionChatService.getTimeOfDayInfo();
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: `Olá! 👋 Sou seu assistente nutricional personalizado!\n\nPosso ajudar você com dicas de alimentação, análise de hábitos, sugestões de refeições e muito mais.\n\nComo posso ajudar você hoje?`,
+      content: `${timeInfo.greeting}! 👋 Sou seu assistente nutricional personalizado!\n\n${timeInfo.mealContext}\n\nPosso ajudar você com dicas de alimentação, análise de hábitos, sugestões de refeições e muito mais.\n\nComo posso ajudar você hoje?`,
       timestamp: new Date()
     }
   ]);
