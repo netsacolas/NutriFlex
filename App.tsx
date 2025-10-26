@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { MealPlanner } from './components/MealPlanner';
 import { MealResultDisplay } from './components/MealResult';
 import { AuthFlow } from './components/Auth/AuthFlow';
@@ -8,6 +8,7 @@ import { HealthModal } from './components/UserPanel/HealthModal';
 import { HistoryModal } from './components/UserPanel/HistoryModal';
 import CostAnalysisModal from './components/UserPanel/CostAnalysisModal';
 import { calculateMealPortions } from './services/geminiService';
+import { isAdmin } from './services/costAnalysisService';
 import { useAuth } from './contexts/AuthContext';
 import type { MealResult, MealType } from './types';
 
@@ -20,6 +21,18 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeModal, setActiveModal] = useState<ModalType>(null);
+    const [isUserAdmin, setIsUserAdmin] = useState(false);
+
+    // Verificar se usuário é admin
+    useEffect(() => {
+        async function checkAdmin() {
+            if (user) {
+                const adminStatus = await isAdmin();
+                setIsUserAdmin(adminStatus);
+            }
+        }
+        checkAdmin();
+    }, [user]);
 
     const handleCalculate = useCallback(async (foods: string[], targetCalories: number, mealType: MealType) => {
         setIsLoading(true);
@@ -93,14 +106,16 @@ const App: React.FC = () => {
                             <span className="text-2xl">📊</span>
                             <span className="relative z-10">Histórico</span>
                         </button>
-                        <button
-                            onClick={() => setActiveModal('costs')}
-                            className="group relative bg-gradient-to-br from-green-600 via-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden"
-                        >
-                            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                            <span className="text-2xl">💰</span>
-                            <span className="relative z-10">Custos</span>
-                        </button>
+                        {isUserAdmin && (
+                            <button
+                                onClick={() => setActiveModal('costs')}
+                                className="group relative bg-gradient-to-br from-green-600 via-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                                <span className="text-2xl">💰</span>
+                                <span className="relative z-10">Custos</span>
+                            </button>
+                        )}
                         <button
                             onClick={signOut}
                             className="group relative bg-gradient-to-br from-red-600 via-rose-600 to-pink-700 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden"

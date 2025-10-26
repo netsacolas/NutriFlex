@@ -1,18 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
+import logger from '../utils/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Debug logs
-console.log('🔧 Supabase Config:', {
-  url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING',
-  key: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'MISSING',
+// Verificação de configuração (sem expor credenciais)
+logger.info('Initializing Supabase client', {
   hasUrl: !!supabaseUrl,
   hasKey: !!supabaseAnonKey
 });
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Supabase configuration missing!');
+  logger.criticalError('Supabase configuration missing - check environment variables');
   throw new Error('Supabase URL and Anon Key must be provided in environment variables');
 }
 

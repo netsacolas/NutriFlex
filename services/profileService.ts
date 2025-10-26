@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { UserProfile } from '../types';
+import logger from '../utils/logger';
 
 export const profileService = {
   // Obter perfil do usuário atual
@@ -18,7 +19,7 @@ export const profileService = {
         .single();
 
       if (error) {
-        console.error('Error getting profile:', error);
+        logger.error('Error getting profile', error);
         // Se a tabela não existe, retornar mensagem específica
         if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('does not exist')) {
           return {
@@ -33,7 +34,7 @@ export const profileService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error getting profile:', error);
+      logger.error('Error getting profile', error);
       return { data: null, error };
     }
   },
@@ -56,7 +57,7 @@ export const profileService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error updating profile:', error);
+      logger.error('Error updating profile', error);
       return { data: null, error };
     }
   },
@@ -77,7 +78,7 @@ export const profileService = {
 
       return { error };
     } catch (error) {
-      console.error('Error updating phone:', error);
+      logger.error('Error updating phone', error);
       return { error };
     }
   },
@@ -98,7 +99,7 @@ export const profileService = {
 
       return { error };
     } catch (error) {
-      console.error('Error updating full name:', error);
+      logger.error('Error updating full name', error);
       return { error };
     }
   },

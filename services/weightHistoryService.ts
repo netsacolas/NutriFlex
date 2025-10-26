@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import type { WeightEntry, Goal, Achievement } from '../types';
 import { calculateBMI, getBMICategory } from '../utils/bmiUtils';
+import logger from '../utils/logger';
 
 export const weightHistoryService = {
   /**
@@ -41,7 +42,7 @@ export const weightHistoryService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error adding weight entry:', error);
+      logger.error('Error adding weight entry', error);
       return { data: null, error };
     }
   },
@@ -64,7 +65,7 @@ export const weightHistoryService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error getting weight history:', error);
+      logger.error('Error getting weight history', error);
       return { data: null, error };
     }
   },
@@ -89,7 +90,7 @@ export const weightHistoryService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error getting latest weight:', error);
+      logger.error('Error getting latest weight', error);
       return { data: null, error };
     }
   },
@@ -109,7 +110,7 @@ export const weightHistoryService = {
 
       return { error };
     } catch (error) {
-      console.error('Error updating AI analysis:', error);
+      logger.error('Error updating AI analysis', error);
       return { error };
     }
   },
@@ -126,7 +127,7 @@ export const weightHistoryService = {
 
       return { error };
     } catch (error) {
-      console.error('Error deleting weight entry:', error);
+      logger.error('Error deleting weight entry', error);
       return { error };
     }
   },
@@ -154,7 +155,7 @@ export const weightHistoryService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error creating goal:', error);
+      logger.error('Error creating goal', error);
       return { data: null, error };
     }
   },
@@ -178,7 +179,7 @@ export const weightHistoryService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error getting active goals:', error);
+      logger.error('Error getting active goals', error);
       return { data: null, error };
     }
   },
@@ -198,7 +199,7 @@ export const weightHistoryService = {
 
       return { error };
     } catch (error) {
-      console.error('Error completing goal:', error);
+      logger.error('Error completing goal', error);
       return { error };
     }
   },
@@ -228,7 +229,7 @@ export const weightHistoryService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error adding achievement:', error);
+      logger.error('Error adding achievement', error);
       return { data: null, error };
     }
   },
@@ -251,7 +252,7 @@ export const weightHistoryService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error getting achievements:', error);
+      logger.error('Error getting achievements', error);
       return { data: null, error };
     }
   }

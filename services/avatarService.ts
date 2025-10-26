@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import logger from '../utils/logger';
 
 export const avatarService = {
   /**
@@ -50,7 +51,7 @@ export const avatarService = {
 
       return { url: publicUrl, error: null };
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      logger.error('Error uploading avatar', error);
       return { url: null, error };
     }
   },
@@ -91,7 +92,7 @@ export const avatarService = {
 
       return { error };
     } catch (error) {
-      console.error('Error deleting avatar:', error);
+      logger.error('Error deleting avatar', error);
       return { error };
     }
   }

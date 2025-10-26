@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import logger from '../../utils/logger';
 
 interface SignUpProps {
   onSwitchToLogin: () => void;
@@ -37,7 +38,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onSwitchToLogin }) => {
       const { error } = await signUp(email, password, fullName);
 
       if (error) {
-        console.error('SignUp error:', error);
+        logger.error('SignUp error', error);
         if (error.message?.includes('fetch')) {
           setError('Erro de conexão com o servidor. Verifique se o Supabase está configurado corretamente.');
         } else {
@@ -52,7 +53,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onSwitchToLogin }) => {
         setConfirmPassword('');
       }
     } catch (err: any) {
-      console.error('SignUp catch error:', err);
+      logger.error('SignUp catch error', err);
       if (err?.message?.includes('fetch')) {
         setError('Erro de conexão. Verifique: 1) Supabase URL está correta 2) Email provider está habilitado no Supabase 3) Sua conexão com internet');
       } else {

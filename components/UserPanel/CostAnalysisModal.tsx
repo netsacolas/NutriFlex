@@ -9,6 +9,10 @@ import React, { useState, useEffect } from 'react';
 import {
   getUserCostAnalysis,
   getRequestHistory,
+  getAllUsersCostAnalysis,
+  getAdminRequestHistory,
+  getAllUsers,
+  isAdmin,
   formatUSD,
   formatBRL,
   formatDateTime,
@@ -19,6 +23,7 @@ import {
   type CostAnalysis,
   type RequestRecord,
   type RequestHistoryFilters,
+  type UserInfo,
 } from '../../services/costAnalysisService';
 
 interface CostAnalysisModalProps {
@@ -36,11 +41,33 @@ const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }
   const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState<1 | 7 | 30 | 90>(30);
 
+  // Admin states
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('all');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+
   // Filtros do extrato
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'cost_desc' | 'cost_asc'>('date_desc');
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 20;
+
+  // Verificar se é admin e carregar usuários
+  useEffect(() => {
+    if (isOpen) {
+      async function checkAdminAndLoadUsers() {
+        const adminStatus = await isAdmin();
+        setIsUserAdmin(adminStatus);
+
+        if (adminStatus) {
+          const userList = await getAllUsers();
+          setUsers(userList);
+        }
+      }
+      checkAdminAndLoadUsers();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -49,18 +76,23 @@ const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }
         loadHistory();
       }
     }
-  }, [isOpen, period]);
+  }, [isOpen, period, selectedUserId]);
 
   useEffect(() => {
     if (isOpen && activeTab === 'history') {
       loadHistory();
     }
-  }, [activeTab, filterType, sortBy, currentPage]);
+  }, [activeTab, filterType, sortBy, currentPage, selectedUserId]);
 
   const loadAnalysis = async () => {
     setIsLoading(true);
     try {
-      const data = await getUserCostAnalysis(period);
+      let data;
+      if (isUserAdmin) {
+        data = await getAllUsersCostAnalysis(period, selectedUserId);
+      } else {
+        data = await getUserCostAnalysis(period);
+      }
       setAnalysis(data);
     } catch (error) {
       console.error('Error loading cost analysis:', error);
@@ -83,9 +115,16 @@ const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }
         sortBy,
         limit: recordsPerPage,
         offset: (currentPage - 1) * recordsPerPage,
+        userId: isUserAdmin ? selectedUserId : undefined,
       };
 
-      const data = await getRequestHistory(filters);
+      let data;
+      if (isUserAdmin) {
+        data = await getAdminRequestHistory(filters);
+      } else {
+        data = await getRequestHistory(filters);
+      }
+
       if (data) {
         setHistory(data.records);
         setTotalRecords(data.total);
@@ -191,6 +230,63 @@ const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }
             </button>
           </div>
         </div>
+
+        {/* Filtro de Usuário (apenas para admin) */}
+        {isUserAdmin && (
+          <div className="p-4 border-b border-hover-bg flex-shrink-0">
+            <div className="flex flex-col gap-3">
+              <label className="text-sm font-semibold text-text-primary">
+                👥 Filtrar por Usuário
+              </label>
+              <div className="flex gap-3 items-center">
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="flex-1 bg-secondary-bg text-text-primary border border-border-color rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="all">📊 Todos os Usuários</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.full_name || user.email}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="🔍 Buscar usuário..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  className="flex-1 bg-secondary-bg text-text-primary border border-border-color rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              {userSearchTerm && (
+                <div className="bg-secondary-bg rounded-lg border border-border-color max-h-48 overflow-y-auto">
+                  {users
+                    .filter(
+                      (user) =>
+                        user.full_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                        user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
+                    )
+                    .map((user) => (
+                      <button
+                        key={user.id}
+                        onClick={() => {
+                          setSelectedUserId(user.id);
+                          setUserSearchTerm('');
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-hover-bg transition-colors border-b border-border-color last:border-b-0"
+                      >
+                        <div className="font-medium text-text-primary">
+                          {user.full_name || 'Sem nome'}
+                        </div>
+                        <div className="text-xs text-text-muted">{user.email}</div>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto">

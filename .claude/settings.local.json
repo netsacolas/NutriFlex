@@ -18,7 +18,16 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(del componentsUserPanelHealthModal.tsx)",
-      "Bash(timeout /t 5 /nobreak)"
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git log:*)",
+      "Bash(npm audit:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(dir:*)",
+      "Bash(npx supabase:*)",
+      "Bash(copy migrations005_add_gemini_requests_table.sql supabasemigrations005_add_gemini_requests_table.sql)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

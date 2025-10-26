@@ -72,6 +72,13 @@ export interface RequestHistoryFilters {
   sortBy?: 'date_desc' | 'date_asc' | 'cost_desc' | 'cost_asc';
   limit?: number;
   offset?: number;
+  userId?: string; // Para admin filtrar por usuário específico
+}
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  full_name: string | null;
 }
 
 /**
@@ -381,4 +388,275 @@ export function formatTime(dateString: string): string {
     minute: '2-digit',
     second: '2-digit',
   }).format(date);
+}
+
+/**
+ * Email do administrador do sistema
+ */
+const ADMIN_EMAIL = 'mariocromia@gmail.com';
+
+/**
+ * Verifica se o usuário atual é administrador
+ */
+export async function isAdmin(): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return false;
+    }
+
+    return user.email === ADMIN_EMAIL;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+}
+
+/**
+ * Busca todos os usuários do sistema (apenas para admin)
+ */
+export async function getAllUsers(): Promise<UserInfo[]> {
+  try {
+    const admin = await isAdmin();
+    if (!admin) {
+      throw new Error('Unauthorized: Admin access required');
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .order('full_name', { ascending: true });
+
+    if (error) throw error;
+
+    // Buscar emails da tabela auth.users via RPC ou juntar com dados que temos
+    // Por enquanto vamos buscar dados do auth
+    const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
+
+    if (authError) {
+      // Se não tiver permissão admin, usar apenas profiles
+      return data?.map(profile => ({
+        id: profile.id,
+        email: profile.id, // Fallback
+        full_name: profile.full_name,
+      })) || [];
+    }
+
+    // Combinar dados de profiles com emails
+    const userMap = new Map(users.map(u => [u.id, u.email || '']));
+
+    return data?.map(profile => ({
+      id: profile.id,
+      email: userMap.get(profile.id) || profile.id,
+      full_name: profile.full_name,
+    })) || [];
+  } catch (error) {
+    console.error('Error getting all users:', error);
+    return [];
+  }
+}
+
+/**
+ * Busca análise de custos de todos os usuários (apenas para admin)
+ */
+export async function getAllUsersCostAnalysis(
+  periodDays: number = 30,
+  userId?: string
+): Promise<CostAnalysis | null> {
+  try {
+    const admin = await isAdmin();
+    if (!admin) {
+      throw new Error('Unauthorized: Admin access required');
+    }
+
+    // Período de análise
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - periodDays);
+
+    // Construir query base
+    let query = supabase
+      .from('gemini_requests')
+      .select('request_type, created_at, user_id')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
+
+    // Se userId fornecido, filtrar por usuário específico
+    if (userId && userId !== 'all') {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data: requests, error } = await query;
+
+    if (error) throw error;
+
+    if (!requests || requests.length === 0) {
+      return {
+        totalRequests: 0,
+        breakdown: [],
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalCost: 0,
+        costInBRL: 0,
+        period: {
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+        },
+      };
+    }
+
+    // Agrupar por tipo de requisição
+    const grouped = requests.reduce((acc, req) => {
+      const type = req.request_type || 'unknown';
+      if (!acc[type]) {
+        acc[type] = 0;
+      }
+      acc[type]++;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Calcular breakdown por tipo
+    const breakdown: CostBreakdown[] = Object.entries(grouped).map(([type, count]) => {
+      const estimate = TOKEN_ESTIMATES[type as keyof typeof TOKEN_ESTIMATES] || {
+        input: 500,
+        output: 300,
+      };
+
+      const totalInputTokens = estimate.input * count;
+      const totalOutputTokens = estimate.output * count;
+
+      const inputCost = (totalInputTokens / 1_000_000) * PRICING.INPUT_PER_MILLION;
+      const outputCost = (totalOutputTokens / 1_000_000) * PRICING.OUTPUT_PER_MILLION;
+
+      return {
+        requestType: type,
+        count,
+        estimatedInputTokens: totalInputTokens,
+        estimatedOutputTokens: totalOutputTokens,
+        inputCost,
+        outputCost,
+        totalCost: inputCost + outputCost,
+      };
+    });
+
+    // Totais
+    const totalInputTokens = breakdown.reduce((sum, b) => sum + b.estimatedInputTokens, 0);
+    const totalOutputTokens = breakdown.reduce((sum, b) => sum + b.estimatedOutputTokens, 0);
+    const totalCost = breakdown.reduce((sum, b) => sum + b.totalCost, 0);
+
+    // Conversão aproximada USD -> BRL (taxa 5.0)
+    const USD_TO_BRL = 5.0;
+    const costInBRL = totalCost * USD_TO_BRL;
+
+    return {
+      totalRequests: requests.length,
+      breakdown,
+      totalInputTokens,
+      totalOutputTokens,
+      totalCost,
+      costInBRL,
+      period: {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+      },
+    };
+  } catch (error) {
+    console.error('Error getting all users cost analysis:', error);
+    return null;
+  }
+}
+
+/**
+ * Busca histórico detalhado de requisições com filtros (com suporte admin)
+ */
+export async function getAdminRequestHistory(
+  filters: RequestHistoryFilters = {}
+): Promise<{ records: RequestRecord[]; total: number } | null> {
+  try {
+    const admin = await isAdmin();
+    if (!admin) {
+      throw new Error('Unauthorized: Admin access required');
+    }
+
+    // Construir query base
+    let query = supabase
+      .from('gemini_requests')
+      .select('id, user_id, request_type, created_at', { count: 'exact' });
+
+    // Se userId fornecido e não for 'all', filtrar por usuário
+    if (filters.userId && filters.userId !== 'all') {
+      query = query.eq('user_id', filters.userId);
+    }
+
+    // Aplicar filtro de tipo
+    if (filters.requestType && filters.requestType !== 'all') {
+      query = query.eq('request_type', filters.requestType);
+    }
+
+    // Aplicar filtro de data
+    if (filters.startDate) {
+      query = query.gte('created_at', filters.startDate.toISOString());
+    }
+    if (filters.endDate) {
+      query = query.lte('created_at', filters.endDate.toISOString());
+    }
+
+    // Aplicar ordenação
+    const sortBy = filters.sortBy || 'date_desc';
+    if (sortBy === 'date_desc') {
+      query = query.order('created_at', { ascending: false });
+    } else if (sortBy === 'date_asc') {
+      query = query.order('created_at', { ascending: true });
+    }
+
+    // Aplicar paginação
+    const limit = filters.limit || 50;
+    const offset = filters.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: requests, error, count } = await query;
+
+    if (error) throw error;
+
+    if (!requests) {
+      return { records: [], total: 0 };
+    }
+
+    // Processar cada requisição para calcular custos estimados
+    const records: RequestRecord[] = requests.map((req) => {
+      const estimate = TOKEN_ESTIMATES[req.request_type as keyof typeof TOKEN_ESTIMATES] || {
+        input: 500,
+        output: 300,
+      };
+
+      const inputCost = (estimate.input / 1_000_000) * PRICING.INPUT_PER_MILLION;
+      const outputCost = (estimate.output / 1_000_000) * PRICING.OUTPUT_PER_MILLION;
+
+      return {
+        id: req.id,
+        user_id: req.user_id,
+        request_type: req.request_type,
+        created_at: req.created_at,
+        estimatedInputTokens: estimate.input,
+        estimatedOutputTokens: estimate.output,
+        estimatedCost: inputCost + outputCost,
+      };
+    });
+
+    // Ordenar por custo se necessário (no frontend)
+    if (sortBy === 'cost_desc') {
+      records.sort((a, b) => b.estimatedCost - a.estimatedCost);
+    } else if (sortBy === 'cost_asc') {
+      records.sort((a, b) => a.estimatedCost - b.estimatedCost);
+    }
+
+    return {
+      records,
+      total: count || 0,
+    };
+  } catch (error) {
+    console.error('Error getting admin request history:', error);
+    return null;
+  }
 }

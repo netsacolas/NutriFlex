@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { nutritionChatService, ChatMessage, UserContext } from '../../services/nutritionChatService';
+import logger from '../../utils/logger';
 
 interface Props {
   context: UserContext;
@@ -52,7 +53,7 @@ export const NutritionChat: React.FC<Props> = ({ context, onClose }) => {
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
+      logger.error('Chat error', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Desculpe, ocorreu um erro. Tente novamente.',

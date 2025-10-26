@@ -3,6 +3,7 @@ import type { MealType, UserProfile } from '../types';
 import { PizzaIcon, TargetIcon, XIcon, ZapIcon, LoaderIcon, StarIcon } from './icons';
 import { searchFoods } from '../data/foodDatabase';
 import { profileService } from '../services/profileService';
+import logger from '../utils/logger';
 
 interface MealPlannerProps {
     onCalculate: (foods: string[], targetCalories: number, mealType: MealType) => void;
@@ -26,7 +27,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
             const savedFavorites = localStorage.getItem('favoriteFoods');
             return savedFavorites ? JSON.parse(savedFavorites) : [];
         } catch (error) {
-            console.error("Failed to parse favorite foods from localStorage", error);
+            logger.error("Failed to parse favorite foods from localStorage", error);
             return [];
         }
     });
@@ -38,13 +39,13 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
     // Carregar perfil do usuário ao montar o componente
     useEffect(() => {
         const loadProfile = async () => {
-            console.log('🔍 Carregando perfil do usuário...');
+            logger.debug('Loading user profile');
             const { data, error } = await profileService.getProfile();
             if (data) {
-                console.log('✅ Perfil carregado:', data);
+                logger.debug('User profile loaded successfully');
                 setProfile(data);
             } else if (error) {
-                console.error('❌ Erro ao carregar perfil:', error);
+                logger.error('Failed to load user profile', error);
             }
         };
         loadProfile();
@@ -60,10 +61,10 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({ onCalculate, isLoading
                 snack: profile.snack_calories || 200,
             };
             const newCalories = calorieMap[mealType];
-            console.log(`🍽️ Atualizando calorias para ${mealType}:`, newCalories);
+            logger.debug(`Updating calories for ${mealType}: ${newCalories}`);
             setTargetCalories(newCalories);
         } else {
-            console.log('⚠️ Perfil não carregado ainda, usando valores padrão');
+            logger.debug('Profile not loaded yet, using default values');
         }
     }, [mealType, profile]);
 

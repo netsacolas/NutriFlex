@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { profileService } from '../../services/profileService';
 import { authService } from '../../services/authService';
 import type { UserProfile } from '../../types';
+import logger from '../../utils/logger';
 
 export const UserPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { user } = useAuth();
@@ -54,7 +55,7 @@ export const UserPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setFullName(data.full_name || '');
       setPhone(formatPhone(data.phone || ''));
     } else if (error) {
-      console.error('Profile load error:', error);
+      logger.error('Profile load error', error);
       // Mensagem específica se a tabela não existe
       if (error.code === 'TABLE_NOT_FOUND') {
         setError('⚠️ Tabela de perfis não encontrada. Você precisa executar a migration SQL no Supabase. Veja o arquivo supabase/migrations/001_create_profiles_table.sql');

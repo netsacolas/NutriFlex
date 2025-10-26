@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { MealConsumption, MealResult, MealType } from '../types';
+import logger from '../utils/logger';
 
 export const mealConsumptionService = {
   /**
@@ -38,7 +39,7 @@ export const mealConsumptionService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error saving meal consumption:', error);
+      logger.error('Error saving meal consumption', error);
       return { data: null, error };
     }
   },
@@ -65,7 +66,7 @@ export const mealConsumptionService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error getting meal history:', error);
+      logger.error('Error getting meal history', error);
       return { data: null, error };
     }
   },
@@ -96,7 +97,7 @@ export const mealConsumptionService = {
 
       return { data, error };
     } catch (error) {
-      console.error('Error getting meals by date:', error);
+      logger.error('Error getting meals by date', error);
       return { data: null, error };
     }
   },
@@ -113,7 +114,7 @@ export const mealConsumptionService = {
 
       return { error };
     } catch (error) {
-      console.error('Error deleting meal:', error);
+      logger.error('Error deleting meal', error);
       return { error };
     }
   },
@@ -151,7 +152,7 @@ export const mealConsumptionService = {
         avgFat: totalFat / totalMeals
       };
     } catch (error) {
-      console.error('Error getting period stats:', error);
+      logger.error('Error getting period stats', error);
       return null;
     }
   }
