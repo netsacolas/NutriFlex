@@ -415,7 +415,7 @@ export async function isAdmin(): Promise<boolean> {
 
 /**
  * Busca todos os usuários do sistema (apenas para admin)
- * Busca direto de gemini_requests para garantir que todos os usuários com requests apareçam
+ * Busca direto de gemini_requests usando o campo user_email
  */
 export async function getAllUsers(): Promise<UserInfo[]> {
   try {
@@ -424,16 +424,25 @@ export async function getAllUsers(): Promise<UserInfo[]> {
       throw new Error('Unauthorized: Admin access required');
     }
 
-    // Buscar todos os user_ids únicos que fizeram requisições
+    // Buscar todos os user_ids e emails únicos que fizeram requisições
     const { data: requestUsers, error: requestError } = await supabase
       .from('gemini_requests')
-      .select('user_id')
-      .order('user_id');
+      .select('user_id, user_email')
+      .not('user_email', 'is', null)
+      .order('user_email');
 
     if (requestError) throw requestError;
 
+    // Criar map de user_id -> email (pegar o mais recente)
+    const userEmailMap = new Map<string, string>();
+    requestUsers?.forEach(r => {
+      if (r.user_email) {
+        userEmailMap.set(r.user_id, r.user_email);
+      }
+    });
+
     // Obter IDs únicos
-    const uniqueUserIds = [...new Set(requestUsers?.map(r => r.user_id) || [])];
+    const uniqueUserIds = Array.from(userEmailMap.keys());
 
     // Buscar dados de profiles para esses usuários
     const { data: profiles, error: profileError } = await supabase
@@ -448,21 +457,10 @@ export async function getAllUsers(): Promise<UserInfo[]> {
     // Criar map de profiles
     const profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
 
-    // Tentar buscar emails via auth (pode falhar sem permissão admin)
-    let emailMap = new Map<string, string>();
-    try {
-      const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
-      if (!authError && users) {
-        emailMap = new Map(users.map(u => [u.id, u.email || '']));
-      }
-    } catch (authErr) {
-      console.warn('Could not fetch auth users:', authErr);
-    }
-
     // Combinar todos os dados
     const userList: UserInfo[] = uniqueUserIds.map(userId => ({
       id: userId,
-      email: emailMap.get(userId) || userId,
+      email: userEmailMap.get(userId) || userId,
       full_name: profileMap.get(userId) || null,
     }));
 
@@ -477,15 +475,19 @@ export async function getAllUsers(): Promise<UserInfo[]> {
 }
 
 /**
- * Busca ID do usuário por email
+ * Busca ID do usuário por email direto de gemini_requests
  */
 async function getUserIdByEmail(email: string): Promise<string | null> {
   try {
-    const { data: { users }, error } = await supabase.auth.admin.listUsers();
-    if (error || !users) return null;
+    const { data, error } = await supabase
+      .from('gemini_requests')
+      .select('user_id')
+      .eq('user_email', email)
+      .limit(1)
+      .single();
 
-    const user = users.find(u => u.email === email);
-    return user?.id || null;
+    if (error || !data) return null;
+    return data.user_id;
   } catch (error) {
     console.error('Error getting user ID by email:', error);
     return null;

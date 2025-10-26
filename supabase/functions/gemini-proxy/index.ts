@@ -256,9 +256,10 @@ Retorne a resposta em JSON neste formato exato:
       geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
     const result = JSON.parse(responseText);
 
-    // 5. REGISTRAR REQUISIÇÃO (para rate limiting)
+    // 5. REGISTRAR REQUISIÇÃO (para rate limiting e custos)
     await supabaseClient.from('gemini_requests').insert({
       user_id: user.id,
+      user_email: user.email,
       request_type: 'meal_calculation',
       created_at: new Date().toISOString(),
     });

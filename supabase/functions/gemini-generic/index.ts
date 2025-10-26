@@ -127,6 +127,7 @@ serve(async (req) => {
     // 4. REGISTRAR REQUISIÇÃO (para rastreamento de custos)
     await supabaseClient.from('gemini_requests').insert({
       user_id: user.id,
+      user_email: user.email,
       request_type: requestBody.type,
       created_at: new Date().toISOString(),
     });
