@@ -7,7 +7,8 @@ import {
   ClipboardDocumentListIcon,
   CalendarDaysIcon,
   HeartIcon,
-  UserIcon
+  UserIcon,
+  WaterDropIcon
 } from './Icons';
 import type { UserProfile } from '../../types';
 
@@ -63,6 +64,11 @@ const Sidebar: React.FC = () => {
       path: '/plan',
       label: 'Planejar',
       icon: ClipboardDocumentListIcon
+    },
+    {
+      path: '/hydration',
+      label: 'Hidratação',
+      icon: WaterDropIcon
     },
     {
       path: '/history',

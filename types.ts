@@ -143,3 +143,53 @@ export interface PhysicalActivity {
     notes: string | null;
     created_at: string;
 }
+
+// Hydration types
+export interface HydrationSettings {
+    id: string;
+    user_id: string;
+    daily_goal_ml: number; // calculado ou ajustado pelo usuário
+    wake_time: string; // formato HH:mm
+    sleep_time: string; // formato HH:mm
+    intake_size_ml: number; // tamanho de cada ingestão (ex: 250ml, 300ml)
+    notifications_enabled: boolean;
+    sound_enabled: boolean;
+    vibration_enabled: boolean;
+    unit: 'ml' | 'liters';
+    language: string;
+    silent_start: string | null; // HH:mm
+    silent_end: string | null; // HH:mm
+    created_at: string;
+    updated_at: string;
+}
+
+export interface HydrationIntake {
+    id: string;
+    user_id: string;
+    amount_ml: number;
+    scheduled_time: string;
+    actual_time: string | null;
+    completed: boolean;
+    snoozed: boolean;
+    snooze_count: number;
+    date: string;
+    created_at: string;
+}
+
+export interface HydrationReminder {
+    id: string;
+    time: string;
+    amount_ml: number;
+    completed: boolean;
+    snoozed: boolean;
+}
+
+export interface HydrationProgress {
+    date: string;
+    consumed_ml: number;
+    goal_ml: number;
+    percentage: number;
+    intakes_completed: number;
+    intakes_total: number;
+    streak_days: number;
+}

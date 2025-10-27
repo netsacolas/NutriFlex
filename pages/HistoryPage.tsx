@@ -10,11 +10,13 @@ import {
   FireIcon,
   ChartBarIcon,
   ScaleIcon,
-  TrashIcon
+  TrashIcon,
+  WaterDropIcon
 } from '../components/Layout/Icons';
+import { HydrationHistory } from '../components/HydrationHistory';
 import type { MealHistory, PhysicalActivity, WeightHistory } from '../types';
 
-type TabType = 'meals' | 'activities' | 'weight';
+type TabType = 'meals' | 'activities' | 'weight' | 'hydration';
 type FilterType = 'today' | 'week' | 'month' | 'all';
 
 const HistoryPage: React.FC = () => {
@@ -183,6 +185,7 @@ const HistoryPage: React.FC = () => {
   const tabs = [
     { id: 'meals' as TabType, label: 'Refeições', icon: '🍽️', count: meals.length },
     { id: 'activities' as TabType, label: 'Atividades', icon: '🏃', count: activities.length },
+    { id: 'hydration' as TabType, label: 'Hidratação', icon: '💧', count: 0 },
     { id: 'weight' as TabType, label: 'Peso', icon: '⚖️', count: weights.length }
   ];
 
@@ -407,6 +410,11 @@ const HistoryPage: React.FC = () => {
               </div>
             )}
           </div>
+        )}
+
+        {/* Hydration Tab */}
+        {activeTab === 'hydration' && (
+          <HydrationHistory filter={filter} onDelete={loadData} />
         )}
 
         {/* Weight Tab */}

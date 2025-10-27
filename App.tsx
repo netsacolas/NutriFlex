@@ -18,6 +18,7 @@ import HealthPage from './pages/HealthPage';
 import ProfilePage from './pages/ProfilePage';
 import ChatPage from './pages/ChatPage';
 import OnboardingPage from './pages/OnboardingPage';
+import HydrationPage from './pages/HydrationPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -109,6 +110,14 @@ const AppRouter: React.FC = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="hydration"
+          element={
+            <ProtectedRoute>
+              <HydrationPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -121,11 +130,16 @@ const AppRouter: React.FC = () => {
 const App: React.FC = () => {
   console.log("App component starting...");
 
-  // Initialize PWA and background sync
+  // Initialize PWA, background sync and hydration notifications
   useEffect(() => {
     console.log('🚀 Initializing PWA...');
     try {
       initBackgroundSync();
+
+      // Inicializa notificações de hidratação
+      import('./utils/hydrationNotifications').then(module => {
+        module.initializeHydrationNotifications();
+      });
     } catch (error) {
       console.error("Error initializing background sync:", error);
     }

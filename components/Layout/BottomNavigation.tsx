@@ -5,7 +5,8 @@ import {
   ClipboardDocumentListIcon,
   CalendarDaysIcon,
   HeartIcon,
-  UserIcon
+  UserIcon,
+  WaterDropIcon
 } from './Icons';
 
 interface NavItem {
@@ -29,9 +30,9 @@ const BottomNavigation: React.FC = () => {
       icon: <ClipboardDocumentListIcon className="w-6 h-6" />
     },
     {
-      path: '/history',
-      label: 'Histórico',
-      icon: <CalendarDaysIcon className="w-6 h-6" />
+      path: '/hydration',
+      label: 'Água',
+      icon: <WaterDropIcon className="w-6 h-6" />
     },
     {
       path: '/health',
