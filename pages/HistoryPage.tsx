@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { profileService } from '../services/profileService';
 import { mealHistoryService } from '../services/mealHistoryService';
 import { physicalActivityService } from '../services/physicalActivityService';
 import { weightHistoryService } from '../services/weightHistoryService';
@@ -51,6 +52,18 @@ const HistoryPage: React.FC = () => {
       if (!session) {
         navigate('/login');
         return;
+      }
+
+      // Verificar se dados obrigatórios estão preenchidos
+      const { data: userProfile } = await profileService.getProfile();
+      if (userProfile) {
+        const hasRequiredData = userProfile.weight && userProfile.height && userProfile.age && userProfile.gender;
+
+        if (!hasRequiredData) {
+          // Redirecionar para onboarding
+          navigate('/onboarding');
+          return;
+        }
       }
 
       const userId = session.user.id;

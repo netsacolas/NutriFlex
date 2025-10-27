@@ -5,13 +5,14 @@ import { profileService } from '../services/profileService';
 import { mealHistoryService } from '../services/mealHistoryService';
 import { weightHistoryService } from '../services/weightHistoryService';
 import { physicalActivityService } from '../services/physicalActivityService';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { nutritionChatService } from '../services/nutritionChatService';
+import logger from '../utils/logger';
 import {
   ChatBubbleBottomCenterTextIcon,
   SparklesIcon,
   ArrowRightIcon
 } from '../components/Layout/Icons';
-import type { UserProfile, MealHistory, WeightHistory } from '../types';
+import type { UserProfile, MealHistory, WeightHistory, MealResult } from '../types';
 
 interface ChatMessage {
   id: string;
@@ -36,6 +37,28 @@ const ChatPage: React.FC = () => {
   const [recentMeals, setRecentMeals] = useState<MealHistory[]>([]);
   const [weightHistory, setWeightHistory] = useState<WeightHistory[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
+
+  const mapMealHistoryToResult = (meal: MealHistory): MealResult => ({
+    totalCalories: meal.total_calories ?? 0,
+    totalMacros: {
+      protein: meal.total_protein ?? 0,
+      carbs: meal.total_carbs ?? 0,
+      fat: meal.total_fat ?? 0,
+      fiber: meal.total_fiber ?? 0,
+    },
+    glycemicData: {
+      index: meal.glycemic_index ?? 0,
+      load: meal.glycemic_load ?? 0,
+    },
+    portions: meal.portions ?? [],
+    suggestions: [],
+  });
+
+  const buildServiceContext = () => ({
+    profile,
+    weightHistory,
+    recentMeals: recentMeals.slice(0, 20).map(mapMealHistoryToResult),
+  });
 
   useEffect(() => {
     initializeChat();
@@ -105,6 +128,17 @@ const ChatPage: React.FC = () => {
         weights: weightsResult.data?.length || 0,
         activities: activitiesResult.data?.length || 0
       });
+
+      // Verificar se dados obrigatórios estão preenchidos
+      if (profileResult.data) {
+        const hasRequiredData = profileResult.data.weight && profileResult.data.height && profileResult.data.age && profileResult.data.gender;
+
+        if (!hasRequiredData) {
+          // Redirecionar para onboarding
+          navigate('/onboarding');
+          return;
+        }
+      }
 
       setProfile(profileResult.data);
 
@@ -451,40 +485,17 @@ INSTRUÇÕES PARA RESPOSTA:
     }, 100);
 
     try {
-      const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-      if (!API_KEY) {
-        throw new Error('API Key não configurada');
-      }
-
-      const genAI = new GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.8,
-          maxOutputTokens: 2048,
-        }
-      });
-
-      // Construir contexto do usuário
-      const contextPrompt = buildContextPrompt();
-      const fullPrompt = `${contextPrompt}\n\nPergunta do usuário: ${userQuestion}`;
-
-      console.log('📤 Enviando para Gemini:', {
+      logger.debug('📤 Enviando para assistente nutricional:', {
         question: userQuestion,
-        contextLength: contextPrompt.length,
         hasProfile: !!profile,
         hasMeals: recentMeals.length,
-        hasWeights: weightHistory.length,
-        hasActivities: recentActivities.length
+        hasWeights: weightHistory.length
       });
 
-      const result = await model.generateContent(fullPrompt);
-      const response = result.response;
-      const responseText = response.text();
+      const context = buildServiceContext();
+      const responseText = await nutritionChatService.sendMessage(userQuestion, context);
 
-      console.log('Resposta recebida do Gemini');
+      logger.debug('✅ Resposta recebida do assistente');
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),

@@ -10,12 +10,14 @@ import MainLayout from './components/Layout/MainLayout';
 // Pages
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 import HomePage from './pages/HomePage';
 import PlanMealPage from './pages/PlanMealPage';
 import HistoryPage from './pages/HistoryPage';
 import HealthPage from './pages/HealthPage';
 import ProfilePage from './pages/ProfilePage';
 import ChatPage from './pages/ChatPage';
+import OnboardingPage from './pages/OnboardingPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -48,6 +50,7 @@ const AppRouter: React.FC = () => {
         <Route index element={<LandingPage />} />
         <Route path="login" element={<AuthPage />} />
         <Route path="register" element={<AuthPage />} />
+        <Route path="auth/callback" element={<AuthCallbackPage />} />
 
         {/* Protected Routes */}
         <Route
@@ -95,6 +98,14 @@ const AppRouter: React.FC = () => {
           element={
             <ProtectedRoute>
               <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="onboarding"
+          element={
+            <ProtectedRoute>
+              <OnboardingPage />
             </ProtectedRoute>
           }
         />

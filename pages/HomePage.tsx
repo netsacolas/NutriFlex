@@ -60,6 +60,18 @@ const HomePage: React.FC = () => {
       const { data: userProfile } = await profileService.getProfile();
       setProfile(userProfile);
 
+      // IMPORTANTE: Verificar sempre se dados obrigatórios estão preenchidos
+      // Se não estiver, redirecionar para onboarding independente do localStorage
+      if (userProfile) {
+        const hasRequiredData = userProfile.weight && userProfile.height && userProfile.age && userProfile.gender;
+
+        if (!hasRequiredData) {
+          // Dados obrigatórios não preenchidos - redirecionar para onboarding
+          navigate('/onboarding');
+          return;
+        }
+      }
+
       // Load today's meals
       const today = new Date().toISOString().split('T')[0];
       const mealsResult = await mealHistoryService.getUserMealHistory(session.user.id);
@@ -106,8 +118,14 @@ const HomePage: React.FC = () => {
 
   const getDailyCalorieGoal = () => {
     if (!profile) return 2000;
-    const { breakfast_calories = 0, lunch_calories = 0, dinner_calories = 0, snack_calories = 0 } = profile;
-    return breakfast_calories + lunch_calories + dinner_calories + snack_calories;
+    const {
+      breakfast_calories = 0,
+      lunch_calories = 0,
+      dinner_calories = 0,
+      snack_calories = 0,
+      snack_quantity = 1
+    } = profile;
+    return breakfast_calories + lunch_calories + dinner_calories + (snack_calories * snack_quantity);
   };
 
   const getCalorieProgress = () => {

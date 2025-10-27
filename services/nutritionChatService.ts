@@ -1,7 +1,6 @@
 import type { UserProfile, WeightEntry, MealResult } from '../types';
 import logger from '../utils/logger';
 import { supabase } from './supabaseClient';
-import { geminiDirectService } from './geminiDirectService';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -232,32 +231,33 @@ Lembre-se: Você está aqui para ajudar o usuário a ter uma relação mais saud
             }),
           });
 
-          if (response.ok) {
-            const data = await response.json();
-            logger.debug('Resposta recebida da Edge Function');
-            return data.response?.trim() || 'Desculpe, não consegui gerar uma resposta.';
-          } else {
-            logger.warn('Edge Function falhou, tentando fallback', { status: response.status });
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            logger.warn('Edge Function falhou', {
+              status: response.status,
+              error: errorData,
+            });
+
+            if (response.status === 429 || errorData?.error?.includes('Rate limit')) {
+              return 'Você atingiu o limite de uso do assistente. Tente novamente em instantes.';
+            }
+
+            if (response.status === 401) {
+              return 'Sua sessão expirou. Faça login novamente para continuar.';
+            }
+
+            throw new Error(errorData?.error || 'Falha ao se comunicar com a Edge Function.');
           }
+
+          const data = await response.json();
+          logger.debug('Resposta recebida da Edge Function');
+          return data.response?.trim() || 'Desculpe, não consegui gerar uma resposta.';
         } catch (edgeError) {
-          logger.warn('Edge Function erro, tentando fallback', edgeError);
+          logger.warn('Erro ao chamar Edge Function', edgeError);
         }
       }
 
-      // Fallback: Tentar usar o serviço direto do Gemini se disponível
-      if (geminiDirectService.isAvailable()) {
-        logger.debug('Usando Gemini Direct Service como fallback');
-        const response = await geminiDirectService.sendMessage(
-          fullPrompt,
-          systemInstruction,
-          0.9,
-          800
-        );
-        return response.trim() || 'Desculpe, não consegui gerar uma resposta.';
-      }
-
-      // Se nenhum serviço estiver disponível
-      throw new Error('Nenhum serviço de IA disponível. Configure a GEMINI_API_KEY no arquivo .env.local');
+      throw new Error('Não foi possível obter resposta da IA. Tente novamente em instantes.');
     } catch (error: any) {
       logger.error('Error in nutrition chat', error);
 

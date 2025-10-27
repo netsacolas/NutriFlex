@@ -1,32 +1,75 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { SparklesIcon } from '../components/Layout/Icons';
+import { z } from 'zod';
+import { signInSchema, validateData } from '../utils/validation';
 
 type AuthMode = 'login' | 'register';
 
+const signUpFormSchema = z.object({
+  fullName: z
+    .string()
+    .min(3, 'O nome deve ter pelo menos 3 caracteres.')
+    .max(100, 'Nome muito longo.'),
+  email: z.string().email('Informe um email válido.').trim(),
+  password: z
+    .string()
+    .min(6, 'A senha deve ter pelo menos 6 caracteres.')
+    .max(100, 'Senha muito longa.'),
+  confirmPassword: z
+    .string()
+    .min(6, 'Confirme sua senha.'),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: 'Você precisa aceitar os termos de uso e a política de privacidade.' }),
+  }),
+}).refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: 'As senhas não coincidem.',
+    path: ['confirmPassword'],
+  }
+);
+
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Detectar se veio da rota /register
+  useEffect(() => {
+    if (location.pathname === '/register') {
+      setMode('register');
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    if (mode === 'register' && password !== confirmPassword) {
-      setError('As senhas não coincidem');
-      return;
-    }
+    const trimmedEmail = email.trim();
+    const trimmedFullName = fullName.trim();
+    const validation = mode === 'login'
+      ? validateData(signInSchema, { email: trimmedEmail, password })
+      : validateData(signUpFormSchema, {
+          fullName: trimmedFullName,
+          email: trimmedEmail,
+          password,
+          confirmPassword,
+          acceptTerms,
+        });
 
-    if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres');
+    if (!validation.success) {
+      setError(validation.errors[0]);
       return;
     }
 
@@ -34,18 +77,26 @@ const AuthPage: React.FC = () => {
 
     try {
       if (mode === 'login') {
-        const result = await authService.signIn(email, password);
+        const result = await authService.signIn(trimmedEmail, password);
         if (result.error) {
-          setError(result.error.message || 'Erro ao fazer login');
+          // Traduzir mensagens de erro do Supabase para português
+          const errorMessage = result.error.message === 'Email not confirmed'
+            ? 'Email não confirmado. Verifique sua caixa de entrada.'
+            : result.error.message || 'Erro ao fazer login';
+          setError(errorMessage);
         } else {
           navigate('/home');
         }
       } else {
-        const result = await authService.signUp(email, password);
+        const result = await authService.signUp(trimmedEmail, password, trimmedFullName);
         if (result.error) {
           setError(result.error.message || 'Erro ao criar conta');
         } else {
           setSuccess('Conta criada com sucesso! Fazendo login...');
+          setFullName('');
+          setPassword('');
+          setConfirmPassword('');
+          setAcceptTerms(false);
           setTimeout(() => {
             navigate('/home');
           }, 1500);
@@ -64,8 +115,12 @@ const AuthPage: React.FC = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-3xl shadow-xl mb-4 transform hover:scale-110 transition-transform">
-              <span className="text-white text-3xl font-bold">🥗</span>
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-xl mb-4 transform hover:scale-110 transition-transform">
+              <img
+                src="/img/nutrimais_logo.png"
+                alt="NutriMais AI"
+                className="w-14 h-14 object-contain"
+              />
             </div>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -122,6 +177,23 @@ const AuthPage: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {mode === 'register' && (
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome Completo
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                  placeholder="Seu nome completo"
+                  required
+                />
+              </div>
+            )}
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -153,20 +225,38 @@ const AuthPage: React.FC = () => {
             </div>
 
             {mode === 'register' && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmar Senha
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirmar Senha
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                  <input
+                    id="acceptTerms"
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <label htmlFor="acceptTerms" className="text-sm text-gray-600 leading-relaxed">
+                    Li e aceito os{' '}
+                    <Link to="/terms" className="text-emerald-600 hover:text-emerald-500 font-medium">Termos de Uso
+                    </Link>{' '}e a{' '}
+                    <Link to="/privacy" className="text-emerald-600 hover:text-emerald-500 font-medium">Política de Privacidade
+                    </Link>.
+                  </label>
+                </div>
+              </>
             )}
 
             {mode === 'login' && (

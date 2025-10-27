@@ -44,8 +44,7 @@ const LandingPage: React.FC = () => {
             onClick={() => navigate('/login')}
             className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold hover:shadow-lg transform hover:scale-105 transition duration-300 flex-shrink-0"
           >
-            <span className="hidden sm:inline">Começar Grátis</span>
-            <span className="sm:hidden">Começar</span>
+            Entrar
           </button>
         </div>
       </header>
@@ -68,7 +67,7 @@ const LandingPage: React.FC = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/register')}
                   className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:shadow-xl transform hover:scale-105 transition duration-300 text-center w-full sm:w-auto"
                 >
                   🚀 Começar Gratuitamente
@@ -809,7 +808,7 @@ const LandingPage: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/register')}
               className="bg-white text-orange-600 px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl transform hover:scale-105 transition duration-300"
             >
               🚀 Começar Gratuitamente Agora

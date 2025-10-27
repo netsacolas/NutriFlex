@@ -18,7 +18,9 @@ export const authService = {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: 'https://nutrimais.app/confirm',
+          emailRedirectTo: 'https://nutrimais.app/auth/callback',
+          // Desabilita verificação de email obrigatória
+          // Nota: também precisa ser configurado no dashboard do Supabase
         },
       });
 

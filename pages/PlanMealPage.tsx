@@ -60,10 +60,19 @@ const PlanMealPage: React.FC = () => {
       }
 
       const { data: userProfile } = await profileService.getProfile();
-      setProfile(userProfile);
 
-      // Set default calories based on meal type
       if (userProfile) {
+        // Verificar se dados obrigatórios estão preenchidos
+        const hasRequiredData = userProfile.weight && userProfile.height && userProfile.age && userProfile.gender;
+
+        if (!hasRequiredData) {
+          // Redirecionar para onboarding
+          navigate('/onboarding');
+          return;
+        }
+
+        setProfile(userProfile);
+        // Set default calories based on meal type
         setTargetCaloriesFromProfile(mealType, userProfile);
       }
     } catch (error) {

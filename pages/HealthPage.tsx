@@ -11,7 +11,8 @@ import {
   FireIcon,
   ScaleIcon,
   PlusCircleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  SparklesIcon
 } from '../components/Layout/Icons';
 import Toast from '../components/Toast';
 import type { UserProfile } from '../types';
@@ -67,6 +68,15 @@ const HealthPage: React.FC = () => {
       setProfile(userProfile);
 
       if (userProfile) {
+        // IMPORTANTE: Verificar sempre se dados obrigatórios estão preenchidos
+        const hasRequiredData = userProfile.weight && userProfile.height && userProfile.age && userProfile.gender;
+
+        if (!hasRequiredData) {
+          // Dados obrigatórios não preenchidos - redirecionar para onboarding
+          navigate('/onboarding');
+          return;
+        }
+
         setFormData({
           weight: userProfile.weight || 0,
           height: userProfile.height || 0,
@@ -204,6 +214,13 @@ const HealthPage: React.FC = () => {
            (formData.snack_calories * formData.snack_quantity);
   };
 
+  const handleRestartTour = () => {
+    // Limpar flag de onboarding completado
+    localStorage.removeItem('onboarding_completed');
+    // Navegar para página de onboarding
+    navigate('/onboarding');
+  };
+
   const bmi = getBMI();
 
   if (isLoading) {
@@ -330,10 +347,19 @@ const HealthPage: React.FC = () => {
 
         {/* Daily Calorie Goals */}
         <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <FireIcon className="w-5 h-5 mr-2 text-orange-500" />
-            Metas de Calorias Diárias
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <FireIcon className="w-5 h-5 mr-2 text-orange-500" />
+              Metas de Calorias Diárias
+            </h2>
+            <button
+              onClick={handleRestartTour}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              <SparklesIcon className="w-4 h-4" />
+              Recalcular com IA
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

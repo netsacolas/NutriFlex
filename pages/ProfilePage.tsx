@@ -50,6 +50,15 @@ const ProfilePage: React.FC = () => {
       setProfile(userProfile);
 
       if (userProfile) {
+        // Verificar se dados obrigatórios estão preenchidos
+        const hasRequiredData = userProfile.weight && userProfile.height && userProfile.age && userProfile.gender;
+
+        if (!hasRequiredData) {
+          // Redirecionar para onboarding
+          navigate('/onboarding');
+          return;
+        }
+
         setFormData({
           full_name: userProfile.full_name || '',
           email: session.user.email || '',
