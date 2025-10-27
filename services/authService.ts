@@ -18,6 +18,7 @@ export const authService = {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: 'https://nutrimais.app/confirm',
         },
       });
 
@@ -66,7 +67,7 @@ export const authService = {
   async resetPassword(email: string): Promise<{ error: AuthError | null }> {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `https://nutrimais.app/reset-password`,
       });
       return { error };
     } catch (error) {

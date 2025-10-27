@@ -1,0 +1,29 @@
+Bem-vindo ao NutriMais AI!
+
+Olá, {{.Data.user_name}}! 🎉
+
+Seja muito bem-vindo(a) ao NutriMais AI! Estamos super felizes em ter você conosco.
+
+Você acabou de dar o primeiro passo para revolucionar sua alimentação. Com o NutriMais AI, você escolhe os alimentos que ama e nossa inteligência artificial calcula as porções perfeitas para suas metas!
+
+CONFIRME SEU EMAIL
+Para começar a usar o NutriMais AI, por favor confirme seu email clicando no link abaixo:
+
+{{.Data.confirmation_url}}
+
+O QUE VOCÊ PODE FAZER AGORA:
+
+✅ Planejar refeições: Escolha seus alimentos favoritos
+✅ Calcular porções: IA ajusta tudo automaticamente
+✅ Acompanhar progresso: Registre peso e atividades
+✅ Assistente IA: Orientação nutricional personalizada
+
+PRECISA DE AJUDA?
+Responda este email que teremos prazer em ajudar!
+
+📧 suporte@nutrimais.app
+🌐 nutrimais.app
+
+---
+© 2024 NutriMais AI. Todos os direitos reservados.
+Desenvolvido com 🧡 para transformar sua nutrição

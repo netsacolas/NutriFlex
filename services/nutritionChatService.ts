@@ -1,6 +1,7 @@
 import type { UserProfile, WeightEntry, MealResult } from '../types';
 import logger from '../utils/logger';
 import { supabase } from './supabaseClient';
+import { geminiDirectService } from './geminiDirectService';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -207,36 +208,56 @@ Por favor, faça perguntas relacionadas a nutrição, saúde ou seus objetivos d
 
 Lembre-se: Você está aqui para ajudar o usuário a ter uma relação mais saudável com a alimentação, sempre considerando o contexto temporal!`;
 
-      logger.debug('Sending message to Edge Function');
-      const token = session.access_token;
-      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      // Tentar primeiro a Edge Function se o URL do Supabase estiver configurado
+      if (SUPABASE_URL && SUPABASE_URL !== 'your_supabase_url') {
+        try {
+          logger.debug('Tentando Edge Function do Supabase');
+          const token = session.access_token;
+          const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/gemini-generic`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'apikey': SUPABASE_ANON_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'nutrition-chat',
-          prompt: fullPrompt,
-          systemInstruction,
-          temperature: 0.9,
-          topP: 0.95,
-          maxOutputTokens: 800,
-        }),
-      });
+          const response = await fetch(`${SUPABASE_URL}/functions/v1/gemini-generic`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'apikey': SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'nutrition-chat',
+              prompt: fullPrompt,
+              systemInstruction,
+              temperature: 0.9,
+              topP: 0.95,
+              maxOutputTokens: 800,
+            }),
+          });
 
-      if (!response.ok) {
-        logger.error('Edge Function error', { status: response.status });
-        throw new Error('Failed to get response from Edge Function');
+          if (response.ok) {
+            const data = await response.json();
+            logger.debug('Resposta recebida da Edge Function');
+            return data.response?.trim() || 'Desculpe, não consegui gerar uma resposta.';
+          } else {
+            logger.warn('Edge Function falhou, tentando fallback', { status: response.status });
+          }
+        } catch (edgeError) {
+          logger.warn('Edge Function erro, tentando fallback', edgeError);
+        }
       }
 
-      const data = await response.json();
-      logger.debug('Response received from Edge Function');
+      // Fallback: Tentar usar o serviço direto do Gemini se disponível
+      if (geminiDirectService.isAvailable()) {
+        logger.debug('Usando Gemini Direct Service como fallback');
+        const response = await geminiDirectService.sendMessage(
+          fullPrompt,
+          systemInstruction,
+          0.9,
+          800
+        );
+        return response.trim() || 'Desculpe, não consegui gerar uma resposta.';
+      }
 
-      return data.response?.trim() || 'Desculpe, não consegui gerar uma resposta.';
+      // Se nenhum serviço estiver disponível
+      throw new Error('Nenhum serviço de IA disponível. Configure a GEMINI_API_KEY no arquivo .env.local');
     } catch (error: any) {
       logger.error('Error in nutrition chat', error);
 

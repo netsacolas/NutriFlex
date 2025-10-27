@@ -41,7 +41,8 @@
       "Bash(npx vite --port 5173)",
       "Bash(if exist node_modules/.vite rmdir /s /q node_modules/.vite)",
       "Bash(find:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
