@@ -24,15 +24,15 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-orange-50 overflow-x-hidden">
       {/* Header/Navbar */}
       <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled ? 'bg-white shadow-lg' : 'bg-transparent'
       }`}>
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <img src="/img/nutrimais_logo.png" alt="NutriMais AI" className="h-10 w-10" />
-            <span className="text-2xl font-bold text-orange-600">NutriMais AI</span>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center max-w-full">
+          <div className="flex items-center space-x-2 min-w-0">
+            <img src="/img/nutrimais_logo.png" alt="NutriMais AI" className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0" />
+            <span className="text-lg sm:text-2xl font-bold text-orange-600 truncate">NutriMais AI</span>
           </div>
           <nav className="hidden md:flex space-x-6">
             <button onClick={() => scrollToSection('como-funciona')} className="text-gray-700 hover:text-orange-600 transition">Como Funciona</button>
@@ -42,61 +42,62 @@ const LandingPage: React.FC = () => {
           </nav>
           <button
             onClick={() => navigate('/login')}
-            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition duration-300"
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold hover:shadow-lg transform hover:scale-105 transition duration-300 flex-shrink-0"
           >
-            Começar Grátis
+            <span className="hidden sm:inline">Começar Grátis</span>
+            <span className="sm:hidden">Começar</span>
           </button>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 px-4">
+      <section className="pt-24 pb-16 px-4 overflow-hidden">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div>
-              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
                 Você escolhe o que comer.
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600 block">
                   A IA calcula as porções perfeitas.
                 </span>
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8">
                 Revolucione sua nutrição: simplesmente escolha seus alimentos favoritos,
                 defina suas metas calóricas e nossa IA avançada calculará automaticamente
                 as porções ideais para uma dieta perfeitamente balanceada.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
                   onClick={() => navigate('/login')}
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-xl transform hover:scale-105 transition duration-300 text-center"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:shadow-xl transform hover:scale-105 transition duration-300 text-center w-full sm:w-auto"
                 >
                   🚀 Começar Gratuitamente
                 </button>
                 <button
                   onClick={() => scrollToSection('como-funciona')}
-                  className="border-2 border-orange-500 text-orange-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-orange-50 transition duration-300 text-center"
+                  className="border-2 border-orange-500 text-orange-600 px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-orange-50 transition duration-300 text-center w-full sm:w-auto"
                 >
                   Ver Como Funciona →
                 </button>
               </div>
-              <div className="mt-8 flex items-center gap-6 text-gray-600">
+              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 text-sm sm:text-base text-gray-600">
                 <div className="flex items-center">
-                  <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Sem cartão de crédito
+                  <span className="whitespace-nowrap">Sem cartão</span>
                 </div>
                 <div className="flex items-center">
-                  <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  3000+ alimentos
+                  <span className="whitespace-nowrap">3000+ alimentos</span>
                 </div>
                 <div className="flex items-center">
-                  <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Cancelamento fácil
+                  <span className="whitespace-nowrap">Cancelamento fácil</span>
                 </div>
               </div>
             </div>

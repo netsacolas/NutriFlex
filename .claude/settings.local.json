@@ -42,7 +42,8 @@
       "Bash(if exist node_modules/.vite rmdir /s /q node_modules/.vite)",
       "Bash(find:*)",
       "Bash(git checkout:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
