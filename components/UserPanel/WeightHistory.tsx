@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { WeightEntry } from '../../types';
 import { weightHistoryService } from '../../services/weightHistoryService';
 import { getBMIInfo, getWeightDifference, getDaysBetween, formatWeightDifference } from '../../utils/bmiUtils';
+import Pagination from '../Pagination';
+import { usePagination } from '../../hooks/usePagination';
 
 export const WeightHistory: React.FC = () => {
   const [history, setHistory] = useState<WeightEntry[]>([]);
@@ -22,6 +24,18 @@ export const WeightHistory: React.FC = () => {
     }
     setLoading(false);
   };
+
+  // Paginação
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    goToPage,
+    totalItems,
+  } = usePagination({
+    items: history,
+    itemsPerPage: 50,
+  });
 
   if (loading) {
     return (
@@ -46,8 +60,13 @@ export const WeightHistory: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {history.map((entry, index) => {
-        const previousEntry = history[index + 1] || null;
+      {/* Total de registros */}
+      <div className="text-sm text-gray-600">
+        Total de {totalItems} pesagem{totalItems !== 1 ? 'ns' : ''} registrada{totalItems !== 1 ? 's' : ''}
+      </div>
+
+      {paginatedItems.map((entry, index) => {
+        const previousEntry = paginatedItems[index + 1] || null;
         const bmiInfo = entry.bmi && entry.height ? getBMIInfo(entry.weight, entry.height) : null;
         const weightDiff = previousEntry ? getWeightDifference(entry.weight, previousEntry.weight) : null;
         const daysSince = previousEntry ? getDaysBetween(entry.measured_at, previousEntry.measured_at) : null;
@@ -135,6 +154,15 @@ export const WeightHistory: React.FC = () => {
           </div>
         );
       })}
+
+      {/* Paginação */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+        itemsPerPage={50}
+        totalItems={totalItems}
+      />
     </div>
   );
 };

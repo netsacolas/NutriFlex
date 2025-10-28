@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { hydrationService } from '../services/hydrationService';
 import type { HydrationIntake } from '../types';
 import { TrashIcon } from './Layout/Icons';
+import Pagination from './Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 type FilterType = 'today' | 'week' | 'month' | 'all';
 
@@ -85,6 +87,18 @@ export const HydrationHistory: React.FC<HydrationHistoryProps> = ({ filter, onDe
     });
   };
 
+  // Paginação
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    goToPage,
+    totalItems,
+  } = usePagination({
+    items: intakes,
+    itemsPerPage: 50,
+  });
+
   const getTotalConsumed = () => {
     return intakes.reduce((sum, intake) => sum + (intake.completed ? intake.amount_ml : 0), 0);
   };
@@ -151,7 +165,12 @@ export const HydrationHistory: React.FC<HydrationHistoryProps> = ({ filter, onDe
           </div>
         ) : (
           <div className="space-y-3">
-            {intakes.map((intake) => (
+            {/* Total de registros */}
+            <div className="text-sm text-gray-600">
+              Total de {totalItems} ingestão{totalItems !== 1 ? 'ões' : ''} registrada{totalItems !== 1 ? 's' : ''}
+            </div>
+
+            {paginatedItems.map((intake) => (
               <div
                 key={intake.id}
                 className={`bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all ${
@@ -219,6 +238,15 @@ export const HydrationHistory: React.FC<HydrationHistoryProps> = ({ filter, onDe
                 </div>
               </div>
             ))}
+
+            {/* Paginação */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={goToPage}
+              itemsPerPage={50}
+              totalItems={totalItems}
+            />
           </div>
         )}
       </div>

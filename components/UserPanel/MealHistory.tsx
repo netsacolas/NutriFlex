@@ -8,6 +8,8 @@ import {
     CookieIcon,
     BarChartIcon
 } from '../icons';
+import Pagination from '../Pagination';
+import { usePagination } from '../../hooks/usePagination';
 
 export const MealHistory: React.FC = () => {
   const [history, setHistory] = useState<MealConsumption[]>([]);
@@ -71,8 +73,20 @@ export const MealHistory: React.FC = () => {
     setSelectedMeal(null);
   };
 
-  // Group meals by date
-  const groupedMeals = history.reduce((groups, meal) => {
+  // Paginação
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    goToPage,
+    totalItems,
+  } = usePagination({
+    items: history,
+    itemsPerPage: 50,
+  });
+
+  // Group meals by date (usando items paginados)
+  const groupedMeals = paginatedItems.reduce((groups, meal) => {
     const date = new Date(meal.consumed_at).toLocaleDateString('pt-BR');
     if (!groups[date]) {
       groups[date] = [];
@@ -151,6 +165,11 @@ export const MealHistory: React.FC = () => {
         </div>
       </div>
 
+      {/* Total de registros */}
+      <div className="text-sm text-gray-600">
+        Total de {totalItems} refeição{totalItems !== 1 ? 'ões' : ''} registrada{totalItems !== 1 ? 's' : ''}
+      </div>
+
       {/* Meal History Timeline */}
       <div className="space-y-4">
         {Object.entries(groupedMeals).map(([date, meals]) => (
@@ -206,6 +225,15 @@ export const MealHistory: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Paginação */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+        itemsPerPage={50}
+        totalItems={totalItems}
+      />
 
       {/* Detail Modal */}
       {selectedMeal && (

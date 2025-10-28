@@ -1,0 +1,446 @@
+﻿import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/authService';
+import { profileService } from '../services/profileService';
+import { mealHistoryService } from '../services/mealHistoryService';
+import { weightHistoryService } from '../services/weightHistoryService';
+import { physicalActivityService } from '../services/physicalActivityService';
+import { nutritionChatService } from '../services/nutritionChatService';
+import logger from '../utils/logger';
+import {
+  ChatBubbleBottomCenterTextIcon,
+  SparklesIcon,
+  ArrowRightIcon
+} from '../components/Layout/Icons';
+import type { UserProfile, MealHistory, WeightHistory, MealResult } from '../types';
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
+const ChatPage: React.FC = () => {
+  const navigate = useNavigate();
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingContext, setIsLoadingContext] = useState(true);
+
+  // User context
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [recentMeals, setRecentMeals] = useState<MealHistory[]>([]);
+  const [weightHistory, setWeightHistory] = useState<WeightHistory[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const mapMealHistoryToResult = (meal: MealHistory): MealResult => ({
+    totalCalories: meal.total_calories ?? 0,
+    totalMacros: {
+      protein: meal.total_protein ?? 0,
+      carbs: meal.total_carbs ?? 0,
+      fat: meal.total_fat ?? 0,
+      fiber: meal.total_fiber ?? 0,
+    },
+    glycemicData: {
+      index: meal.glycemic_index ?? 0,
+      load: meal.glycemic_load ?? 0,
+    },
+    portions: meal.portions ?? [],
+    suggestions: [],
+  });
+
+  const buildServiceContext = () => ({
+    profile,
+    weightHistory,
+    recentMeals: recentMeals.slice(0, 20).map(mapMealHistoryToResult),
+  });
+
+  useEffect(() => {
+    initializeChat();
+  }, []);
+
+  const initializeChat = async () => {
+    setIsLoadingContext(true);
+
+    // Mostrar mensagem de loading
+    const loadingMessage: ChatMessage = {
+      id: 'loading',
+      role: 'assistant',
+      content: 'â³ Aguarde enquanto verifico todo seu histÃ³rico de refeiÃ§Ãµes, atividades e pesagem alÃ©m de nossas conversas anteriores...',
+      timestamp: new Date()
+    };
+    setMessages([loadingMessage]);
+
+    // Carregar contexto do usuÃ¡rio
+    await loadUserContext();
+
+    // Substituir mensagem de loading pela welcome message
+    setIsLoadingContext(false);
+    addWelcomeMessage();
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+    // Retornar foco ao input apÃ³s cada mensagem
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  }, [messages]);
+
+  // Foco inicial ao montar componente
+  useEffect(() => {
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
+  }, []);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadUserContext = async () => {
+    try {
+      const session = await authService.getCurrentSession();
+      if (!session) {
+        navigate('/login');
+        return;
+      }
+
+      const userId = session.user.id;
+      logger.debug('ðŸ”„ Carregando contexto do usuÃ¡rio...', { userId });
+
+      // Load user profile and comprehensive history
+      const [profileResult, mealsResult, weightsResult, activitiesResult] = await Promise.all([
+        profileService.getProfile(),
+        mealHistoryService.getUserMealHistory(userId),
+        weightHistoryService.getUserWeightHistory(userId),
+        physicalActivityService.getUserActivities(30) // Last 30 days
+      ]);
+
+      logger.debug('âœ… Dados carregados:', {
+        profile: !!profileResult.data,
+        meals: mealsResult.data?.length || 0,
+        weights: weightsResult.data?.length || 0,
+        activities: activitiesResult.data?.length || 0
+      });
+
+      // Verificar se dados obrigatórios estão preenchidos
+      if (profileResult.data) {
+        const hasRequiredData = profileResult.data.weight && profileResult.data.height && profileResult.data.age && profileResult.data.gender;
+
+        if (!hasRequiredData) {
+          // Redirecionar para onboarding
+          navigate('/onboarding');
+          return;
+        }
+      }
+
+      setProfile(profileResult.data);
+
+      // RefeiÃ§Ãµes da Ãºltima semana
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const weekMeals = (mealsResult.data || []).filter(meal =>
+        new Date(meal.consumed_at) >= oneWeekAgo
+      );
+      setRecentMeals(weekMeals);
+
+      // Ãšltimas 20 pesagens
+      setWeightHistory((weightsResult.data || []).slice(0, 20));
+
+      // Ãšltimas 30 atividades fÃ­sicas
+      setRecentActivities((activitiesResult.data || []).slice(0, 30));
+
+      logger.debug('âœ… Contexto carregado:', {
+        weekMeals: weekMeals.length,
+        weights: weightsResult.data?.slice(0, 20).length || 0,
+        activities: activitiesResult.data?.slice(0, 30).length || 0
+      });
+    } catch (error) {
+      logger.error('âŒ Erro ao carregar contexto:', error);
+    }
+  };
+
+  const loadChatHistory = () => {
+    try {
+      const saved = localStorage.getItem('chatHistory');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Converter timestamps de string para Date
+        const messages = parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(messages);
+        return true;
+      }
+    } catch (error) {
+      logger.error('Error loading chat history:', error);
+    }
+    return false;
+  };
+
+  const saveChatHistory = (messages: ChatMessage[]) => {
+    try {
+      // Salvar apenas Ãºltimas 20 mensagens (10 conversas de ida e volta)
+      const toSave = messages.slice(-20);
+      localStorage.setItem('chatHistory', JSON.stringify(toSave));
+    } catch (error) {
+      logger.error('Error saving chat history:', error);
+    }
+  };
+
+  const addWelcomeMessage = () => {
+    // Tentar carregar histÃ³rico primeiro
+    const hasHistory = loadChatHistory();
+
+    if (!hasHistory) {
+      const welcome: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'OlÃ¡! ðŸ‘‹ Sou seu consultor nutricional prÃ¡tico! Meu foco Ã© te ajudar a comer bem com o que vocÃª JÃ TEM em casa, sem precisar comprar nada especial. Vamos montar suas refeiÃ§Ãµes balanceadas juntos?',
+        timestamp: new Date()
+      };
+      setMessages([welcome]);
+      saveChatHistory([welcome]);
+    }
+  };
+
+  const simulateTyping = async (response: string) => {
+    setIsTyping(true);
+    const words = response.split(' ');
+    let currentText = '';
+
+    for (let i = 0; i < words.length; i++) {
+      currentText += (i === 0 ? '' : ' ') + words[i];
+
+      // Update the last message with current text
+      setMessages(prev => {
+        const newMessages = [...prev];
+        if (newMessages[newMessages.length - 1].role === 'assistant') {
+          newMessages[newMessages.length - 1].content = currentText;
+        }
+        return newMessages;
+      });
+
+      // Small delay between words for typing effect
+      await new Promise(resolve => setTimeout(resolve, 30));
+    }
+
+    setIsTyping(false);
+
+    // Retornar foco apÃ³s terminar de digitar
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: inputMessage.trim(),
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    const userQuestion = inputMessage.trim();
+    setInputMessage('');
+    setIsLoading(true);
+
+    // Manter foco no input apÃ³s enviar
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+
+    try {
+      const conversationHistory = [...messages, userMessage].map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      const assistantResponse = await nutritionChatService.sendMessage(
+        userQuestion,
+        buildServiceContext(),
+        conversationHistory
+      );
+
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: assistantResponse,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => {
+        const updated = [...prev, assistantMessage];
+        saveChatHistory(updated);
+        return updated;
+      });
+      await simulateTyping(assistantResponse);
+    } catch (error) {
+      logger.error('Error generating response:', error);
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.',
+        timestamp: new Date()
+      };
+      const updatedMessages = [...messages, userMessage, errorMessage];
+      setMessages(updatedMessages);
+      saveChatHistory(updatedMessages);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+    // Shift+Enter permite quebra de linha (comportamento padrÃ£o do textarea)
+  };
+
+  const quickQuestions = [
+    'Como montar um almoÃ§o balanceado?',
+    'Que quantidade de arroz posso comer?',
+    'Como distribuir proteÃ­na, carbo e gordura?',
+    'Como saber as porÃ§Ãµes certas?'
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col pb-20">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 pt-12 pb-6 shadow-lg">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center mb-2">
+            <ChatBubbleBottomCenterTextIcon className="w-7 h-7 text-white mr-3" />
+            <h1 className="text-white text-2xl font-bold">Assistente Nutricional</h1>
+          </div>
+          <p className="text-white/80">Seu consultor pessoal de nutriÃ§Ã£o e treino</p>
+        </div>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                  message.role === 'user'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-xl'
+                    : 'bg-white shadow-xl border border-gray-100 text-gray-800'
+                }`}
+              >
+                {message.role === 'assistant' && (
+                  <div className="flex items-center mb-1">
+                    <SparklesIcon className="w-4 h-4 text-purple-500 mr-1" />
+                    <span className="text-xs font-medium text-purple-600">IA Nutricional</span>
+                  </div>
+                )}
+                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className={`text-xs mt-2 ${
+                  message.role === 'user' ? 'text-white/70' : 'text-gray-500'
+                }`}>
+                  {message.timestamp.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-white shadow-xl border border-gray-100 rounded-2xl px-4 py-3">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={chatEndRef} />
+        </div>
+      </div>
+
+      {/* Quick Questions */}
+      {messages.length === 1 && (
+        <div className="px-4 pb-4">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-sm text-gray-600 mb-2">SugestÃµes de perguntas:</p>
+            <div className="flex flex-wrap gap-2">
+              {quickQuestions.map((question, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setInputMessage(question);
+                    setTimeout(() => inputRef.current?.focus(), 100);
+                  }}
+                  className="px-3 py-1.5 bg-white border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Input Area */}
+      <div className="bg-white border-t border-gray-200 px-4 py-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex gap-2">
+            <textarea
+              ref={inputRef}
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Digite sua pergunta... (Enter para enviar, Shift+Enter para nova linha)"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              rows={1}
+              style={{ minHeight: '48px', maxHeight: '120px' }}
+              disabled={isLoading}
+              autoFocus
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim() || isLoading}
+              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                !inputMessage.trim() || isLoading
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg transform hover:scale-105'
+              }`}
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ArrowRightIcon className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Powered by Gemini AI â€¢ Suas informaÃ§Ãµes sÃ£o usadas apenas para personalizar as respostas
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
+

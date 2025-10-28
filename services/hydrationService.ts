@@ -118,22 +118,52 @@ export const hydrationService = {
         return { data: null, error: new Error('User not authenticated') };
       }
 
-      const { data, error } = await supabase
+      // Primeiro verifica se já existe configuração
+      const { data: existing } = await supabase
         .from('hydration_settings')
-        .upsert({
-          ...settings,
-          user_id: user.id,
-          updated_at: new Date().toISOString(),
-        })
-        .select()
+        .select('id')
+        .eq('user_id', user.id)
         .single();
 
-      if (error) {
-        logger.error('Error upserting hydration settings:', error);
-        return { data: null, error };
-      }
+      const settingsData = {
+        ...settings,
+        user_id: user.id,
+        updated_at: new Date().toISOString(),
+      };
 
-      return { data, error: null };
+      // Se existe, faz update
+      if (existing) {
+        const { data, error } = await supabase
+          .from('hydration_settings')
+          .update(settingsData)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+
+        if (error) {
+          logger.error('Error updating hydration settings:', error);
+          return { data: null, error };
+        }
+
+        return { data, error: null };
+      } else {
+        // Se não existe, faz insert
+        const { data, error } = await supabase
+          .from('hydration_settings')
+          .insert({
+            ...settingsData,
+            created_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (error) {
+          logger.error('Error inserting hydration settings:', error);
+          return { data: null, error };
+        }
+
+        return { data, error: null };
+      }
     } catch (error) {
       logger.error('Error in upsertSettings:', error);
       return { data: null, error };
@@ -143,7 +173,7 @@ export const hydrationService = {
   /**
    * Registra uma ingestão de água
    */
-  async recordIntake(amountMl: number, scheduledTime?: string): Promise<{ data: HydrationIntake | null; error: any }> {
+  async recordIntake(amountMl: number, scheduledTime: string): Promise<{ data: HydrationIntake | null; error: any }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -153,62 +183,25 @@ export const hydrationService = {
       const now = new Date();
       const today = now.toISOString().split('T')[0];
 
-      // Tenta encontrar o próximo lembrete não completado
-      const { data: incompleteReminder } = await supabase
+      // Atualiza o lembrete específico que foi clicado
+      const { data, error } = await supabase
         .from('hydration_intakes')
-        .select('*')
+        .update({
+          actual_time: now.toISOString(), // Marca com horário atual, não o agendado
+          completed: true,
+        })
         .eq('user_id', user.id)
+        .eq('scheduled_time', scheduledTime)
         .eq('date', today)
-        .eq('completed', false)
-        .order('scheduled_time', { ascending: true })
-        .limit(1)
+        .select()
         .single();
 
-      if (incompleteReminder) {
-        // Atualiza lembrete existente
-        const { data, error } = await supabase
-          .from('hydration_intakes')
-          .update({
-            actual_time: now.toISOString(),
-            completed: true,
-          })
-          .eq('id', incompleteReminder.id)
-          .select()
-          .single();
-
-        if (error) {
-          logger.error('Error updating reminder:', error);
-          return { data: null, error };
-        }
-
-        return { data, error: null };
-      } else {
-        // Cria novo registro se não houver lembretes pendentes (ingestão manual)
-        const intake: Partial<HydrationIntake> = {
-          user_id: user.id,
-          amount_ml: amountMl,
-          scheduled_time: scheduledTime || now.toISOString(),
-          actual_time: now.toISOString(),
-          completed: true,
-          snoozed: false,
-          snooze_count: 0,
-          date: today,
-          created_at: now.toISOString(),
-        };
-
-        const { data, error } = await supabase
-          .from('hydration_intakes')
-          .insert(intake)
-          .select()
-          .single();
-
-        if (error) {
-          logger.error('Error recording intake:', error);
-          return { data: null, error };
-        }
-
-        return { data, error: null };
+      if (error) {
+        logger.error('Error updating reminder:', error);
+        return { data: null, error };
       }
+
+      return { data, error: null };
     } catch (error) {
       logger.error('Error in recordIntake:', error);
       return { data: null, error };
@@ -458,6 +451,71 @@ export const hydrationService = {
     } catch (error) {
       logger.error('Error in deleteIntake:', error);
       return { error };
+    }
+  },
+
+  /**
+   * Desmarca uma ingestão (volta para estado não completado)
+   */
+  async uncompleteIntake(scheduledTime: string): Promise<{ error: any }> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { error: new Error('User not authenticated') };
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+
+      const { error } = await supabase
+        .from('hydration_intakes')
+        .update({
+          completed: false,
+          actual_time: null,
+        })
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .eq('scheduled_time', scheduledTime);
+
+      if (error) {
+        logger.error('Error uncompleting intake:', error);
+        return { error };
+      }
+
+      return { error: null };
+    } catch (error) {
+      logger.error('Error in uncompleteIntake:', error);
+      return { error };
+    }
+  },
+
+  /**
+   * Busca lembretes do dia (com status de completado)
+   */
+  async getTodayReminders(): Promise<{ data: any[] | null; error: any }> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { data: null, error: new Error('User not authenticated') };
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data: reminders, error } = await supabase
+        .from('hydration_intakes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .order('scheduled_time', { ascending: true });
+
+      if (error) {
+        logger.error('Error fetching today reminders:', error);
+        return { data: null, error };
+      }
+
+      return { data: reminders || [], error: null };
+    } catch (error) {
+      logger.error('Error in getTodayReminders:', error);
+      return { data: null, error };
     }
   },
 

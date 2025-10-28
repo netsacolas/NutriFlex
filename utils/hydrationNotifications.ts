@@ -139,6 +139,7 @@ export function showGoalCompletedNotification(): void {
 
 /**
  * Agenda lembretes com base nas configurações do usuário
+ * Agora usa os lembretes do banco de dados ao invés de calcular
  */
 export async function scheduleReminders(): Promise<void> {
   try {
@@ -151,88 +152,92 @@ export async function scheduleReminders(): Promise<void> {
     // Busca configurações
     const { data: settings } = await hydrationService.getSettings();
     if (!settings || !settings.notifications_enabled) {
+      logger.info('Notifications disabled or no settings found');
       return;
     }
 
-    const { wake_time, sleep_time, daily_goal_ml, intake_size_ml } = settings;
-
-    // Parse horários
-    const [wakeHour, wakeMin] = wake_time.split(':').map(Number);
-    const [sleepHour, sleepMin] = sleep_time.split(':').map(Number);
-
-    // Calcula número de lembretes
-    const numberOfIntakes = Math.ceil(daily_goal_ml / intake_size_ml);
-
-    // Calcula intervalo em minutos
-    let wakeMinutes = wakeHour * 60 + wakeMin;
-    let sleepMinutes = sleepHour * 60 + sleepMin;
-
-    if (sleepMinutes <= wakeMinutes) {
-      sleepMinutes += 24 * 60;
+    // Busca lembretes do dia
+    const { data: todayReminders } = await hydrationService.getTodayReminders();
+    if (!todayReminders || todayReminders.length === 0) {
+      logger.warn('No reminders found for today. Please save settings first.');
+      return;
     }
 
-    const awakeMinutes = sleepMinutes - wakeMinutes;
-    const intervalMinutes = awakeMinutes / numberOfIntakes;
+    logger.info(`Scheduling ${todayReminders.length} reminders for today`);
 
-    // Verifica a cada minuto se é hora de notificar
-    notificationIntervalId = window.setInterval(() => {
-      checkAndNotify(wakeHour, wakeMin, intervalMinutes, numberOfIntakes, intake_size_ml, settings.sound_enabled, settings.vibration_enabled);
+    // Verifica a cada minuto se é hora de notificar algum lembrete
+    notificationIntervalId = window.setInterval(async () => {
+      await checkAndNotifyFromDatabase(settings.sound_enabled, settings.vibration_enabled);
     }, 60000); // Checa a cada 1 minuto
 
-    logger.info('Hydration reminders scheduled');
+    // Faz uma verificação imediata também
+    await checkAndNotifyFromDatabase(settings.sound_enabled, settings.vibration_enabled);
+
+    logger.info('Hydration reminders scheduled successfully');
   } catch (error) {
     logger.error('Error scheduling reminders:', error);
   }
 }
 
 /**
- * Verifica se é hora de notificar
+ * Verifica lembretes do banco e notifica se for hora
  */
-function checkAndNotify(
-  wakeHour: number,
-  wakeMin: number,
-  intervalMinutes: number,
-  numberOfIntakes: number,
-  amountMl: number,
+async function checkAndNotifyFromDatabase(
   soundEnabled: boolean,
   vibrationEnabled: boolean
-): void {
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentMin = now.getMinutes();
+): Promise<void> {
+  try {
+    const { data: todayReminders } = await hydrationService.getTodayReminders();
+    if (!todayReminders) return;
+
+    const now = new Date();
+    const currentTime = now.toTimeString().substring(0, 5); // HH:mm
+
+    // Percorre lembretes não completados
+    for (const reminder of todayReminders) {
+      if (reminder.completed) continue;
+
+      const scheduledTime = new Date(reminder.scheduled_time);
+      const reminderTime = scheduledTime.toTimeString().substring(0, 5);
+
+      // Verifica se é hora de notificar (com margem de 1 minuto)
+      if (shouldNotifyNow(currentTime, reminderTime)) {
+        logger.info(`Triggering notification for ${reminderTime}`);
+
+        showHydrationReminder(reminder.amount_ml);
+
+        if (soundEnabled) {
+          playNotificationSound();
+        }
+
+        if (vibrationEnabled && 'vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200]);
+        }
+
+        // Marca que já notificou para não repetir no próximo minuto
+        // (poderia adicionar uma flag 'notified' no banco se quiser ser mais robusto)
+        break; // Notifica apenas um lembrete por vez
+      }
+    }
+  } catch (error) {
+    logger.error('Error checking notifications:', error);
+  }
+}
+
+/**
+ * Verifica se deve notificar agora (com margem de 1 minuto)
+ */
+function shouldNotifyNow(currentTime: string, reminderTime: string): boolean {
+  const [currentHour, currentMin] = currentTime.split(':').map(Number);
+  const [reminderHour, reminderMin] = reminderTime.split(':').map(Number);
 
   const currentMinutes = currentHour * 60 + currentMin;
-  const wakeMinutes = wakeHour * 60 + wakeMin;
+  const reminderMinutes = reminderHour * 60 + reminderMin;
 
-  // Calcula em qual "slot" de lembrete estamos
-  const minutesSinceWake = currentMinutes - wakeMinutes;
+  const diff = Math.abs(currentMinutes - reminderMinutes);
 
-  if (minutesSinceWake < 0) {
-    return; // Ainda não acordou
-  }
-
-  // Verifica se é um múltiplo exato do intervalo
-  const reminderIndex = Math.floor(minutesSinceWake / intervalMinutes);
-
-  if (reminderIndex >= numberOfIntakes) {
-    return; // Já passou de todos os lembretes do dia
-  }
-
-  const expectedReminderMinutes = wakeMinutes + Math.round(intervalMinutes * reminderIndex);
-  const diff = Math.abs(currentMinutes - expectedReminderMinutes);
-
-  // Se estamos dentro de 1 minuto do horário esperado
-  if (diff <= 1) {
-    showHydrationReminder(amountMl);
-
-    if (soundEnabled) {
-      playNotificationSound();
-    }
-
-    if (vibrationEnabled && 'vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200]);
-    }
-  }
+  // Notifica se estamos dentro de 1 minuto do horário
+  return diff <= 1;
 }
 
 /**

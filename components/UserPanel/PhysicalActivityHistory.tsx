@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { physicalActivityService } from '../../services/physicalActivityService';
 import { ConfirmDeleteModal } from '../ConfirmDeleteModal';
 import type { PhysicalActivity } from '../../types';
+import Pagination from '../Pagination';
+import { usePagination } from '../../hooks/usePagination';
 
 export const PhysicalActivityHistory: React.FC = () => {
   const [activities, setActivities] = useState<PhysicalActivity[]>([]);
@@ -75,6 +77,18 @@ export const PhysicalActivityHistory: React.FC = () => {
       minute: '2-digit'
     });
   };
+
+  // Paginação
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    goToPage,
+    totalItems,
+  } = usePagination({
+    items: activities,
+    itemsPerPage: 50,
+  });
 
   const totalCalories = activities.reduce((sum, a) => sum + (a.calories_burned || 0), 0);
   const totalMinutes = activities.reduce((sum, a) => sum + a.duration_minutes, 0);
@@ -162,7 +176,7 @@ export const PhysicalActivityHistory: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {activities.map((activity) => (
+          {paginatedItems.map((activity) => (
             <div
               key={activity.id}
               className="bg-secondary-bg border border-border-color rounded-lg p-4 hover:bg-hover-bg transition-colors"
@@ -226,6 +240,17 @@ export const PhysicalActivityHistory: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Paginação */}
+      {activities.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          itemsPerPage={50}
+          totalItems={totalItems}
+        />
       )}
 
       {/* Delete Confirmation Modal */}

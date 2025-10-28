@@ -4,14 +4,21 @@ import { hydrationService, calculateDailyWaterGoal, generateReminders } from '..
 import { profileService } from '../services/profileService';
 import type { HydrationSettings, HydrationProgress, UserProfile } from '../types';
 import logger from '../utils/logger';
+import SuccessModal from '../components/SuccessModal';
 
 const HydrationPage: React.FC = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [settings, setSettings] = useState<HydrationSettings | null>(null);
   const [progress, setProgress] = useState<HydrationProgress | null>(null);
+  const [todayReminders, setTodayReminders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [processingReminder, setProcessingReminder] = useState<string | null>(null);
+
+  // Modal de sucesso
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: '', message: '', icon: '✅' });
 
   // Form states
   const [dailyGoalMl, setDailyGoalMl] = useState(2000);
@@ -87,6 +94,12 @@ const HydrationPage: React.FC = () => {
       if (todayProgress) {
         setProgress(todayProgress);
       }
+
+      // Busca lembretes do dia
+      const { data: reminders } = await hydrationService.getTodayReminders();
+      if (reminders) {
+        setTodayReminders(reminders);
+      }
     } catch (error) {
       logger.error('Error loading hydration data:', error);
     } finally {
@@ -147,7 +160,13 @@ const HydrationPage: React.FC = () => {
         await restartReminders();
       }
 
-      alert('Configurações salvas com sucesso!\n\nLembretes foram reagendados automaticamente.');
+      // Exibe modal de sucesso
+      setSuccessMessage({
+        title: 'Configurações Salvas! ⚙️',
+        message: 'Lembretes foram reagendados automaticamente',
+        icon: '✅',
+      });
+      setShowSuccessModal(true);
     } catch (error) {
       logger.error('Error saving settings:', error);
       alert('Erro ao salvar configurações');
@@ -156,31 +175,81 @@ const HydrationPage: React.FC = () => {
     }
   };
 
-  const handleRecordIntake = async () => {
-    try {
-      const { error } = await hydrationService.recordIntake(intakeSizeMl);
+  const handleToggleReminder = async (reminderTime: string, currentlyCompleted: boolean) => {
+    // Previne múltiplos cliques no mesmo botão
+    if (processingReminder === reminderTime) {
+      return;
+    }
 
-      if (error) {
-        alert('Erro ao registrar ingestão');
-        return;
+    try {
+      setProcessingReminder(reminderTime);
+
+      const today = new Date().toISOString().split('T')[0];
+      const scheduledTime = `${today}T${reminderTime}:00`;
+
+      if (currentlyCompleted) {
+        // Desmarcar: encontrar e remover a ingestão
+        const { error } = await hydrationService.uncompleteIntake(scheduledTime);
+        if (error) {
+          setSuccessMessage({
+            title: 'Erro',
+            message: 'Não foi possível desmarcar a ingestão',
+            icon: '❌',
+          });
+          setShowSuccessModal(true);
+          return;
+        }
+
+        // Exibe modal de sucesso ao desmarcar
+        setSuccessMessage({
+          title: 'Ingestão Desmarcada',
+          message: `Lembrete de ${reminderTime} foi desmarcado com sucesso`,
+          icon: '↩️',
+        });
+        setShowSuccessModal(true);
+      } else {
+        // Marcar: registrar ingestão com horário atual
+        const { error } = await hydrationService.recordIntake(intakeSizeMl, scheduledTime);
+        if (error) {
+          setSuccessMessage({
+            title: 'Erro',
+            message: 'Não foi possível registrar a ingestão',
+            icon: '❌',
+          });
+          setShowSuccessModal(true);
+          return;
+        }
+
+        // Exibe modal de sucesso ao marcar
+        const currentTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        setSuccessMessage({
+          title: 'Água Registrada! 💧',
+          message: `${intakeSizeMl}ml consumidos às ${currentTime}`,
+          icon: '✅',
+        });
+        setShowSuccessModal(true);
       }
 
-      // Recarrega progresso
+      // Recarrega progresso e lembretes
       const { data: todayProgress } = await hydrationService.getTodayProgress();
       if (todayProgress) {
         setProgress(todayProgress);
       }
 
-      // Mostra notificação de sucesso
-      if (Notification.permission === 'granted') {
-        new Notification('Hidratação Registrada! 💧', {
-          body: `Você bebeu ${intakeSizeMl}ml. Continue assim!`,
-          icon: '/img/nutrimais_logo.png',
-        });
+      const { data: reminders } = await hydrationService.getTodayReminders();
+      if (reminders) {
+        setTodayReminders(reminders);
       }
     } catch (error) {
-      logger.error('Error recording intake:', error);
-      alert('Erro ao registrar ingestão');
+      logger.error('Error toggling reminder:', error);
+      setSuccessMessage({
+        title: 'Erro',
+        message: 'Erro ao atualizar ingestão',
+        icon: '❌',
+      });
+      setShowSuccessModal(true);
+    } finally {
+      setProcessingReminder(null);
     }
   };
 
@@ -299,13 +368,12 @@ const HydrationPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Botão Beber Água */}
-                <button
-                  onClick={handleRecordIntake}
-                  className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                >
-                  💧 Bebi {formatValue(intakeSizeMl)}
-                </button>
+                {/* Mensagem informativa */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
+                  <p className="text-sm text-gray-700 text-center">
+                    ✅ Clique nos horários programados abaixo para registrar sua hidratação
+                  </p>
+                </div>
               </>
             ) : (
               <p className="text-center text-gray-500 py-12">
@@ -445,26 +513,85 @@ const HydrationPage: React.FC = () => {
         </div>
 
         {/* Lembretes Programados */}
-        {reminders.length > 0 && (
+        {todayReminders.length > 0 && (
           <div className="bg-white rounded-2xl shadow-xl p-6 mt-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Lembretes Programados ({reminders.length})
+              Lembretes de Hoje ({todayReminders.filter(r => r.completed).length}/{todayReminders.length})
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {reminders.map((reminder, index) => (
-                <div
-                  key={index}
-                  className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-3 text-center"
-                >
-                  <p className="text-lg font-bold text-cyan-600">{reminder.time}</p>
-                  <p className="text-xs text-gray-600">{formatValue(reminder.amount_ml)}</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {todayReminders.map((reminder, index) => {
+                const scheduledTime = new Date(reminder.scheduled_time);
+                const timeStr = scheduledTime.toTimeString().substring(0, 5);
+
+                return (
+                  <button
+                    key={reminder.id || index}
+                    onClick={() => handleToggleReminder(timeStr, reminder.completed)}
+                    disabled={processingReminder === timeStr}
+                    className={`relative rounded-xl p-4 text-center transition-all transform hover:scale-105 ${
+                      reminder.completed
+                        ? 'bg-gradient-to-br from-emerald-100 to-green-100 border-2 border-emerald-400 shadow-lg'
+                        : 'bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-300 hover:border-cyan-400'
+                    } ${processingReminder === timeStr ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {/* Ícone de Check */}
+                    {reminder.completed && (
+                      <div className="absolute top-2 right-2">
+                        <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Horário */}
+                    <p className={`text-xl font-bold ${
+                      reminder.completed ? 'text-emerald-600' : 'text-gray-700'
+                    }`}>
+                      {timeStr}
+                    </p>
+
+                    {/* Quantidade */}
+                    <p className={`text-sm mt-1 ${
+                      reminder.completed ? 'text-emerald-500' : 'text-gray-500'
+                    }`}>
+                      {formatValue(reminder.amount_ml)}
+                    </p>
+
+                    {/* Hora real se completado */}
+                    {reminder.completed && reminder.actual_time && (
+                      <p className="text-xs text-emerald-400 mt-1">
+                        ✓ {new Date(reminder.actual_time).toTimeString().substring(0, 5)}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Legenda */}
+            <div className="mt-4 flex justify-center gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gradient-to-br from-emerald-100 to-green-100 border-2 border-emerald-400 rounded"></div>
+                <span>Consumido</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-300 rounded"></div>
+                <span>Pendente</span>
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Modal de Sucesso */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={successMessage.title}
+        message={successMessage.message}
+        icon={successMessage.icon}
+      />
     </div>
   );
 };
