@@ -259,18 +259,20 @@ const HomePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Atividades</p>
-                <p className="text-2xl font-bold text-gray-900">{todaysSummary.activitiesCount}</p>
-                <p className="text-xs text-orange-600">-{todaysSummary.caloriesBurned} kcal</p>
-              </div>
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <span className="text-xl">🏃</span>
+          <Link to="/health" className="block">
+            <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4 hover:shadow-2xl hover:border-orange-300 transition-all cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Atividades</p>
+                  <p className="text-2xl font-bold text-gray-900">{todaysSummary.activitiesCount}</p>
+                  <p className="text-xs text-orange-600">-{todaysSummary.caloriesBurned} kcal</p>
+                </div>
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span className="text-xl">🏃</span>
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Recent Meals */}
@@ -286,14 +288,13 @@ const HomePage: React.FC = () => {
             <div className="space-y-3">
               {recentMeals.map((meal) => (
                 <div key={meal.id} className="bg-white rounded-xl shadow-xl border border-gray-100 p-4 hover:shadow-2xl transition-shadow">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">
                         {getMealTypeLabel(meal.meal_type)}
                       </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {meal.food_items?.slice(0, 3).join(', ')}
-                        {meal.food_items && meal.food_items.length > 3 && '...'}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(meal.consumed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                     <div className="text-right">
@@ -301,10 +302,29 @@ const HomePage: React.FC = () => {
                         {meal.total_calories} kcal
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(meal.consumed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        P: {meal.total_protein?.toFixed(0) || 0}g • C: {meal.total_carbs?.toFixed(0) || 0}g • G: {meal.total_fat?.toFixed(0) || 0}g
                       </p>
                     </div>
                   </div>
+
+                  {/* Alimentos detalhados */}
+                  {meal.portions && meal.portions.length > 0 && (
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="text-xs font-medium text-gray-500 mb-2">Alimentos:</p>
+                      <div className="space-y-1">
+                        {meal.portions.map((portion, index) => (
+                          <div key={index} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700">
+                              • {portion.foodName}
+                            </span>
+                            <span className="text-gray-500 text-xs">
+                              {portion.grams}g ({portion.calories} kcal)
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

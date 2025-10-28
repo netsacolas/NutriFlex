@@ -1,10 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell:*)",
-      "Bash(git config:*)",
-      "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

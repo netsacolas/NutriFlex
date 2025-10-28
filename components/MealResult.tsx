@@ -258,6 +258,16 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType,
                         </div>
                     )}
 
+                    {/* Título chamativo para as porções */}
+                    <div className="mb-6 text-center">
+                        <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent mb-2">
+                            🍽️ Seu Plano Alimentar Personalizado
+                        </h2>
+                        <p className="text-lg text-gray-400">
+                            Confira os alimentos e quantidades que você deve consumir
+                        </p>
+                    </div>
+
                     <div className="flex justify-end mb-6">
                         <button
                             onClick={() => setShowSaveModal(true)}
@@ -268,8 +278,15 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType,
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-3 space-y-4">
-                <h3 className="text-xl font-semibold text-text-primary mb-2">Ajuste suas Porções:</h3>
+            <div className="lg:col-span-3 space-y-4 order-1">
+                <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 p-4 rounded-xl border-2 border-emerald-500/30 mb-4">
+                    <h3 className="text-2xl font-bold text-emerald-400 mb-2 flex items-center gap-2">
+                        📋 Alimentos e Quantidades
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                        Estas são as porções calculadas para sua refeição. Você pode ajustar as quantidades conforme sua preferência.
+                    </p>
+                </div>
                 {editedResult.portions.map(item => (
                     <div key={item.foodName} className="bg-secondary-bg p-4 rounded-lg border border-border-color transition-all duration-200">
                         <div className="flex justify-between items-start">
@@ -315,7 +332,7 @@ export const MealResultDisplay: React.FC<MealResultProps> = ({ result, mealType,
                 ))}
             </div>
 
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 order-2">
                 <div>
                    <h3 className="flex items-center gap-2 text-xl font-semibold text-text-primary mb-2">
                        <BarChartIcon className="w-6 h-6 text-accent-peach" />
