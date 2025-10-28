@@ -183,6 +183,25 @@ export const hydrationService = {
       const now = new Date();
       const today = now.toISOString().split('T')[0];
 
+      // Primeiro, busca o lembrete específico
+      const { data: existingIntake, error: fetchError } = await supabase
+        .from('hydration_intakes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('scheduled_time', scheduledTime)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (fetchError) {
+        logger.error('Error fetching reminder:', fetchError);
+        return { data: null, error: fetchError };
+      }
+
+      if (!existingIntake) {
+        logger.error('Reminder not found for scheduled_time:', scheduledTime);
+        return { data: null, error: new Error('Reminder not found') };
+      }
+
       // Atualiza o lembrete específico que foi clicado
       const { data, error } = await supabase
         .from('hydration_intakes')
@@ -190,9 +209,7 @@ export const hydrationService = {
           actual_time: now.toISOString(), // Marca com horário atual, não o agendado
           completed: true,
         })
-        .eq('user_id', user.id)
-        .eq('scheduled_time', scheduledTime)
-        .eq('date', today)
+        .eq('id', existingIntake.id)
         .select()
         .single();
 
@@ -466,15 +483,33 @@ export const hydrationService = {
 
       const today = new Date().toISOString().split('T')[0];
 
+      // Primeiro, busca o lembrete específico
+      const { data: existingIntake, error: fetchError } = await supabase
+        .from('hydration_intakes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('scheduled_time', scheduledTime)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (fetchError) {
+        logger.error('Error fetching reminder to uncomplete:', fetchError);
+        return { error: fetchError };
+      }
+
+      if (!existingIntake) {
+        logger.error('Reminder not found for scheduled_time:', scheduledTime);
+        return { error: new Error('Reminder not found') };
+      }
+
+      // Desmarca o lembrete
       const { error } = await supabase
         .from('hydration_intakes')
         .update({
           completed: false,
           actual_time: null,
         })
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .eq('scheduled_time', scheduledTime);
+        .eq('id', existingIntake.id);
 
       if (error) {
         logger.error('Error uncompleting intake:', error);
