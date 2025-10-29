@@ -2,9 +2,56 @@ import { supabase } from './supabaseClient';
 import type { UserProfile } from '../types';
 import logger from '../utils/logger';
 
+const isE2EMock = import.meta.env.VITE_E2E_MOCK === 'true';
+
+const buildDefaultProfile = (): UserProfile => {
+  const timestamp = new Date().toISOString();
+  return {
+    id: 'mock-user',
+    full_name: 'Usuário Demo',
+    phone: '11900000000',
+    avatar_url: null,
+    date_of_birth: null,
+    age: 30,
+    birth_date: null,
+    gender: 'male',
+    weight: 72,
+    height: 175,
+    activity_level: 'moderately_active',
+    dietary_preferences: [],
+    allergies: [],
+    health_goals: ['melhorar alimentação'],
+    meals_per_day: 4,
+    breakfast_calories: 350,
+    lunch_calories: 600,
+    dinner_calories: 550,
+    snack_calories: 200,
+    snack_quantity: 2,
+    created_at: timestamp,
+    updated_at: timestamp,
+  };
+};
+
+const mockProfileState: { profile: UserProfile } = {
+  profile: buildDefaultProfile(),
+};
+
+const updateMockProfile = (updates: Partial<UserProfile>) => {
+  mockProfileState.profile = {
+    ...mockProfileState.profile,
+    ...updates,
+    updated_at: new Date().toISOString(),
+  };
+  return mockProfileState.profile;
+};
+
 export const profileService = {
   // Obter perfil do usuário atual
   async getProfile(): Promise<{ data: UserProfile | null; error: any }> {
+    if (isE2EMock) {
+      return { data: mockProfileState.profile, error: null };
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -26,8 +73,8 @@ export const profileService = {
             data: null,
             error: {
               message: 'Tabela de perfis não encontrada. Execute a migration SQL no Supabase.',
-              code: 'TABLE_NOT_FOUND'
-            }
+              code: 'TABLE_NOT_FOUND',
+            },
           };
         }
       }
@@ -41,6 +88,10 @@ export const profileService = {
 
   // Atualizar perfil
   async updateProfile(updates: Partial<UserProfile>): Promise<{ data: UserProfile | null; error: any }> {
+    if (isE2EMock) {
+      return { data: updateMockProfile(updates), error: null };
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -64,6 +115,11 @@ export const profileService = {
 
   // Atualizar telefone
   async updatePhone(phone: string): Promise<{ error: any }> {
+    if (isE2EMock) {
+      updateMockProfile({ phone });
+      return { error: null };
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -85,6 +141,11 @@ export const profileService = {
 
   // Atualizar nome completo
   async updateFullName(full_name: string): Promise<{ error: any }> {
+    if (isE2EMock) {
+      updateMockProfile({ full_name });
+      return { error: null };
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -115,21 +176,20 @@ export const profileService = {
   calculateBMR(weight: number, height: number, age: number, gender: 'male' | 'female'): number {
     if (gender === 'male') {
       return 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
-    } else {
-      return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
     }
+    return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
   },
 
   // Calcular TDEE (Total Daily Energy Expenditure)
   calculateTDEE(bmr: number, activityLevel: string): number {
     const multipliers: Record<string, number> = {
-      'sedentary': 1.2,
-      'lightly_active': 1.375,
-      'moderately_active': 1.55,
-      'very_active': 1.725,
-      'extra_active': 1.9
+      sedentary: 1.2,
+      lightly_active: 1.375,
+      moderately_active: 1.55,
+      very_active: 1.725,
+      extra_active: 1.9,
     };
 
     return bmr * (multipliers[activityLevel] || 1.2);
-  }
+  },
 };

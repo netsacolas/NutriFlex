@@ -78,6 +78,12 @@ export function generateReminders(
   return reminders;
 }
 
+
+const getLocalDateString = (date: Date = new Date()): string => {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().split('T')[0];
+};
+
 export const hydrationService = {
   /**
    * Busca ou cria configurações de hidratação do usuário
@@ -173,7 +179,7 @@ export const hydrationService = {
   /**
    * Registra uma ingestão de água
    */
-  async recordIntake(amountMl: number, scheduledTime: string): Promise<{ data: HydrationIntake | null; error: any }> {
+  async recordIntake(amountMl: number, scheduledTime?: string): Promise<{ data: HydrationIntake | null; error: any }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -181,33 +187,69 @@ export const hydrationService = {
       }
 
       const now = new Date();
-      const today = now.toISOString().split('T')[0];
+      let existingIntake: HydrationIntake | null = null;
 
-      // Primeiro, busca o lembrete específico
-      const { data: existingIntake, error: fetchError } = await supabase
-        .from('hydration_intakes')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('scheduled_time', scheduledTime)
-        .eq('date', today)
-        .maybeSingle();
+      if (scheduledTime) {
+        const scheduleDate = new Date(scheduledTime);
+        if (Number.isNaN(scheduleDate.getTime())) {
+          logger.error('Invalid scheduledTime received in recordIntake:', scheduledTime);
+          return { data: null, error: new Error('Invalid scheduled time') };
+        }
+        const scheduledDateStr = scheduledTime.split('T')[0];
 
-      if (fetchError) {
-        logger.error('Error fetching reminder:', fetchError);
-        return { data: null, error: fetchError };
+        const { data, error: fetchError } = await supabase
+          .from('hydration_intakes')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('scheduled_time', scheduledTime)
+          .eq('date', scheduledDateStr)
+          .maybeSingle();
+
+        if (fetchError) {
+          logger.error('Error fetching reminder:', fetchError);
+          return { data: null, error: fetchError };
+        }
+
+        if (!data) {
+          logger.error('Reminder not found for scheduled_time:', scheduledTime);
+          return { data: null, error: new Error('Reminder not found') };
+        }
+
+        existingIntake = data;
+      } else {
+        const today = getLocalDateString(now);
+
+        const { data, error: fetchError } = await supabase
+          .from('hydration_intakes')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('date', today)
+          .eq('completed', false)
+          .order('scheduled_time', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (fetchError) {
+          logger.error('Error fetching next pending reminder:', fetchError);
+          return { data: null, error: fetchError };
+        }
+
+        if (!data) {
+          logger.error('No pending reminders found for today');
+          return { data: null, error: new Error('No pending reminders found') };
+        }
+
+        existingIntake = data;
       }
 
-      if (!existingIntake) {
-        logger.error('Reminder not found for scheduled_time:', scheduledTime);
-        return { data: null, error: new Error('Reminder not found') };
-      }
+      const localDate = getLocalDateString(now);
 
-      // Atualiza o lembrete específico que foi clicado
       const { data, error } = await supabase
         .from('hydration_intakes')
         .update({
           actual_time: now.toISOString(), // Marca com horário atual, não o agendado
           completed: true,
+          date: localDate,
         })
         .eq('id', existingIntake.id)
         .select()
@@ -235,7 +277,7 @@ export const hydrationService = {
         return { data: null, error: new Error('User not authenticated') };
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
 
       // Busca ingestões do dia
       const { data: intakes, error: intakesError } = await supabase
@@ -293,7 +335,7 @@ export const hydrationService = {
         .from('hydration_intakes')
         .select('date, amount_ml')
         .eq('user_id', userId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+        .gte('date', getLocalDateString(thirtyDaysAgo))
         .order('date', { ascending: false });
 
       if (!intakes || intakes.length === 0) return 0;
@@ -312,7 +354,7 @@ export const hydrationService = {
       const today = new Date();
 
       while (true) {
-        const dateStr = today.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(today);
         const total = dailyTotals[dateStr] || 0;
 
         if (total >= goalMl) {
@@ -372,7 +414,7 @@ export const hydrationService = {
         .from('hydration_intakes')
         .select('*')
         .eq('user_id', user.id)
-        .gte('date', sevenDaysAgo.toISOString().split('T')[0])
+        .gte('date', getLocalDateString(sevenDaysAgo))
         .order('date', { ascending: true });
 
       if (error) {
@@ -434,7 +476,7 @@ export const hydrationService = {
         .from('hydration_intakes')
         .select('*')
         .eq('user_id', user.id)
-        .gte('date', daysAgo.toISOString().split('T')[0])
+        .gte('date', getLocalDateString(daysAgo))
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -481,7 +523,12 @@ export const hydrationService = {
         return { error: new Error('User not authenticated') };
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const scheduleDate = new Date(scheduledTime);
+      if (Number.isNaN(scheduleDate.getTime())) {
+        logger.error('Invalid scheduledTime received in uncompleteIntake:', scheduledTime);
+        return { error: new Error('Invalid scheduled time') };
+      }
+      const scheduledDateStr = scheduledTime.split('T')[0];
 
       // Primeiro, busca o lembrete específico
       const { data: existingIntake, error: fetchError } = await supabase
@@ -489,7 +536,7 @@ export const hydrationService = {
         .select('*')
         .eq('user_id', user.id)
         .eq('scheduled_time', scheduledTime)
-        .eq('date', today)
+        .eq('date', scheduledDateStr)
         .maybeSingle();
 
       if (fetchError) {
@@ -508,6 +555,7 @@ export const hydrationService = {
         .update({
           completed: false,
           actual_time: null,
+          date: scheduledDateStr,
         })
         .eq('id', existingIntake.id);
 
@@ -533,7 +581,7 @@ export const hydrationService = {
         return { data: null, error: new Error('User not authenticated') };
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
 
       const { data: reminders, error } = await supabase
         .from('hydration_intakes')
@@ -570,7 +618,7 @@ export const hydrationService = {
         return { error: new Error('User not authenticated') };
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
 
       // Remove lembretes existentes do dia (para evitar duplicatas)
       await supabase

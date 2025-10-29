@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import logger from '../utils/logger';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const isE2EMock = import.meta.env.VITE_E2E_MOCK === 'true';
 
 interface CalorieGoalRequest {
   weight: number;
@@ -27,6 +28,9 @@ export const calorieGoalService = {
    * Calcula as metas calóricas usando IA (Gemini)
    */
   async calculateCalorieGoals(params: CalorieGoalRequest): Promise<CalorieGoalResponse> {
+    if (isE2EMock) {
+      return this.calculateFallback(params);
+    }
     try {
       logger.debug('Calculating calorie goals with AI');
 

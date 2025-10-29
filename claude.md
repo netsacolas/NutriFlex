@@ -1,8 +1,13 @@
-# NutriMais AI - Documentação Técnica Atualizada
+﻿# NutriMais AI - Documentação Técnica Atualizada
 
 ## Visão Geral
+NutriMais AI é uma aplicação web inteligente para diário alimentar que simplifica o planejamento nutricional. Os usuários definem metas calóricas por refeição, escolhem alimentos e a IA calcula automaticamente porções ideais seguindo a distribuição 40% carboidratos, 30% proteínas e 30% gorduras. A experiência foi desenhada como uma PWA multiplataforma, com suporte offline, sincronização em segundo plano e notificações push.
 
-**NutriMais AI** é uma aplicação web inteligente de diário alimentar que simplifica o planejamento nutricional. Os usuários definem suas metas de calorias para cada refeição, escolhem os alimentos desejados, e a IA calcula automaticamente as porções ideais para atingir uma dieta balanceada com distribuição de macronutrientes 40% carboidratos, 30% proteína e 30% gordura.
+### Objetivos Principais
+- Automatizar cálculos nutricionais mantendo possibilidade de ajuste manual por refeição.
+- Conduzir onboarding guiado para capturar dados antropométricos, hábitos e objetivos.
+- Consolidar histórico de refeições, hidratação, peso, atividades e insights gerados pela IA.
+- Oferecer experiência responsiva, acessível e segura em diferentes dispositivos.
 
 ### Links Importantes
 - **AI Studio App**: https://ai.studio/apps/drive/1Dbi9jO-Jmlmz2eT3Ldk05Q6NHUO1xVD8
@@ -12,522 +17,243 @@
 ---
 
 ## Stack Tecnológica
-
 ### Frontend
-- **React 19.2.0** - Biblioteca UI com componentes funcionais e hooks
-- **React Router DOM 7.9.4** - Camada de roteamento com rotas públicas e protegidas
-- **TypeScript 5.8.2** - Type safety e desenvolvimento robusto
-- **Vite 6.2.0** - Build tool e dev server de alta performance
-- **TailwindCSS 4.1.16** - Utility-first CSS (local + CDN)
+- **React 19.2.0** — componentes funcionais com hooks e suspense.
+- **React Router DOM 7.9.4** — roteamento com rotas públicas e protegidas.
+- **TypeScript 5.8.2** — garantia de tipagem e DX elevada.
+- **Vite 6.2.0** — dev server rápido com suporte a HMR e build otimizado.
+- **Tailwind CSS 4.1.16** — utilitário CSS com presets locais e fallback CDN.
 
-### Bibliotecas
-- **Recharts 3.3.0** - Visualização de dados (gráficos de pizza para macronutrientes)
-- **@google/genai 1.27.0** - SDK oficial do Google Gemini AI (Edge Function)
-- **@supabase/supabase-js 2.76.1** - Cliente Supabase para auth e database
-- **Zod 4.1.12** - Schemas de validação centralizados em `utils/validation.ts`
+### Bibliotecas de apoio
+- **Recharts 3.3.0** — gráficos de pizza e evolução temporal.
+- **@google/genai 1.27.0** — SDK oficial do Gemini para consumo nas Edge Functions.
+- **@supabase/supabase-js 2.76.1** — autenticação, storage e banco de dados.
+- **Zod 4.1.12** — schemas de validação centralizados em `utils/validation.ts`.
 
-### Backend & Infraestrutura
-- **Supabase** - Backend as a Service (autenticação, banco de dados PostgreSQL, Edge Functions)
-- **Gemini 2.0 Flash Experimental** - Modelo de IA para cálculos nutricionais
-- **PostgreSQL** - Banco de dados relacional com Row Level Security (RLS)
-
----
-
-## 🆕 Atualizações Recentes (Janeiro 2025)
-
-### 1. Sistema de Onboarding Obrigatório
-- **OnboardingPage.tsx**: Wizard de 5 passos para novos usuários
-- Coleta dados essenciais: peso, altura, idade, sexo, nível de atividade, objetivos
-- Cálculo automático de IMC em tempo real
-- **IA calcula metas calóricas** personalizadas usando `calorieGoalService`
-- Redirecionamento forçado até completar onboarding
-- Encoding UTF-8 corrigido em todos os arquivos
-
-### 2. Sistema Completo de Hidratação
-- **HydrationPage.tsx**: Rastreamento de água com IA
-- Cálculo automático de meta diária baseado em peso/atividade
-- Configuração de lembretes personalizados (horário de acordar/dormir)
-- **Web Push Notifications** para lembretes de hidratação
-- Histórico de ingestões com gráficos e estatísticas
-- Correção do contador de ingestões (bug fix recente)
-- Tamanho de copo configurável (ml)
-- Unidades: ml ou litros
-
-### 3. Landing Page Completa
-- **LandingPage.tsx**: Página institucional profissional
-- Seções: Hero, Features, Pricing, FAQ, Testimonials
-- Templates de email para onboarding e confirmação
-- Design responsivo com gradientes modernos
-- Call-to-actions estratégicos
-
-### 4. Melhorias de UX/UI
-- **Sidebar para desktop** com logotipo e navegação
-- **Bottom navigation para mobile** (touch-friendly)
-- Headers padronizados em todas as páginas
-- Foto do perfil substituindo emoji na página inicial
-- Contraste e sombreamento aumentados nos cards
-- Remoção da seção "Assistente Nutricional" da página de perfil (agora apenas no chat dedicado)
-
-### 5. Histórico Expandido
-- **4 abas no HistoryPage**: Refeições, Peso, Atividades, **Hidratação** (novo)
-- Filtros temporais aprimorados (hoje, semana, mês, tudo)
-- Estatísticas detalhadas por categoria
-- Gráficos de evolução para peso e hidratação
+### Backend e Infraestrutura
+- **Supabase** — autenticação, PostgreSQL gerenciado, Edge Functions e storage.
+- **Gemini 2.0 Flash Experimental** — modelo de IA responsável pelos cálculos nutricionais e geração de insights.
+- **PostgreSQL** — banco relacional com Row Level Security ativada.
+- **Edge Functions (TypeScript)** — camada serverless para encapsular chamadas ao Gemini e regras de negócio sensíveis.
 
 ---
 
-## Arquitetura do Projeto Atualizada
+## Setup e Execução
+
+### Pré-requisitos
+- Node.js 20.x ou superior.
+- npm 10+ ou pnpm 9+ (scripts oficiais utilizam npm).
+- Supabase CLI 1.181.0 ou superior para gerenciar migrações.
+- Acesso às chaves do Gemini e do Supabase (ambiente de testes e produção).
+
+### Configuração inicial
+1. Duplique `.env.example` para `.env.local`.
+2. Preencha as variáveis `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_GEMINI_API_KEY` e demais segredos necessários.
+3. Instale dependências com `npm install`.
+4. Inicie o ambiente local com `npm run dev` (porta padrão 5173).
+
+### Scripts úteis
+- `npm run dev`: servidor de desenvolvimento com HMR.
+- `npm run build`: build de produção com tree-shaking e minificação.
+- `npm run preview`: serve estático do build para testes de QA.
+- `npm run test:e2e`: executa a suíte Playwright; rodar `npx playwright install` na primeira vez para baixar os navegadores.
+- `npm run validate:pwa`: valida manifest, service worker e políticas PWA (scripts/validate-pwa.js).
+
+### Provisionamento do Supabase
+- Faça login com `supabase login` e vincule o projeto usando `supabase link --project-ref <ref>`.
+- Execute `supabase migration up` (ou `supabase db push`) para aplicar as migrações em `supabase/migrations`.
+- Se preferir SQL puro, utilize `apply-all-migrations.sql` diretamente no editor SQL do Supabase.
+- Garanta que as políticas RLS estejam publicadas e que os buckets de storage de avatares estejam com permissões corretas.
+
+### Dados locais e seeds
+- O diretório `data/` contém `foodDatabase.ts`, `activitiesDatabase.ts` e `dailyTips.ts`, usados como fonte de dados estáticos.
+- Scripts em `scripts/` podem auxiliar no carregamento de dados adicionais ou validações automatizadas.
+- Para testar notificações PWA, utilize os exemplos em `public/` e os arquivos `test-edge-function.html` e `test-database-connection.html`.
+
+---
+
+## Plano de Testes
+
+### Metas
+- Elevar cobertura de componentes críticos (onboarding, planner, hidratação) para acima de 70%.
+- Validar fluxos de autenticação, onboarding obrigatório e cálculos da IA.
+- Monitorar regressões em integrações com Supabase, Edge Functions e funcionalidades PWA.
+
+### Ferramentas recomendadas
+- **Vitest** + **React Testing Library** para testes de unidade e componentes.
+- **MSW (Mock Service Worker)** para simular respostas do Supabase e do Gemini.
+- **Playwright** para fluxos end-to-end (onboarding, planejamento, hidratação).
+
+### Roadmap incremental
+1. Configurar Vitest no projeto (`vitest.config.ts`) e criar suíte smoke para páginas críticas.
+2. Testar hooks e serviços (`hooks/`, `services/`) com mocks do Supabase.
+3. Cobrir fluxos de UI (onboarding e planner) com testes de interação (RTL).
+4. Adicionar smoke tests E2E com Playwright usando banco Supabase de staging.
+5. Integrar execução de testes em CI (GitHub Actions) com badges no README.
+
+### Progresso atual (Outubro 2025)
+- Vitest configurado com `vitest.setup.ts`, `vitest.config.ts` e reporter de cobertura (`@vitest/coverage-v8`).
+- Testes unitários cobrindo `calorieGoalService`, `hydrationService`, `AuthContext` e o hook `useRequiredProfile`.
+- Testes de interface para `LandingPage`, `PlanMealPage` e `HydrationPage`, validando redirecionamentos protegidos e preenchimento automático.
+- Pipeline GitHub Actions (`.github/workflows/tests.yml`) executa `npm run test -- --coverage` em push/PR.
+- Navegadores Playwright instalados (`npx playwright install`) e suíte smoke (`npm run test:e2e`) garantindo visibilidade do hero e botões de conversão da landing.
+
+---
+
+## Mitigações de Segurança Prioritárias
+- Concluir rotação de credenciais expostas em `.env.local` e atualizar secrets em pipelines.
+- Migrar Tailwind para build local removendo dependência do CDN e habilitando CSP estrita.
+- Implementar política de senhas fortes (mínimo 12 caracteres, verificação em tempo real) no fluxo de cadastro.
+- Ativar confirmação de e-mail obrigatória e expiração de magic links.
+- Migrar tokens sensíveis para cookies `httpOnly` e reforçar regras RLS no Supabase.
+- Publicar política de privacidade e termos de uso alinhados à LGPD, com opção de exclusão de conta.
+- Executar varredura periódica com `npx supabase secrets list` + dependabot e registrar findings em `SECURITY.md`.
+
+---
+
+## Atualizações Recentes (Janeiro 2025)
+1. **Sistema de Onboarding Obrigatório** — wizard em cinco passos (`pages/OnboardingPage.tsx`) com cálculo automático de IMC e metas calóricas via `services/calorieGoalService.ts`.
+2. **Sistema Completo de Hidratação** — página dedicada (`pages/HydrationPage.tsx`) com metas personalizadas, histórico visual e notificações push configuráveis.
+3. **Landing Page Institucional** — `pages/LandingPage.tsx` com seções Hero, Features, Pricing, FAQ e depoimentos, além de templates de e-mail para onboarding.
+4. **Melhorias de UX/UI** — sidebar para desktop, bottom navigation mobile, headers padronizados e avatar do usuário aplicado ao dashboard.
+5. **Histórico Expandido** — `pages/HistoryPage.tsx` com quatro abas (refeições, peso, atividades, hidratação), filtros temporais e gráficos de evolução.
+
+---
+
+## Arquitetura do Projeto
 
 ```
 NutriMais/
-├── index.html                  # Entry point HTML (Tailwind CDN + local)
-├── index.tsx                   # Bootstrap do React
-├── App.tsx                     # Router + PWAManager + Hydration Notifications
-├── types.ts                    # Tipagens compartilhadas (expandido com hidratação)
-├── vite.config.ts              # Vite + security headers plugin + PWA config
-├── tsconfig.json               # Configuração TypeScript
-├── package.json                # Dependências e scripts
-├── config/
-│   └── app.config.ts           # Metadados, URLs, feature flags e pricing
-├── contexts/
-│   └── AuthContext.tsx         # Provedor Supabase Auth com onboarding redirect
-├── components/
-│   ├── Auth/                   # Login, SignUp, ForgotPassword, AuthFlow
-│   ├── Layout/                 # MainLayout, Sidebar, BottomNavigation, Icons (16+)
-│   ├── UserPanel/              # Modais: Profile, Health, History, NutritionChat, CostAnalysis
-│   ├── MealPlanner.tsx         # Planejamento com autocomplete de alimentos
-│   ├── MealResult.tsx          # Exibição e edição de porções com recálculo dinâmico
-│   ├── SaveMealModal.tsx       # Modal para salvar refeições
-│   ├── AIAssistantFAB.tsx      # Floating action button para chat IA
-│   ├── PWAComponents.tsx       # InstallPrompt, OfflineDetector, UpdateNotification
-│   ├── HydrationHistory.tsx    # 🆕 Histórico de ingestões de água
-│   └── Toast.tsx / ConfirmDeleteModal.tsx
-├── pages/
-│   ├── LandingPage.tsx         # 🆕 Landing institucional completa
-│   ├── AuthPage.tsx            # Container de autenticação (login/cadastro)
-│   ├── AuthCallbackPage.tsx    # 🆕 Callback para confirmação de email
-│   ├── OnboardingPage.tsx      # 🆕 Wizard obrigatório de 5 passos
-│   ├── HomePage.tsx            # Dashboard com resumo diário
-│   ├── PlanMealPage.tsx        # Orquestra planner + resultados com IA
-│   ├── HistoryPage.tsx         # 🆕 4 abas: refeições, peso, atividades, hidratação
-│   ├── HealthPage.tsx          # Metas, IMC e registro de atividades
-│   ├── ProfilePage.tsx         # Perfil, avatar e dados pessoais
-│   ├── ChatPage.tsx            # Chat nutricional com IA (time-aware)
-│   └── HydrationPage.tsx       # 🆕 Rastreamento completo de hidratação
-├── services/
-│   ├── geminiService.ts        # Chamada à Edge Function
-│   ├── authService.ts          # Wrapper Supabase Auth
-│   ├── profileService.ts       # Perfil com validação de onboarding
-│   ├── mealHistoryService.ts   # Histórico de refeições
-│   ├── weightHistoryService.ts # Histórico de peso com gráficos
-│   ├── physicalActivityService.ts # Registro de atividades físicas
-│   ├── hydrationService.ts     # 🆕 Gerenciamento de hidratação
-│   ├── calorieGoalService.ts   # 🆕 Cálculo de metas calóricas com IA
-│   ├── weightAnalysisService.ts # 🆕 Análise de tendências de peso
-│   ├── avatarService.ts        # Upload/gerenciamento de avatar
-│   ├── mealConsumptionService.ts # Consumo de refeições
-│   ├── costAnalysisService.ts  # Painel administrativo
-│   └── nutritionChatService.ts # Prompt engineering (time-aware)
-├── data/
-│   ├── activitiesDatabase.ts   # 116 atividades + MET values
-│   ├── foodDatabase.ts         # 🆕 Banco de alimentos com autocomplete
-│   └── dailyTips.ts            # 🆕 Dicas nutricionais diárias
-├── utils/
-│   ├── backgroundSync.tsx      # Fila offline + badge + sync queue
-│   ├── bmiUtils.ts             # Cálculo de IMC com classificação colorida
-│   ├── logger.ts               # Logger seguro (silenciado em produção)
-│   ├── validation.ts           # Schemas Zod
-│   └── hydrationNotifications.ts # 🆕 Push notifications para hidratação
-├── email-templates/            # 🆕 Templates HTML de email
-├── scripts/                    # Ferramentas PWA (validate, generate icons/splash)
-├── migrations/                 # SQL manuais + apply-all-migrations.sql
-└── supabase/
-    ├── functions/gemini-proxy/ # Edge Function com rate limiting
-    ├── functions/gemini-generic/ # Edge Function genérica
-    ├── migrations/             # Migrações Supabase CLI
-    └── functions/DEPLOY_INSTRUCTIONS.md
+|-- index.html
+|-- index.tsx
+|-- App.tsx
+|-- types.ts
+|-- vite.config.ts
+|-- tsconfig.json
+|-- package.json
+|-- public/
+|   |-- manifest.webmanifest
+|   |-- service-worker.js
+|-- components/
+|   |-- Auth/
+|   |-- Layout/
+|   |-- UserPanel/
+|   |-- HydrationHistory.tsx
+|   |-- AIAssistantFAB.tsx
+|-- pages/
+|   |-- LandingPage.tsx
+|   |-- AuthPage.tsx
+|   |-- AuthCallbackPage.tsx
+|   |-- OnboardingPage.tsx
+|   |-- HomePage.tsx
+|   |-- PlanMealPage.tsx
+|   |-- HistoryPage.tsx
+|   |-- HealthPage.tsx
+|   |-- ProfilePage.tsx
+|   |-- ChatPage.tsx
+|   |-- HydrationPage.tsx
+|-- services/
+|   |-- geminiService.ts
+|   |-- authService.ts
+|   |-- profileService.ts
+|   |-- calorieGoalService.ts
+|-- contexts/
+|   |-- AuthContext.tsx
+|-- hooks/
+|   |-- useAuth.ts
+|   |-- useHydration.ts
+|-- data/
+|   |-- foodDatabase.ts
+|   |-- activitiesDatabase.ts
+|   |-- dailyTips.ts
+|-- email-templates/
+|-- scripts/
+|   |-- validate-pwa.js
+|-- supabase/
+|   |-- migrations/
+|-- utils/
+|   |-- validation.ts
+|-- migrations/
+|-- dist/ (build)
 ```
 
 ---
 
-## Páginas da Aplicação (11 Páginas)
-
-| Página | Rota | Status | Descrição |
-|--------|------|--------|-----------|
-| **LandingPage** | `/` | Público | Landing institucional com pricing e features |
-| **AuthPage** | `/login`, `/register` | Público | Login e cadastro |
-| **AuthCallbackPage** | `/auth/callback` | Público | Confirmação de email |
-| **OnboardingPage** | `/onboarding` | Protegido | **🆕 Wizard obrigatório de 5 passos** |
-| **HomePage** | `/home` | Protegido | Dashboard com resumo diário |
-| **PlanMealPage** | `/plan` | Protegido | Planejamento de refeições com IA |
-| **HistoryPage** | `/history` | Protegido | **🆕 4 abas** (refeições, peso, atividades, hidratação) |
-| **HealthPage** | `/health` | Protegido | Metas, IMC e atividades |
-| **ProfilePage** | `/profile` | Protegido | Perfil, avatar e senha |
-| **ChatPage** | `/chat` | Protegido | Chat nutricional com IA |
-| **HydrationPage** | `/hydration` | Protegido | **🆕 Rastreamento de água** |
+## Páginas e Rotas-chave
+- `/` → `LandingPage.tsx`: apresentação institucional e call-to-actions.
+- `/auth` → `AuthPage.tsx`: login, cadastro e recuperação de senha (Supabase Auth).
+- `/onboarding` → `OnboardingPage.tsx`: fluxo obrigatório de configuração inicial.
+- `/app` → `HomePage.tsx`: dashboard com resumo diário.
+- `/plan` → `PlanMealPage.tsx`: planejamento de refeições assistido por IA.
+- `/history` → `HistoryPage.tsx`: histórico com filtros e gráficos.
+- `/hydration` → `HydrationPage.tsx`: acompanhe ingestão de água e lembretes.
+- `/chat` → `ChatPage.tsx`: assistente nutricional assíncrono (Gemini).
+- `/profile` → `ProfilePage.tsx`: dados pessoais, metas e preferências.
+- `/health` → `HealthPage.tsx`: registro de peso, metas e atividades físicas.
 
 ---
 
-## Novos Componentes e Features
-
-### 🆕 OnboardingPage - Sistema de Configuração Inicial
-
-**Localização**: [pages/OnboardingPage.tsx](pages/OnboardingPage.tsx)
-
-**Passos do Wizard**:
-1. **Bem-vindo**: Introdução ao sistema
-2. **Dados Corporais**: Peso, altura com cálculo de IMC em tempo real
-3. **Informações Pessoais**: Idade e sexo
-4. **Nível de Atividade**: Sedentário até Extra Ativo
-5. **Objetivos e Metas**: IA calcula calorias ideais por refeição
-
-**Features**:
-- Validação completa de inputs (peso 30-300kg, altura 100-250cm, idade 13-120)
-- **Cálculo de IMC em tempo real** com código de cores
-- **IA calcula metas calóricas** baseado em perfil completo
-- Possibilidade de editar metas sugeridas
-- Progresso visual com steps
-- Redirecionamento forçado do AuthContext se dados incompletos
-- Salvamento automático no Supabase (profile + weight_history)
-
-**Integração**:
-```typescript
-// AuthContext redireciona para onboarding se dados incompletos
-if (needsOnboarding(profile)) {
-  navigate('/onboarding');
-}
-```
+## Serviços e Integrações
+- `services/geminiService.ts`: encapsula chamadas às Edge Functions que conversam com o Gemini (prompt engineering e limites de taxa).
+- `services/authService.ts`: wrapper de autenticação e recuperação de sessão do Supabase.
+- `services/profileService.ts`: sincroniza dados de perfil, garantindo que o onboarding permaneça obrigatório.
+- `services/calorieGoalService.ts`: calcula metas calóricas personalizadas (TMB, fator de atividade e objetivo).
+- Edge Functions Supabase: validam ingestão nutricional/hidratação e retornam planos ajustados pelo Gemini.
 
 ---
 
-### 🆕 HydrationPage - Sistema de Hidratação
-
-**Localização**: [pages/HydrationPage.tsx](pages/HydrationPage.tsx)
-
-**Features Principais**:
-
-#### 1. Cálculo Automático de Meta Diária
-```typescript
-// Fórmula baseada em peso e nível de atividade
-baseWater = weight(kg) × 35ml
-activityMultiplier = 1.0 (sedentário) até 1.5 (extra ativo)
-dailyGoal = baseWater × activityMultiplier
-```
-
-#### 2. Configuração de Lembretes
-- **Horário de acordar** (padrão: 07:00)
-- **Horário de dormir** (padrão: 23:00)
-- **Intervalo entre lembretes**: Calculado automaticamente
-- **Notificações**: Som, vibração configuráveis
-- **Web Push API** para lembretes nativos
-
-#### 3. Registro de Ingestões
-- **Tamanho do copo configurável** (padrão: 250ml)
-- Botão rápido "Adicionar ingestão"
-- Contador de ingestões diárias
-- Percentual de progresso visual
-- Unidades: ml ou litros
-
-#### 4. Histórico e Estatísticas
-- Total consumido hoje
-- Número de ingestões
-- Meta diária
-- Percentual atingido
-- Gráfico de evolução semanal
-
-**Service**: [services/hydrationService.ts](services/hydrationService.ts)
-```typescript
-calculateDailyWaterGoal(weight, activityLevel)
-generateReminders(wakeTime, sleepTime, dailyGoal, intakeSize)
-logIntake(userId, amountMl, timestamp)
-getProgress(userId, date)
-```
-
-**Notificações**: [utils/hydrationNotifications.ts](utils/hydrationNotifications.ts)
-- Integração com Web Push API
-- Agendamento de lembretes recorrentes
-- Permission handling
-- Fallback para browsers sem suporte
+## Fluxo do Usuário
+1. Usuário cria conta ou autentica-se via Supabase Auth.
+2. É redirecionado ao onboarding obrigatório para preencher dados básicos, objetivos e preferências alimentares.
+3. Após conclusão, acessa o dashboard (`HomePage`) com resumo diário.
+4. Planeja refeições em `/plan`, recebendo sugestões e ajustes da IA em tempo real.
+5. Registra ingestões de água, atividades físicas e atualiza peso através das páginas dedicadas.
+6. Interage com o chat nutricional para recomendações adicionais.
+7. Recebe notificações push configuradas (hidratação, lembretes de refeições) e acompanha histórico completo.
 
 ---
 
-### 🆕 Sistema de Notificações Push
-
-**Implementação**:
-```typescript
-// App.tsx
-import('./utils/hydrationNotifications').then(module => {
-  module.initializeHydrationNotifications();
-});
-```
-
-**Features**:
-- Solicita permissão do usuário
-- Agenda notificações baseadas em configurações
-- Respeita horário de acordar/dormir
-- Som e vibração configuráveis
-- Cancelamento automático ao desabilitar
-
----
-
-## Services Atualizados
-
-### 🆕 calorieGoalService.ts
-**Responsabilidade**: Calcular metas calóricas usando IA
-
-**Função Principal**:
-```typescript
-async calculateCalorieGoals(profile: UserProfile): Promise<CalorieGoals>
-```
-
-**Prompt para IA**:
-```
-Você é um nutricionista expert. Calcule as calorias ideais por refeição para:
-- Peso: ${weight}kg
-- Altura: ${height}cm
-- Idade: ${age} anos
-- Sexo: ${gender}
-- Nível de atividade: ${activityLevel}
-- Objetivo: ${goal}
-
-Retorne JSON com:
-{
-  breakfast_calories: number,
-  lunch_calories: number,
-  dinner_calories: number,
-  snack_calories: number,
-  snack_quantity: number,
-  total_daily_calories: number,
-  explanation: string
-}
-```
-
----
-
-### 🆕 hydrationService.ts
-**Responsabilidade**: Gerenciar hidratação e lembretes
-
-**Funções**:
-- `getSettings(userId)` - Busca configurações
-- `saveSettings(userId, settings)` - Salva configurações
-- `logIntake(userId, amountMl)` - Registra ingestão
-- `getProgress(userId, date)` - Progresso diário
-- `getHistory(userId, days)` - Histórico de ingestões
-- `calculateDailyWaterGoal(weight, activityLevel)` - Cálculo de meta
-- `generateReminders(wakeTime, sleepTime, dailyGoal, intakeSize)` - Lembretes
-
----
-
-### 🆕 weightAnalysisService.ts
-**Responsabilidade**: Análise de tendências de peso
-
-**Funções**:
-- `analyzeTrend(weightHistory)` - Detecta tendência (ganho/perda/estável)
-- `calculateAverageChange(weightHistory)` - Mudança média por semana
-- `predictFutureWeight(weightHistory, weeks)` - Projeção futura
-- `getWeeklySummary(weightHistory)` - Resumo semanal
-
----
-
-## Tipos Atualizados (types.ts)
-
-### 🆕 Tipos de Hidratação
-```typescript
-interface HydrationSettings {
-  user_id: string;
-  daily_goal_ml: number;
-  wake_time: string;          // "07:00"
-  sleep_time: string;         // "23:00"
-  intake_size_ml: number;     // Tamanho do copo
-  notifications_enabled: boolean;
-  sound_enabled: boolean;
-  vibration_enabled: boolean;
-  unit: 'ml' | 'liters';
-  created_at: string;
-  updated_at: string;
-}
-
-interface HydrationIntake {
-  id: string;
-  user_id: string;
-  amount_ml: number;
-  intake_time: string;
-  created_at: string;
-}
-
-interface HydrationProgress {
-  date: string;
-  consumed_ml: number;
-  goal_ml: number;
-  intake_count: number;
-  percentage: number;
-}
-
-interface HydrationReminder {
-  time: string;
-  amount_ml: number;
-}
-```
-
-### 🆕 Tipos de Onboarding
-```typescript
-interface CalorieGoals {
-  breakfast_calories: number;
-  lunch_calories: number;
-  dinner_calories: number;
-  snack_calories: number;
-  snack_quantity: number;
-  total_daily_calories: number;
-  explanation?: string;
-}
-
-type GoalType = 'lose' | 'maintain' | 'gain' | 'muscle_gain' | 'custom';
-```
+## Métricas e Indicadores
+- **Funcionalidades**: 11 páginas principais, 28+ componentes reutilizáveis, 14 serviços integrados.
+- **Cobertura de código**: 51% linhas / 59% branches / 22% funções (Vitest v8, foco nos módulos críticos monitorados). Meta permanece >=70% após ampliação da suíte.
+- **Segurança**: score atual estimado em 35/100 com quatro vulnerabilidades críticas e cinco altas identificadas (ver `SECURITY.md`).
+- **Performance**: bundle ~50 KB minificado; continuar monitorando lighthouse no build de produção.
+- **Conformidade LGPD**: pendente. Priorizar política de privacidade, exportação de dados e exclusão de conta.
 
 ---
 
 ## Histórico de Mudanças Recentes
-
-### Commit 6a06a32 (Mais Recente)
-**feat: Sistema completo de hidratação com correção do contador de ingestões**
-- HydrationPage completa
-- hydrationService com todas as funções
-- Web Push Notifications
-- Correção de bug no contador de ingestões
-- Histórico de hidratação no HistoryPage
-
-### Commit 89c9deb
-**feat: Sistema de onboarding obrigatório, encoding UTF-8 corrigido e melhorias UX**
-- OnboardingPage com wizard de 5 passos
-- calorieGoalService com IA
-- Correção de encoding UTF-8 em todos os arquivos
-- Redirecionamento forçado do AuthContext
-- Validações completas de inputs
-
-### Commit 6031e8e
-**feat: Landing page completa, templates de email e correção do assistente nutricional**
-- LandingPage profissional
-- Templates de email HTML
-- Correção do assistente nutricional (time-aware)
-- AuthCallbackPage para confirmação
-
-### Commit e661e3f
-**style: Aumentar contraste e intensidade de sombreamentos dos cards**
-- Melhor legibilidade
-- Shadows mais pronunciados
-- Cards com mais depth
-
-### Commit 547f38a
-**feat: Remover seção Assistente Nutricional da página de perfil**
-- Chat IA exclusivo em /chat
-- Perfil mais focado em dados pessoais
-
-### Commit 4b4899d
-**refactor: Padronizar headers em Início, Perfil e Planejar**
-- Consistência visual
-- Headers uniformes
-- Melhor UX
-
-### Commit 2787ed6
-**feat: Adicionar sidebar com logotipo para desktop e manter bottom nav para mobile**
-- Sidebar elegante para desktop
-- Bottom navigation touch-friendly para mobile
-- Responsive design
-
-### Commit bde8548
-**feat: Substituir emoji por foto do perfil na página inicial**
-- Avatar do usuário em vez de emoji
-- Experiência mais personalizada
+- `6031e8e` — landing page completa, templates de e-mail e correções no assistente nutricional.
+- `e661e3f` — contraste e sombras aprimorados para melhor legibilidade.
+- `547f38a` — remoção da seção "Assistente Nutricional" do perfil; chat dedicado em `/chat`.
+- `4b4899d` — padronização de headers no dashboard e páginas principais.
+- `2787ed6` — sidebar desktop e bottom navigation mobile.
+- `bde8548` — avatar do usuário substitui emoji no dashboard.
 
 ---
 
-## Features Implementadas ✅
-
-- ✅ Sistema completo de autenticação (Supabase)
-- ✅ **Onboarding obrigatório com IA** (cálculo de metas)
-- ✅ Planejamento de refeições com IA (40/30/30)
-- ✅ Edição de porções com recálculo dinâmico
-- ✅ Cálculo de índice/carga glicêmica
-- ✅ Registro de atividades físicas (116 atividades)
-- ✅ **Sistema completo de hidratação com notificações**
-- ✅ Histórico expandido (4 abas)
-- ✅ Chat nutricional com IA (time-aware)
-- ✅ Progressive Web App (PWA)
-- ✅ Modo offline + Background Sync
-- ✅ **Landing page profissional**
-- ✅ **Templates de email**
-- ✅ Sistema de favoritos
-- ✅ Análise de tendências de peso
-- ✅ **Sidebar desktop + Bottom nav mobile**
-- ✅ **Avatar do usuário**
-- ✅ Daily nutrition tips
+## Próximos Passos Prioritários
+1. Implementar suite de testes com Vitest + RTL e automatizar execução em CI.
+2. Migrar Tailwind para build local, reforçar CSP e revisar políticas de segurança (LGPD + tokens httpOnly).
+3. Entregar política de privacidade, termos de uso e funcionalidade de exclusão de conta.
+4. Adicionar exportação de dados (PDF/JSON) e reforçar fluxo de confirmação de e-mail.
+5. Criar modo escuro opcional após estabilização das melhorias de segurança.
 
 ---
 
-## Próximos Passos Sugeridos
-
-### Alta Prioridade
-1. **Integrar validação Zod** nos formulários (AuthPage, ProfilePage, HealthPage)
-2. **Migrar TailwindCSS para build local** (remover CDN)
-3. **Implementar testes automatizados** (Vitest/Jest)
-4. **Política de Privacidade e Termos** (conformidade LGPD)
-5. **Rotacionar credenciais** expostas no .env.local
-
-### Média Prioridade
-6. **Exportar dados** (PDF/JSON para LGPD)
-7. **Deletar conta** (funcionalidade obrigatória LGPD)
-8. **Senha forte obrigatória** (≥12 caracteres)
-9. **Confirmação de email obrigatória**
-10. **Migrar tokens para cookies httpOnly**
-
-### Baixa Prioridade (Features)
-11. **Planejamento semanal** de refeições
-12. **Receitas favoritas** (combinações salvas)
-13. **Compartilhamento** via Web Share API
-14. **Camera API** para fotos de alimentos
-15. **Dark mode** toggle
-
----
-
-## Métricas de Qualidade Atual
-
-### Funcionalidades
-- **11 páginas** completas
-- **28+ componentes** modulares
-- **14 services** integrados
-- **3 databases locais** (alimentos, atividades, dicas)
-- **Score de completude**: 90/100
-
-### Segurança
-- **Score de segurança**: 35/100 (🚨 crítico)
-- **4 vulnerabilidades críticas**
-- **5 vulnerabilidades altas**
-- **Conformidade LGPD**: ❌ Não conforme
-
-### Código
-- **TypeScript**: 100% tipado
-- **Cobertura de testes**: 0%
-- **Vulnerabilidades npm**: 0
-- **Build size**: ~50KB minificado
+## Diretrizes para Agentes
+- Sempre responda em português do Brasil, com acentuação correta e vocabulário local sempre que o ambiente suportar UTF-8.
+- Utilize tom colaborativo, objetivo e respeitoso.
+- Prefira terminologia técnica em português; mantenha nomes próprios e identificadores em inglês quando necessário.
+- Explique raciocínios e decisões de forma clara e estruturada para facilitar revisões.
+- Esta seção permanece em sincronia com `agents.md`, que é a fonte de verdade para orientações de interação.
 
 ---
 
 ## Conclusão
-
-O NutriMais AI está **funcionalmente completo** com todas as features principais implementadas, incluindo o novo **sistema de onboarding obrigatório** e o **sistema completo de hidratação com notificações**. A aplicação oferece uma experiência moderna e intuitiva com:
-
-- 🤖 IA integrada em múltiplos pontos
-- 📱 PWA instalável (Android/iOS/Desktop)
-- 💧 Rastreamento de hidratação com lembretes
-- 🏋️ 116 atividades físicas catalogadas
-- 📊 Histórico completo com 4 categorias
-- 🎨 UI moderna e responsiva
-- 🔒 Autenticação segura com Supabase
-
-**Prioridade atual**: Resolver **vulnerabilidades de segurança críticas** e garantir **conformidade com LGPD** antes de qualquer deploy em produção.
+O NutriMais AI encontra-se funcionalmente completo, com onboarding obrigatório, planejamento assistido por IA, histórico ampliado e monitoramento de hidratação. Os próximos ciclos devem focar em endurecer segurança (LGPD, rotação de credenciais) e estabelecer uma base sólida de testes automatizados para suportar evolução contínua do produto.
 
 ---
-
-**Última atualização**: Janeiro 2025
-**Versão**: 1.3.0 (Hydration + Onboarding)
-**Status**: Funcionalmente completo, pendente melhorias de segurança
+**Última atualização**: Outubro 2025  
+**Versão**: 1.3.1 (Documentação revisada e sincronizada)  
+**Status**: Pronto para testes extensivos e hardening de segurança

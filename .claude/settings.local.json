@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git push:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nUX: Melhorias de usabilidade e visualização\n\nImplementadas 5 melhorias de UX conforme solicitado:\n\n1. 👁️ Ícone visualizar senha no login\n   - Adicionado botão de toggle show/hide password\n   - Implementado para senha e confirmar senha\n   - SVG com ícones de olho aberto/fechado\n   - Melhora experiência de cadastro\n\n2. 🍽️ Destaque nas porções calculadas\n   - Título chamativo: \"Seu Plano Alimentar Personalizado\"\n   - Gradiente colorido (emerald-cyan-blue)\n   - Box de destaque para porções\n   - Hierarquia visual clara\n   - Gráfico movido para segunda posição\n\n3. 💡 Orientação em adicionar alimentos\n   - Box informativo cyan antes do input\n   - Instrução clara: \"Adicione um alimento de cada vez\"\n   - Explica que pode ajustar porções depois\n   - Facilita entendimento para usuários leigos\n\n4. 🏃 Card atividades clicável\n   - Link direto para /health\n   - Hover effects (shadow e border)\n   - Design preservado\n   - Acesso rápido a registro de atividades\n\n5. 📋 Detalhes de alimentos na home\n   - Últimas refeições agora mostram porções\n   - Lista detalhada: alimento + gramas + calorias\n   - Macros totais (P/C/G)\n   - Consistente com histórico completo\n\nArquivos modificados:\n- pages/AuthPage.tsx: toggle senha\n- components/MealResult.tsx: reorganização visual\n- components/MealPlanner.tsx: dica de uso\n- pages/HomePage.tsx: card clicável + detalhes\n\nBuild: ✓ 236 modules in 10.02s\n\n🚀 Generated with Claude Code\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

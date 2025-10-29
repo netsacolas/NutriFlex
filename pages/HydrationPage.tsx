@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { hydrationService, calculateDailyWaterGoal, generateReminders } from '../services/hydrationService';
 import { profileService } from '../services/profileService';
-import type { HydrationSettings, HydrationProgress, UserProfile } from '../types';
+import type { HydrationIntake, HydrationSettings, HydrationProgress, UserProfile } from '../types';
 import logger from '../utils/logger';
 import SuccessModal from '../components/SuccessModal';
 
@@ -11,7 +11,7 @@ const HydrationPage: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [settings, setSettings] = useState<HydrationSettings | null>(null);
   const [progress, setProgress] = useState<HydrationProgress | null>(null);
-  const [todayReminders, setTodayReminders] = useState<any[]>([]);
+  const [todayReminders, setTodayReminders] = useState<HydrationIntake[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [processingReminder, setProcessingReminder] = useState<string | null>(null);
@@ -175,20 +175,43 @@ const HydrationPage: React.FC = () => {
     }
   };
 
-  const handleToggleReminder = async (reminderTime: string, currentlyCompleted: boolean) => {
-    // Previne múltiplos cliques no mesmo botão
-    if (processingReminder === reminderTime) {
+  const formatReminderTime = (value?: string | null) => {
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleToggleReminder = async (reminder: HydrationIntake) => {
+    const reminderKey = reminder.id ?? reminder.scheduled_time;
+
+    if (!reminderKey) {
+      logger.error('Reminder without identifier:', reminder);
       return;
     }
 
+    if (processingReminder === reminderKey) {
+      return;
+    }
+
+    const { scheduled_time: scheduledTime } = reminder;
+
+    if (!scheduledTime) {
+      logger.error('Reminder without scheduled_time:', reminder);
+      return;
+    }
+
+    const matchesReminder = (item: HydrationIntake) =>
+      (reminder.id && item.id ? item.id === reminder.id : item.scheduled_time === reminder.scheduled_time);
+
     try {
-      setProcessingReminder(reminderTime);
+      setProcessingReminder(reminderKey);
 
-      const today = new Date().toISOString().split('T')[0];
-      const scheduledTime = `${today}T${reminderTime}:00`;
-
-      if (currentlyCompleted) {
-        // Desmarcar: encontrar e remover a ingestão
+      if (reminder.completed) {
         const { error } = await hydrationService.uncompleteIntake(scheduledTime);
         if (error) {
           setSuccessMessage({
@@ -200,16 +223,20 @@ const HydrationPage: React.FC = () => {
           return;
         }
 
-        // Exibe modal de sucesso ao desmarcar
+        setTodayReminders((prev) =>
+          prev.map((item) =>
+            matchesReminder(item) ? { ...item, completed: false, actual_time: null } : item
+          )
+        );
+
         setSuccessMessage({
           title: 'Ingestão Desmarcada',
-          message: `Lembrete de ${reminderTime} foi desmarcado com sucesso`,
+          message: `Lembrete de ${formatReminderTime(scheduledTime) || '--:--'} foi desmarcado com sucesso`,
           icon: '↩️',
         });
         setShowSuccessModal(true);
       } else {
-        // Marcar: registrar ingestão com horário atual
-        const { error } = await hydrationService.recordIntake(intakeSizeMl, scheduledTime);
+        const { data, error } = await hydrationService.recordIntake(reminder.amount_ml, scheduledTime);
         if (error) {
           setSuccessMessage({
             title: 'Erro',
@@ -220,25 +247,33 @@ const HydrationPage: React.FC = () => {
           return;
         }
 
-        // Exibe modal de sucesso ao marcar
-        const currentTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const now = new Date();
+        const recordedAtIso = data?.actual_time || now.toISOString();
+        const amountText =
+          unit === 'liters'
+            ? `${(reminder.amount_ml / 1000).toFixed(2)}L`
+            : `${reminder.amount_ml}ml`;
+        const currentTime =
+          formatReminderTime(recordedAtIso) ||
+          now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        setTodayReminders((prev) =>
+          prev.map((item) =>
+            matchesReminder(item) ? { ...item, completed: true, actual_time: recordedAtIso } : item
+          )
+        );
+
         setSuccessMessage({
           title: 'Água Registrada! 💧',
-          message: `${intakeSizeMl}ml consumidos às ${currentTime}`,
+          message: `${amountText} consumidos às ${currentTime}`,
           icon: '✅',
         });
         setShowSuccessModal(true);
       }
 
-      // Recarrega progresso e lembretes
       const { data: todayProgress } = await hydrationService.getTodayProgress();
       if (todayProgress) {
         setProgress(todayProgress);
-      }
-
-      const { data: reminders } = await hydrationService.getTodayReminders();
-      if (reminders) {
-        setTodayReminders(reminders);
       }
     } catch (error) {
       logger.error('Error toggling reminder:', error);
@@ -277,6 +312,65 @@ const HydrationPage: React.FC = () => {
   };
 
   const reminders = generateReminders(wakeTime, sleepTime, dailyGoalMl, intakeSizeMl);
+
+const reminderItems = todayReminders.map((reminder, index) => {
+  const reminderKey = reminder.id || reminder.scheduled_time || String(index);
+  const timeStr = formatReminderTime(reminder.scheduled_time);
+  const isProcessing = processingReminder === (reminder.id || reminder.scheduled_time);
+
+  const buttonClasses = [
+    'relative rounded-xl p-4 text-center transition-all transform hover:scale-105',
+    reminder.completed
+      ? 'bg-gradient-to-br from-emerald-100 to-green-100 border-2 border-emerald-400 shadow-lg'
+      : 'bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-300 hover:border-cyan-400',
+    isProcessing ? 'opacity-50 cursor-not-allowed' : '',
+  ].join(' ');
+
+  const timeClasses = [
+    'text-xl font-bold',
+    reminder.completed ? 'text-emerald-600' : 'text-gray-700',
+  ].join(' ');
+
+  const amountClasses = [
+    'text-sm mt-1',
+    reminder.completed ? 'text-emerald-500' : 'text-gray-500',
+  ].join(' ');
+
+  return (
+    <button
+      key={reminderKey}
+      onClick={() => handleToggleReminder(reminder)}
+      disabled={isProcessing}
+      className={buttonClasses}
+    >
+      {/* Ícone de Check */}
+      {reminder.completed && (
+        <div className="absolute top-2 right-2">
+          <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        </div>
+      )}
+
+      {/* Horário */}
+      <p className={timeClasses}>
+        {timeStr || '--'}
+      </p>
+
+      {/* Quantidade */}
+      <p className={amountClasses}>
+        {formatValue(reminder.amount_ml)}
+      </p>
+
+      {/* Hora real se completado */}
+      {reminder.completed && reminder.actual_time && (
+        <p className="text-xs text-emerald-400 mt-1">
+          Consumido às {formatReminderTime(reminder.actual_time) || '--'}
+        </p>
+      )}
+    </button>
+  );
+});
 
   if (loading) {
     return (
@@ -520,53 +614,7 @@ const HydrationPage: React.FC = () => {
             </h2>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {todayReminders.map((reminder, index) => {
-                const scheduledTime = new Date(reminder.scheduled_time);
-                const timeStr = scheduledTime.toTimeString().substring(0, 5);
-
-                return (
-                  <button
-                    key={reminder.id || index}
-                    onClick={() => handleToggleReminder(timeStr, reminder.completed)}
-                    disabled={processingReminder === timeStr}
-                    className={`relative rounded-xl p-4 text-center transition-all transform hover:scale-105 ${
-                      reminder.completed
-                        ? 'bg-gradient-to-br from-emerald-100 to-green-100 border-2 border-emerald-400 shadow-lg'
-                        : 'bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-300 hover:border-cyan-400'
-                    } ${processingReminder === timeStr ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {/* Ícone de Check */}
-                    {reminder.completed && (
-                      <div className="absolute top-2 right-2">
-                        <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-
-                    {/* Horário */}
-                    <p className={`text-xl font-bold ${
-                      reminder.completed ? 'text-emerald-600' : 'text-gray-700'
-                    }`}>
-                      {timeStr}
-                    </p>
-
-                    {/* Quantidade */}
-                    <p className={`text-sm mt-1 ${
-                      reminder.completed ? 'text-emerald-500' : 'text-gray-500'
-                    }`}>
-                      {formatValue(reminder.amount_ml)}
-                    </p>
-
-                    {/* Hora real se completado */}
-                    {reminder.completed && reminder.actual_time && (
-                      <p className="text-xs text-emerald-400 mt-1">
-                        ✓ {new Date(reminder.actual_time).toTimeString().substring(0, 5)}
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
+              {reminderItems}
             </div>
 
             {/* Legenda */}

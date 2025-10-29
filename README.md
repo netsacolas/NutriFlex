@@ -1,4 +1,9 @@
-# 🥗 NutriMais AI
+﻿# NutriMais AI
+
+<!-- coverage-badge:start -->
+![Cobertura](./badges/coverage.svg)
+<!-- coverage-badge:end -->
+
 
 > Planeje sua alimentação com inteligência artificial
 

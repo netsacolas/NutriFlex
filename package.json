@@ -7,6 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
     "validate:pwa": "node scripts/validate-pwa.js"
   },
   "dependencies": {
@@ -27,6 +32,13 @@
     "tailwindcss": "^4.1.16",
     "terser": "^5.44.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitest/coverage-v8": "^2.1.3",
+    "@playwright/test": "^1.48.2",
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.3"
   }
 }

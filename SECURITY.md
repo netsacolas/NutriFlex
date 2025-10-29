@@ -30,6 +30,12 @@
 3. Ausência de validação de inputs (XSS)
 4. Não conformidade com LGPD
 
+### Melhorias Recentes (Outubro 2025)
+- Suíte inicial de testes unitários (Vitest + React Testing Library) cobrindo fluxos críticos de onboarding, planner e hidratação.
+- Pipeline GitHub Actions configurado para executar `npm run test -- --coverage`, gerando relatórios de cobertura e prevenindo regressões básicas.
+- Playwright configurado com web server do Vite e cenários smoke para landing page e navegação até a seção de recursos.
+- Cobertura atual monitorada (≈51% linhas / 59% branches nas áreas críticas) publicada nos relatórios de CI.
+
 ---
 
 ## 🔴 VULNERABILIDADES CRÍTICAS
@@ -952,8 +958,8 @@ export const deleteAccount = async (password: string) => {
 
 ### 🔶 Próximas 2 Semanas
 
-- [ ] Testes automatizados (Vitest)
-- [ ] Testes E2E (Playwright)
+- [x] Testes automatizados (Vitest)
+- [x] Testes E2E (Playwright)
 - [ ] Monitoramento (Sentry)
 - [ ] Alertas de segurança
 - [ ] Backup automático
@@ -1060,4 +1066,3 @@ O NutriFlex AI possui **vulnerabilidades críticas** que expõem:
 **Auditor**: Claude (Anthropic Sonnet 4.5)
 **Data**: 25 de Outubro de 2025
 **Próxima Auditoria**: Após implementação das correções críticas
-
