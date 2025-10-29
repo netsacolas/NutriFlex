@@ -1,13 +1,13 @@
-Ôªø# NutriMais AI - Documenta√ß√£o T√©cnica Atualizada
+# NutriMais AI - DocumentaÁ„o TÈcnica Atualizada
 
-## Vis√£o Geral
-NutriMais AI √© uma aplica√ß√£o web inteligente para di√°rio alimentar que simplifica o planejamento nutricional. Os usu√°rios definem metas cal√≥ricas por refei√ß√£o, escolhem alimentos e a IA calcula automaticamente por√ß√µes ideais seguindo a distribui√ß√£o 40% carboidratos, 30% prote√≠nas e 30% gorduras. A experi√™ncia foi desenhada como uma PWA multiplataforma, com suporte offline, sincroniza√ß√£o em segundo plano e notifica√ß√µes push.
+## Vis„o Geral
+NutriMais AI È uma aplicaÁ„o web inteligente para di·rio alimentar que simplifica o planejamento nutricional. Os usu·rios definem metas calÛricas por refeiÁ„o, escolhem alimentos e a IA calcula automaticamente porÁıes ideais seguindo a distribuiÁ„o 40% carboidratos, 30% proteÌnas e 30% gorduras. A experiÍncia foi desenhada como uma PWA multiplataforma, com suporte offline, sincronizaÁ„o em segundo plano e notificaÁıes push.
 
 ### Objetivos Principais
-- Automatizar c√°lculos nutricionais mantendo possibilidade de ajuste manual por refei√ß√£o.
-- Conduzir onboarding guiado para capturar dados antropom√©tricos, h√°bitos e objetivos.
-- Consolidar hist√≥rico de refei√ß√µes, hidrata√ß√£o, peso, atividades e insights gerados pela IA.
-- Oferecer experi√™ncia responsiva, acess√≠vel e segura em diferentes dispositivos.
+- Automatizar c·lculos nutricionais mantendo possibilidade de ajuste manual por refeiÁ„o.
+- Conduzir onboarding guiado para capturar dados antropomÈtricos, h·bitos e objetivos.
+- Consolidar histÛrico de refeiÁıes, hidrataÁ„o, peso, atividades e insights gerados pela IA.
+- Oferecer experiÍncia responsiva, acessÌvel e segura em diferentes dispositivos.
 
 ### Links Importantes
 - **AI Studio App**: https://ai.studio/apps/drive/1Dbi9jO-Jmlmz2eT3Ldk05Q6NHUO1xVD8
@@ -16,107 +16,108 @@ NutriMais AI √© uma aplica√ß√£o web inteligente para di√°rio alimentar que simpl
 
 ---
 
-## Stack Tecnol√≥gica
+## Stack TecnolÛgica
 ### Frontend
-- **React 19.2.0** ‚Äî componentes funcionais com hooks e suspense.
-- **React Router DOM 7.9.4** ‚Äî roteamento com rotas p√∫blicas e protegidas.
-- **TypeScript 5.8.2** ‚Äî garantia de tipagem e DX elevada.
-- **Vite 6.2.0** ‚Äî dev server r√°pido com suporte a HMR e build otimizado.
-- **Tailwind CSS 4.1.16** ‚Äî utilit√°rio CSS com presets locais e fallback CDN.
+- **React 19.2.0** ó componentes funcionais com hooks e suspense.
+- **React Router DOM 7.9.4** ó roteamento com rotas p˙blicas e protegidas.
+- **TypeScript 5.8.2** ó garantia de tipagem e DX elevada.
+- **Vite 6.2.0** ó dev server r·pido com suporte a HMR e build otimizado.
+- **Tailwind CSS 4.1.16** ó utilit·rio CSS com presets locais e fallback CDN.
 
 ### Bibliotecas de apoio
-- **Recharts 3.3.0** ‚Äî gr√°ficos de pizza e evolu√ß√£o temporal.
-- **@google/genai 1.27.0** ‚Äî SDK oficial do Gemini para consumo nas Edge Functions.
-- **@supabase/supabase-js 2.76.1** ‚Äî autentica√ß√£o, storage e banco de dados.
-- **Zod 4.1.12** ‚Äî schemas de valida√ß√£o centralizados em `utils/validation.ts`.
+- **Recharts 3.3.0** ó gr·ficos de pizza e evoluÁ„o temporal.
+- **@google/genai 1.27.0** ó SDK oficial do Gemini para consumo nas Edge Functions.
+- **@supabase/supabase-js 2.76.1** ó autenticaÁ„o, storage e banco de dados.
+- **Zod 4.1.12** ó schemas de validaÁ„o centralizados em `utils/validation.ts`.
 
 ### Backend e Infraestrutura
-- **Supabase** ‚Äî autentica√ß√£o, PostgreSQL gerenciado, Edge Functions e storage.
-- **Gemini 2.0 Flash Experimental** ‚Äî modelo de IA respons√°vel pelos c√°lculos nutricionais e gera√ß√£o de insights.
-- **PostgreSQL** ‚Äî banco relacional com Row Level Security ativada.
-- **Edge Functions (TypeScript)** ‚Äî camada serverless para encapsular chamadas ao Gemini e regras de neg√≥cio sens√≠veis.
+- **Supabase** ó autenticaÁ„o, PostgreSQL gerenciado, Edge Functions e storage.
+- **Gemini 2.0 Flash Experimental** ó modelo de IA respons·vel pelos c·lculos nutricionais e geraÁ„o de insights.
+- **PostgreSQL** ó banco relacional com Row Level Security ativada.
+- **Edge Functions (TypeScript)** ó camada serverless para encapsular chamadas ao Gemini e regras de negÛcio sensÌveis.
 
 ---
 
-## Setup e Execu√ß√£o
+## Setup e ExecuÁ„o
 
-### Pr√©-requisitos
+### PrÈ-requisitos
 - Node.js 20.x ou superior.
 - npm 10+ ou pnpm 9+ (scripts oficiais utilizam npm).
-- Supabase CLI 1.181.0 ou superior para gerenciar migra√ß√µes.
-- Acesso √†s chaves do Gemini e do Supabase (ambiente de testes e produ√ß√£o).
+- Supabase CLI 1.181.0 ou superior para gerenciar migraÁıes.
+- Acesso ‡s chaves do Gemini e do Supabase (ambiente de testes e produÁ„o).
 
-### Configura√ß√£o inicial
+### ConfiguraÁ„o inicial
 1. Duplique `.env.example` para `.env.local`.
-2. Preencha as vari√°veis `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_GEMINI_API_KEY` e demais segredos necess√°rios.
-3. Instale depend√™ncias com `npm install`.
-4. Inicie o ambiente local com `npm run dev` (porta padr√£o 5173).
+2. Preencha `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, URLs de checkout Kiwify (`VITE_KIWIFY_CHECKOUT_*`) e os segredos `KIWIFY_PLAN_*`/`KIWIFY_WEBHOOK_SECRET` conforme ambiente.
+3. Instale dependÍncias com `npm install`.
+4. Inicie o ambiente local com `npm run dev` (porta padr„o 5173).
 
-### Scripts √∫teis
+### Scripts ˙teis
 - `npm run dev`: servidor de desenvolvimento com HMR.
-- `npm run build`: build de produ√ß√£o com tree-shaking e minifica√ß√£o.
-- `npm run preview`: serve est√°tico do build para testes de QA.
-- `npm run test:e2e`: executa a su√≠te Playwright; rodar `npx playwright install` na primeira vez para baixar os navegadores.
-- `npm run validate:pwa`: valida manifest, service worker e pol√≠ticas PWA (scripts/validate-pwa.js).
+- `npm run build`: build de produÁ„o com tree-shaking e minificaÁ„o.
+- `npm run preview`: serve est·tico do build para testes de QA.
+- `npm run test:e2e`: executa a suÌte Playwright; rodar `npx playwright install` na primeira vez para baixar os navegadores.
+- `npm run validate:pwa`: valida manifest, service worker e polÌticas PWA (scripts/validate-pwa.js).
 
 ### Provisionamento do Supabase
-- Fa√ßa login com `supabase login` e vincule o projeto usando `supabase link --project-ref <ref>`.
-- Execute `supabase migration up` (ou `supabase db push`) para aplicar as migra√ß√µes em `supabase/migrations`.
+- FaÁa login com `supabase login` e vincule o projeto usando `supabase link --project-ref <ref>`.
+- Execute `supabase migration up` (ou `supabase db push`) para aplicar as migraÁıes em `supabase/migrations`.
 - Se preferir SQL puro, utilize `apply-all-migrations.sql` diretamente no editor SQL do Supabase.
-- Garanta que as pol√≠ticas RLS estejam publicadas e que os buckets de storage de avatares estejam com permiss√µes corretas.
+- Certifique-se de aplicar a migracao `009_add_subscriptions.sql` (tabela `user_subscriptions` + trigger em `auth.users`) antes de habilitar a cobranca.
+- Garanta que as polÌticas RLS estejam publicadas e que os buckets de storage de avatares estejam com permissıes corretas.
 
 ### Dados locais e seeds
-- O diret√≥rio `data/` cont√©m `foodDatabase.ts`, `activitiesDatabase.ts` e `dailyTips.ts`, usados como fonte de dados est√°ticos.
-- Scripts em `scripts/` podem auxiliar no carregamento de dados adicionais ou valida√ß√µes automatizadas.
-- Para testar notifica√ß√µes PWA, utilize os exemplos em `public/` e os arquivos `test-edge-function.html` e `test-database-connection.html`.
+- O diretÛrio `data/` contÈm `foodDatabase.ts`, `activitiesDatabase.ts` e `dailyTips.ts`, usados como fonte de dados est·ticos.
+- Scripts em `scripts/` podem auxiliar no carregamento de dados adicionais ou validaÁıes automatizadas.
+- Para testar notificaÁıes PWA, utilize os exemplos em `public/` e os arquivos `test-edge-function.html` e `test-database-connection.html`.
 
 ---
 
 ## Plano de Testes
 
 ### Metas
-- Elevar cobertura de componentes cr√≠ticos (onboarding, planner, hidrata√ß√£o) para acima de 70%.
-- Validar fluxos de autentica√ß√£o, onboarding obrigat√≥rio e c√°lculos da IA.
-- Monitorar regress√µes em integra√ß√µes com Supabase, Edge Functions e funcionalidades PWA.
+- Elevar cobertura de componentes crÌticos (onboarding, planner, hidrataÁ„o) para acima de 70%.
+- Validar fluxos de autenticaÁ„o, onboarding obrigatÛrio e c·lculos da IA.
+- Monitorar regressıes em integraÁıes com Supabase, Edge Functions e funcionalidades PWA.
 
 ### Ferramentas recomendadas
 - **Vitest** + **React Testing Library** para testes de unidade e componentes.
 - **MSW (Mock Service Worker)** para simular respostas do Supabase e do Gemini.
-- **Playwright** para fluxos end-to-end (onboarding, planejamento, hidrata√ß√£o).
+- **Playwright** para fluxos end-to-end (onboarding, planejamento, hidrataÁ„o).
 
 ### Roadmap incremental
-1. Configurar Vitest no projeto (`vitest.config.ts`) e criar su√≠te smoke para p√°ginas cr√≠ticas.
-2. Testar hooks e servi√ßos (`hooks/`, `services/`) com mocks do Supabase.
-3. Cobrir fluxos de UI (onboarding e planner) com testes de intera√ß√£o (RTL).
+1. Configurar Vitest no projeto (`vitest.config.ts`) e criar suÌte smoke para p·ginas crÌticas.
+2. Testar hooks e serviÁos (`hooks/`, `services/`) com mocks do Supabase.
+3. Cobrir fluxos de UI (onboarding e planner) com testes de interaÁ„o (RTL).
 4. Adicionar smoke tests E2E com Playwright usando banco Supabase de staging.
-5. Integrar execu√ß√£o de testes em CI (GitHub Actions) com badges no README.
+5. Integrar execuÁ„o de testes em CI (GitHub Actions) com badges no README.
 
 ### Progresso atual (Outubro 2025)
 - Vitest configurado com `vitest.setup.ts`, `vitest.config.ts` e reporter de cobertura (`@vitest/coverage-v8`).
-- Testes unit√°rios cobrindo `calorieGoalService`, `hydrationService`, `AuthContext` e o hook `useRequiredProfile`.
-- Testes de interface para `LandingPage`, `PlanMealPage` e `HydrationPage`, validando redirecionamentos protegidos e preenchimento autom√°tico.
+- Testes unit·rios cobrindo `calorieGoalService`, `hydrationService`, `AuthContext` e o hook `useRequiredProfile`.
+- Testes de interface para `LandingPage`, `PlanMealPage` e `HydrationPage`, validando redirecionamentos protegidos e preenchimento autom·tico.
 - Pipeline GitHub Actions (`.github/workflows/tests.yml`) executa `npm run test -- --coverage` em push/PR.
-- Navegadores Playwright instalados (`npx playwright install`) e su√≠te smoke (`npm run test:e2e`) garantindo visibilidade do hero e bot√µes de convers√£o da landing.
+- Navegadores Playwright instalados (`npx playwright install`) e suÌte smoke (`npm run test:e2e`) garantindo visibilidade do hero e botıes de convers„o da landing.
 
 ---
 
-## Mitiga√ß√µes de Seguran√ßa Priorit√°rias
-- Concluir rota√ß√£o de credenciais expostas em `.env.local` e atualizar secrets em pipelines.
-- Migrar Tailwind para build local removendo depend√™ncia do CDN e habilitando CSP estrita.
-- Implementar pol√≠tica de senhas fortes (m√≠nimo 12 caracteres, verifica√ß√£o em tempo real) no fluxo de cadastro.
-- Ativar confirma√ß√£o de e-mail obrigat√≥ria e expira√ß√£o de magic links.
-- Migrar tokens sens√≠veis para cookies `httpOnly` e refor√ßar regras RLS no Supabase.
-- Publicar pol√≠tica de privacidade e termos de uso alinhados √† LGPD, com op√ß√£o de exclus√£o de conta.
-- Executar varredura peri√≥dica com `npx supabase secrets list` + dependabot e registrar findings em `SECURITY.md`.
+## MitigaÁıes de SeguranÁa Priorit·rias
+- Concluir rotaÁ„o de credenciais expostas em `.env.local` e atualizar secrets em pipelines.
+- Migrar Tailwind para build local removendo dependÍncia do CDN e habilitando CSP estrita.
+- Implementar polÌtica de senhas fortes (mÌnimo 12 caracteres, verificaÁ„o em tempo real) no fluxo de cadastro.
+- Ativar confirmaÁ„o de e-mail obrigatÛria e expiraÁ„o de magic links.
+- Migrar tokens sensÌveis para cookies `httpOnly` e reforÁar regras RLS no Supabase.
+- Publicar polÌtica de privacidade e termos de uso alinhados ‡ LGPD, com opÁ„o de exclus„o de conta.
+- Executar varredura periÛdica com `npx supabase secrets list` + dependabot e registrar findings em `SECURITY.md`.
 
 ---
 
-## Atualiza√ß√µes Recentes (Janeiro 2025)
-1. **Sistema de Onboarding Obrigat√≥rio** ‚Äî wizard em cinco passos (`pages/OnboardingPage.tsx`) com c√°lculo autom√°tico de IMC e metas cal√≥ricas via `services/calorieGoalService.ts`.
-2. **Sistema Completo de Hidrata√ß√£o** ‚Äî p√°gina dedicada (`pages/HydrationPage.tsx`) com metas personalizadas, hist√≥rico visual e notifica√ß√µes push configur√°veis.
-3. **Landing Page Institucional** ‚Äî `pages/LandingPage.tsx` com se√ß√µes Hero, Features, Pricing, FAQ e depoimentos, al√©m de templates de e-mail para onboarding.
-4. **Melhorias de UX/UI** ‚Äî sidebar para desktop, bottom navigation mobile, headers padronizados e avatar do usu√°rio aplicado ao dashboard.
-5. **Hist√≥rico Expandido** ‚Äî `pages/HistoryPage.tsx` com quatro abas (refei√ß√µes, peso, atividades, hidrata√ß√£o), filtros temporais e gr√°ficos de evolu√ß√£o.
+## AtualizaÁıes Recentes (Janeiro 2025)
+1. **Sistema de Onboarding ObrigatÛrio** ó wizard em cinco passos (`pages/OnboardingPage.tsx`) com c·lculo autom·tico de IMC e metas calÛricas via `services/calorieGoalService.ts`.
+2. **Sistema Completo de HidrataÁ„o** ó p·gina dedicada (`pages/HydrationPage.tsx`) com metas personalizadas, histÛrico visual e notificaÁıes push configur·veis.
+3. **Landing Page Institucional** ó `pages/LandingPage.tsx` com seÁıes Hero, Features, Pricing, FAQ e depoimentos, alÈm de templates de e-mail para onboarding.
+4. **Melhorias de UX/UI** ó sidebar para desktop, bottom navigation mobile, headers padronizados e avatar do usu·rio aplicado ao dashboard.
+5. **HistÛrico Expandido** ó `pages/HistoryPage.tsx` com quatro abas (refeiÁıes, peso, atividades, hidrataÁ„o), filtros temporais e gr·ficos de evoluÁ„o.
 
 ---
 
@@ -179,81 +180,82 @@ NutriMais/
 
 ---
 
-## P√°ginas e Rotas-chave
-- `/` ‚Üí `LandingPage.tsx`: apresenta√ß√£o institucional e call-to-actions.
-- `/auth` ‚Üí `AuthPage.tsx`: login, cadastro e recupera√ß√£o de senha (Supabase Auth).
-- `/onboarding` ‚Üí `OnboardingPage.tsx`: fluxo obrigat√≥rio de configura√ß√£o inicial.
-- `/app` ‚Üí `HomePage.tsx`: dashboard com resumo di√°rio.
-- `/plan` ‚Üí `PlanMealPage.tsx`: planejamento de refei√ß√µes assistido por IA.
-- `/history` ‚Üí `HistoryPage.tsx`: hist√≥rico com filtros e gr√°ficos.
-- `/hydration` ‚Üí `HydrationPage.tsx`: acompanhe ingest√£o de √°gua e lembretes.
-- `/chat` ‚Üí `ChatPage.tsx`: assistente nutricional ass√≠ncrono (Gemini).
-- `/profile` ‚Üí `ProfilePage.tsx`: dados pessoais, metas e prefer√™ncias.
-- `/health` ‚Üí `HealthPage.tsx`: registro de peso, metas e atividades f√≠sicas.
-
+## Paginas e Rotas-chave
+- `/` -> `LandingPage.tsx`: apresentacao institucional e call-to-actions.
+- `/auth` -> `AuthPage.tsx`: login, cadastro e recuperacao de senha (Supabase Auth).
+- `/onboarding` -> `OnboardingPage.tsx`: fluxo obrigatorio de configuracao inicial.
+- `/app` -> `HomePage.tsx`: dashboard com resumo diario.
+- `/plan` -> `PlanMealPage.tsx`: planejamento de refeicoes assistido por IA.
+- `/history` -> `HistoryPage.tsx`: historico com filtros e graficos.
+- `/hydration` -> `HydrationPage.tsx`: acompanhe ingestao de agua e lembretes.
+- `/chat` -> `ChatPage.tsx`: assistente nutricional assincrono (Gemini).
+- `/assinatura` -> `SubscriptionPage.tsx`: gerenciamento dos planos Kiwify, checkout e status do usuario.
+- `/profile` -> `ProfilePage.tsx`: dados pessoais, metas e preferencias.
+- `/health` -> `HealthPage.tsx`: registro de peso, metas e atividades fisicas.
 ---
 
-## Servi√ßos e Integra√ß√µes
-- `services/geminiService.ts`: encapsula chamadas √†s Edge Functions que conversam com o Gemini (prompt engineering e limites de taxa).
-- `services/authService.ts`: wrapper de autentica√ß√£o e recupera√ß√£o de sess√£o do Supabase.
-- `services/profileService.ts`: sincroniza dados de perfil, garantindo que o onboarding permane√ßa obrigat√≥rio.
-- `services/calorieGoalService.ts`: calcula metas cal√≥ricas personalizadas (TMB, fator de atividade e objetivo).
-- Edge Functions Supabase: validam ingest√£o nutricional/hidrata√ß√£o e retornam planos ajustados pelo Gemini.
+## Servicos e Integracoes
+- `services/geminiService.ts`: encapsula chamadas as Edge Functions que conversam com o Gemini (prompt engineering e limites de taxa).
+- `services/authService.ts`: wrapper de autenticacao e recuperacao de sessao do Supabase.
+- `services/profileService.ts`: sincroniza dados de perfil, garantindo que o onboarding permanece obrigatorio.
+- `services/subscriptionService.ts`: centraliza limites do plano (refeicoes, historico, chat) e gera links de checkout Kiwify.
+- `services/calorieGoalService.ts`: calcula metas caloricas personalizadas (TMB, fator de atividade e objetivo).
+- `contexts/SubscriptionContext.tsx`: provider global que expoe `plan`, `limits`, `openCheckout` e escuta mudancas via realtime.
+- Edge Functions Supabase: validam ingestao nutricional/hidratacao, processam webhooks da Kiwify (`kiwify-webhook`) e retornam planos ajustados pelo Gemini.
 
+## Fluxo do Usuario
+1. Usuario cria conta ou autentica-se via Supabase Auth.
+2. E redirecionado ao onboarding obrigatorio para preencher dados basicos, objetivos e preferencias alimentares.
+3. Apos conclusao, acessa o dashboard (`HomePage`) com resumo diario.
+4. Planeja refeicoes em `/plan`, recebendo sugestoes e ajustes da IA em tempo real.
+5. No plano gratis, encontra avisos de limite (2 refeicoes/dia, historico reduzido, chat bloqueado) com call-to-action para `/assinatura`.
+6. Caso seja Premium, utiliza o chat completo, registra refeicoes ilimitadas e visualiza historico integral.
+7. Registra ingestoes de agua, atividades fisicas e atualiza peso atraves das paginas dedicadas.
+8. Recebe notificacoes push configuradas (hidratacao, lembretes de refeicoes) e acompanha relatÛrios.
 ---
 
-## Fluxo do Usu√°rio
-1. Usu√°rio cria conta ou autentica-se via Supabase Auth.
-2. √â redirecionado ao onboarding obrigat√≥rio para preencher dados b√°sicos, objetivos e prefer√™ncias alimentares.
-3. Ap√≥s conclus√£o, acessa o dashboard (`HomePage`) com resumo di√°rio.
-4. Planeja refei√ß√µes em `/plan`, recebendo sugest√µes e ajustes da IA em tempo real.
-5. Registra ingest√µes de √°gua, atividades f√≠sicas e atualiza peso atrav√©s das p√°ginas dedicadas.
-6. Interage com o chat nutricional para recomenda√ß√µes adicionais.
-7. Recebe notifica√ß√µes push configuradas (hidrata√ß√£o, lembretes de refei√ß√µes) e acompanha hist√≥rico completo.
-
+## Metricas e Indicadores
+- **Funcionalidades**: 12 paginas principais, 30+ componentes reutilizaveis, 16 servicos integrados (inclui modulo de assinatura).
+- **Cobertura de codigo**: 51% linhas / 59% branches / 22% funcoes (Vitest v8, foco nos modulos criticos monitorados). Meta permanece >=70% apos ampliacao da suite.
+- **Seguranca**: score atual estimado em 35/100 com quatro vulnerabilidades criticas e cinco altas identificadas (ver `SECURITY.md`).
+- **Performance**: bundle ~50 KB minificado; continuar monitorando lighthouse no build de producao.
+- **Monetizacao**: estado de assinatura sincronizado via Supabase (tabela `user_subscriptions`) e webhooks Kiwify em producao, limites aplicados no frontend.
+- **Conformidade LGPD**: pendente. Priorizar politica de privacidade, exportacao de dados e exclusao de conta.
 ---
 
-## M√©tricas e Indicadores
-- **Funcionalidades**: 11 p√°ginas principais, 28+ componentes reutiliz√°veis, 14 servi√ßos integrados.
-- **Cobertura de c√≥digo**: 51% linhas / 59% branches / 22% fun√ß√µes (Vitest v8, foco nos m√≥dulos cr√≠ticos monitorados). Meta permanece >=70% ap√≥s amplia√ß√£o da su√≠te.
-- **Seguran√ßa**: score atual estimado em 35/100 com quatro vulnerabilidades cr√≠ticas e cinco altas identificadas (ver `SECURITY.md`).
-- **Performance**: bundle ~50 KB minificado; continuar monitorando lighthouse no build de produ√ß√£o.
-- **Conformidade LGPD**: pendente. Priorizar pol√≠tica de privacidade, exporta√ß√£o de dados e exclus√£o de conta.
+- 2025-10-29 - modulo de assinatura integrado a Kiwify (checkout, webhooks), provider de limites e telas de upgrade.
+## HistÛrico de MudanÁas Recentes
+- `6031e8e` ó landing page completa, templates de e-mail e correÁıes no assistente nutricional.
+- `e661e3f` ó contraste e sombras aprimorados para melhor legibilidade.
+- `547f38a` ó remoÁ„o da seÁ„o "Assistente Nutricional" do perfil; chat dedicado em `/chat`.
+- `4b4899d` ó padronizaÁ„o de headers no dashboard e p·ginas principais.
+- `2787ed6` ó sidebar desktop e bottom navigation mobile.
+- `bde8548` ó avatar do usu·rio substitui emoji no dashboard.
 
 ---
-
-## Hist√≥rico de Mudan√ßas Recentes
-- `6031e8e` ‚Äî landing page completa, templates de e-mail e corre√ß√µes no assistente nutricional.
-- `e661e3f` ‚Äî contraste e sombras aprimorados para melhor legibilidade.
-- `547f38a` ‚Äî remo√ß√£o da se√ß√£o "Assistente Nutricional" do perfil; chat dedicado em `/chat`.
-- `4b4899d` ‚Äî padroniza√ß√£o de headers no dashboard e p√°ginas principais.
-- `2787ed6` ‚Äî sidebar desktop e bottom navigation mobile.
-- `bde8548` ‚Äî avatar do usu√°rio substitui emoji no dashboard.
-
----
-
-## Pr√≥ximos Passos Priorit√°rios
-1. Implementar suite de testes com Vitest + RTL e automatizar execu√ß√£o em CI.
-2. Migrar Tailwind para build local, refor√ßar CSP e revisar pol√≠ticas de seguran√ßa (LGPD + tokens httpOnly).
-3. Entregar pol√≠tica de privacidade, termos de uso e funcionalidade de exclus√£o de conta.
-4. Adicionar exporta√ß√£o de dados (PDF/JSON) e refor√ßar fluxo de confirma√ß√£o de e-mail.
-5. Criar modo escuro opcional ap√≥s estabiliza√ß√£o das melhorias de seguran√ßa.
+## Proximos Passos Prioritarios
+1. Implementar suite de testes com Vitest + RTL e automatizar execucao em CI (incluindo cenarios Free/Premium).
+2. Migrar Tailwind para build local, reforcar CSP e revisar politicas de seguranca (LGPD + tokens httpOnly).
+3. Entregar politica de privacidade, termos de uso e funcionalidade de exclusao de conta.
+4. Adicionar exportacao de dados (PDF/JSON) e reforcar fluxo de confirmacao de e-mail.
+5. Monitorar consumo da API/checkout Kiwify (logs da Edge Function) e documentar playbook de cancelamento/reembolso.
+6. Criar modo escuro opcional apos estabilizacao das melhorias de seguranca.
 
 ---
 
 ## Diretrizes para Agentes
-- Sempre responda em portugu√™s do Brasil, com acentua√ß√£o correta e vocabul√°rio local sempre que o ambiente suportar UTF-8.
+- Sempre responda em portuguÍs do Brasil, com acentuaÁ„o correta e vocabul·rio local sempre que o ambiente suportar UTF-8.
 - Utilize tom colaborativo, objetivo e respeitoso.
-- Prefira terminologia t√©cnica em portugu√™s; mantenha nomes pr√≥prios e identificadores em ingl√™s quando necess√°rio.
-- Explique racioc√≠nios e decis√µes de forma clara e estruturada para facilitar revis√µes.
-- Esta se√ß√£o permanece em sincronia com `agents.md`, que √© a fonte de verdade para orienta√ß√µes de intera√ß√£o.
+- Prefira terminologia tÈcnica em portuguÍs; mantenha nomes prÛprios e identificadores em inglÍs quando necess·rio.
+- Explique raciocÌnios e decisıes de forma clara e estruturada para facilitar revisıes.
+- Esta secao e a fonte de verdade; mantenha qualquer resumo em `agents.md` sincronizado com este documento.
 
 ---
 
-## Conclus√£o
-O NutriMais AI encontra-se funcionalmente completo, com onboarding obrigat√≥rio, planejamento assistido por IA, hist√≥rico ampliado e monitoramento de hidrata√ß√£o. Os pr√≥ximos ciclos devem focar em endurecer seguran√ßa (LGPD, rota√ß√£o de credenciais) e estabelecer uma base s√≥lida de testes automatizados para suportar evolu√ß√£o cont√≠nua do produto.
+## Conclus„o
+O NutriMais AI encontra-se funcionalmente completo, com onboarding obrigatÛrio, planejamento assistido por IA, histÛrico ampliado e monitoramento de hidrataÁ„o. Os prÛximos ciclos devem focar em endurecer seguranÁa (LGPD, rotaÁ„o de credenciais) e estabelecer uma base sÛlida de testes automatizados para suportar evoluÁ„o contÌnua do produto.
 
 ---
-**√öltima atualiza√ß√£o**: Outubro 2025  
-**Vers√£o**: 1.3.1 (Documenta√ß√£o revisada e sincronizada)  
-**Status**: Pronto para testes extensivos e hardening de seguran√ßa
+**⁄ltima atualizaÁ„o**: Outubro 2025  
+**Vers„o**: 1.3.1 (DocumentaÁ„o revisada e sincronizada)  
+**Status**: Pronto para testes extensivos e hardening de seguranÁa

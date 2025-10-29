@@ -7,7 +7,9 @@ Documento elaborado a partir das recomendações de segurança e compliance dest
 - `Automação` Criar verificação automática nas pipelines/git hooks que bloqueie commits contendo arquivos `.env` ou chaves sensíveis.
 - `Observabilidade` Remover ou isolar `console.log` sensíveis; adicionar utilitário de logging condicionado a `import.meta.env.DEV`.
 - `Backend` Especificar e publicar proxy seguro (Supabase Edge Function ou backend dedicado) para encapsular chamadas ao Gemini.
+- `Monetizacao` Finalizar setup da Kiwify: validar migracao `009_add_subscriptions.sql`, configurar `KIWIFY_*` em todos ambientes e publicar a Edge Function `kiwify-webhook`.
 - `Validação` Introduzir `zod` nos formulários críticos (`ProfileModal`, `HealthModal`, `MealPlanner`) para validar/sanitizar entradas.
+- `QA` Criar cenario de teste para verificar limites do plano gratis (2 refeicoes/dia, historico reduzido, chat bloqueado) e fluxo de upgrade/retorno ao Premium.
 
 ## 2. Curto Prazo (Semanas 2-3)
 - `Segurança` Aumentar política de senha para mínimo de 12 caracteres + complexidade e ajustar telas/validações.
@@ -16,6 +18,7 @@ Documento elaborado a partir das recomendações de segurança e compliance dest
 - `Storage` Substituir `localStorage` por cookies `httpOnly` (ou storage seguro equivalente) para tokens de sessão.
 - `Headers` Adicionar middleware/configuração com CSP, X-Frame-Options, X-Content-Type-Options e HSTS no servidor/proxy.
 
+- `Faturamento` Documentar processos de cancelamento/reembolso, armazenar recibos (Supabase) e configurar monitoramento de falhas de webhook.
 ## 3. Compliance LGPD (Semanas 4-5)
 - `Políticas` Redigir e publicar Política de Privacidade e Termos de Uso alinhados ao tratamento de dados de saúde.
 - `Consentimento` Incluir checkbox explícito no cadastro com link para termos + registro de auditoria.
@@ -33,6 +36,7 @@ Documento elaborado a partir das recomendações de segurança e compliance dest
 - `Testes Unitários` Introduzir Vitest para validar regras de negócio (ex.: schemas Zod, cálculo de macros, MET).
 - `Testes E2E` Selecionar ferramenta (Playwright/Cypress) e criar smoke tests para login, planejamento de refeição e histórico.
 - `Segurança` Agendar execuções periódicas de `npm audit` + scanner SAST e revisão trimestral das políticas RLS.
+- `Monetizacao` Automatizar cenarios Free vs Premium (PlanMeal, History, Chat, Profile) garantindo que limites sejam respeitados e atualizados apos webhooks.
 - `Monitoramento` Avaliar integração com Sentry/LogRocket para rastrear erros e sessões suspeitas.
 
 ## 6. Gestão e Acompanhamento
