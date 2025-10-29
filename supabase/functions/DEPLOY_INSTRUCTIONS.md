@@ -284,3 +284,12 @@ supabase functions delete gemini-proxy
 
 **Criado em**: 2025-10-25
 **Última atualização**: 2025-10-25
+
+## Kiwify webhook
+
+1. Configure as variaveis de ambiente KIWIFY_PLAN_MONTHLY_ID, KIWIFY_PLAN_QUARTERLY_ID, KIWIFY_PLAN_ANNUAL_ID e KIWIFY_WEBHOOK_SECRET no painel do Supabase.
+2. Execute supabase functions deploy kiwify-webhook para publicar a funcao.
+3. No painel da Kiwify, cadastre o endpoint: https://<PROJETO>.functions.supabase.co/kiwify-webhook com o mesmo segredo configurado.
+4. Teste o webhook enviando uma notificacao manual e verifique os logs com supabase functions logs kiwify-webhook --follow.
+
+**Atualizado em**: 2025-10-29

@@ -8,7 +8,8 @@ import {
   CalendarDaysIcon,
   HeartIcon,
   UserIcon,
-  WaterDropIcon
+  WaterDropIcon,
+  SparklesIcon
 } from './Icons';
 import type { UserProfile } from '../../types';
 
@@ -79,6 +80,11 @@ const Sidebar: React.FC = () => {
       path: '/health',
       label: 'Saúde',
       icon: HeartIcon
+    },
+    {
+      path: '/assinatura',
+      label: 'Assinatura',
+      icon: SparklesIcon
     },
     {
       path: '/profile',

@@ -5,6 +5,7 @@ import { profileService } from '../services/profileService';
 import { mealHistoryService } from '../services/mealHistoryService';
 import { physicalActivityService } from '../services/physicalActivityService';
 import { getTipOfTheDay } from '../data/dailyTips';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import {
   SparklesIcon,
   FireIcon,
@@ -39,6 +40,7 @@ const HomePage: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [dailyTip, setDailyTip] = useState<string>('');
+  const { isPremium, plan: activeSubscriptionPlan } = useSubscription();
 
   useEffect(() => {
     loadDashboardData();
@@ -186,6 +188,26 @@ const HomePage: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {!isPremium && (
+          <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-5 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Plano Gratuito ativo</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Refeições por dia: {activeSubscriptionPlan.limits.maxMealsPerDay || 0} · Histórico: últimos {activeSubscriptionPlan.limits.historyItems || 0} registros
+              </p>
+              <p className="text-sm text-gray-600">
+                Assine o Premium para liberar IA completa, histórico ilimitado e registros sem limites.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/assinatura')}
+              className="px-4 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+            >
+              Conhecer Premium
+            </button>
+          </div>
+        )}
+
         {/* Main Stats Card */}
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">

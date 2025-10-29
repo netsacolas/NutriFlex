@@ -6,6 +6,7 @@ import { mealHistoryService } from '../services/mealHistoryService';
 import { weightHistoryService } from '../services/weightHistoryService';
 import { physicalActivityService } from '../services/physicalActivityService';
 import { nutritionChatService } from '../services/nutritionChatService';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import logger from '../utils/logger';
 import {
   ChatBubbleBottomCenterTextIcon,
@@ -26,6 +27,8 @@ const ChatPage: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const { limits } = useSubscription();
+  const chatEnabled = limits.aiChatEnabled;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -61,8 +64,11 @@ const ChatPage: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!chatEnabled) {
+      return;
+    }
     initializeChat();
-  }, []);
+  }, [chatEnabled]);
 
   const initializeChat = async () => {
     setIsLoadingContext(true);
@@ -94,10 +100,13 @@ const ChatPage: React.FC = () => {
 
   // Foco inicial ao montar componente
   useEffect(() => {
+    if (!chatEnabled) {
+      return;
+    }
     setTimeout(() => {
       inputRef.current?.focus();
     }, 300);
-  }, []);
+  }, [chatEnabled]);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -539,6 +548,25 @@ INSTRUÇÕES PARA RESPOSTA:
     'Como saber as porções certas?'
   ];
 
+  if (!chatEnabled) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center px-4">
+        <div className="max-w-xl w-full bg-white border border-emerald-100 rounded-2xl shadow-xl p-8 text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
+            <SparklesIcon className="w-8 h-8 text-emerald-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Desbloqueie o Assistente de IA</h1>
+          <p className="text-gray-600 text-sm">O chat nutricional faz parte do plano Premium. Atualize sua assinatura para conversar com a IA, receber planos personalizados e analisar seu historico completo.</p>
+          <button
+            onClick={() => navigate('/assinatura')}
+            className="w-full px-4 py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+          >
+            Ver planos Premium
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col pb-20">
       {/* Header */}
@@ -667,3 +695,10 @@ INSTRUÇÕES PARA RESPOSTA:
 };
 
 export default ChatPage;
+
+
+
+
+
+
+

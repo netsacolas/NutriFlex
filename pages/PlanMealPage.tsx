@@ -5,6 +5,7 @@ import { mealHistoryService } from '../services/mealHistoryService';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 import { searchFoods } from '../data/foodDatabase';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import {
   SparklesIcon,
   StarIcon,
@@ -45,11 +46,31 @@ const PlanMealPage: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { limits } = useSubscription();
+  const [todayMealsCount, setTodayMealsCount] = useState(0);
+  const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
 
   useEffect(() => {
     loadUserData();
     loadFavorites();
   }, []);
+
+  const loadTodayMealCount = async (userId: string) => {
+    try {
+      const { data } = await mealHistoryService.getUserMealHistory(userId);
+      const today = new Date().toISOString().split('T')[0];
+      const count = (data || []).filter(meal => meal.consumed_at.startsWith(today)).length;
+      setTodayMealsCount(count);
+    } catch (error) {
+      console.error('Error counting today meals:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (limits.maxMealsPerDay === null) {
+      setShowUpgradeNotice(false);
+    }
+  }, [limits.maxMealsPerDay]);
 
   const loadUserData = async () => {
     try {
@@ -58,6 +79,8 @@ const PlanMealPage: React.FC = () => {
         navigate('/login');
         return;
       }
+      setCurrentUserId(session.user.id);
+      await loadTodayMealCount(session.user.id);
 
       const { data: userProfile } = await profileService.getProfile();
 
@@ -423,6 +446,15 @@ const PlanMealPage: React.FC = () => {
   const handleSaveMeal = async () => {
     if (!editedResult) return;
 
+    if (limits.maxMealsPerDay !== null && todayMealsCount >= limits.maxMealsPerDay) {
+      setShowUpgradeNotice(true);
+      setToast({
+        message: 'Plano gratuito permite registrar apenas 2 refeicoes por dia. Assine o Premium para liberar ilimitado.',
+        type: 'error'
+      });
+      return;
+    }
+
     try {
       const session = await authService.getCurrentSession();
       if (!session) {
@@ -440,7 +472,9 @@ const PlanMealPage: React.FC = () => {
         consumed_at: new Date().toISOString()
       });
 
-      setToast({ message: 'Refeição salva com sucesso!', type: 'success' });
+      await loadTodayMealCount(session.user.id);
+      setShowUpgradeNotice(false);
+      setToast({ message: 'Refeicao salva com sucesso!', type: 'success' });
       setTimeout(() => {
         navigate('/home');
       }, 1500);
@@ -504,6 +538,42 @@ const PlanMealPage: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {limits.maxMealsPerDay !== null && (
+          <div className="mb-6 space-y-3">
+            <div className="bg-white border border-emerald-100 rounded-xl p-4 shadow-sm flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm text-emerald-600 font-semibold">Plano Grátis ativo</p>
+                <p className="text-gray-800 font-medium">
+                  Refeições registradas hoje: {todayMealsCount}/{limits.maxMealsPerDay}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  O plano Premium libera registros ilimitados, histórico completo e o assistente de IA.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/assinatura')}
+                className="self-start md:self-auto px-4 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+              >
+                Conhecer plano Premium
+              </button>
+            </div>
+
+            {showUpgradeNotice && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                <p className="text-orange-700 text-sm font-medium">
+                  Você atingiu o limite diário do Plano Grátis. Para continuar registrando refeições e liberar todos os recursos profissionais, faça o upgrade para o Premium.
+                </p>
+                <button
+                  onClick={() => navigate('/assinatura')}
+                  className="mt-3 inline-flex items-center px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  Ver opções de assinatura
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Success Message */}
         {successMessage && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
@@ -879,3 +949,9 @@ const PlanMealPage: React.FC = () => {
 };
 
 export default PlanMealPage;
+
+
+
+
+
+

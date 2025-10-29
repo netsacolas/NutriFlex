@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { PWAManager } from './components/PWAComponents';
 import { initBackgroundSync, SyncStatusBadge } from './utils/backgroundSync';
 
@@ -19,6 +20,7 @@ import ProfilePage from './pages/ProfilePage';
 import ChatPage from './pages/ChatPage';
 import OnboardingPage from './pages/OnboardingPage';
 import HydrationPage from './pages/HydrationPage';
+import SubscriptionPage from './pages/SubscriptionPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -118,6 +120,14 @@ const AppRouter: React.FC = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="assinatura"
+          element={
+            <ProtectedRoute>
+              <SubscriptionPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -150,15 +160,19 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        {/* PWA Components */}
-        <PWAManager />
-        <SyncStatusBadge />
+        <SubscriptionProvider>
+          {/* PWA Components */}
+          <PWAManager />
+          <SyncStatusBadge />
 
-        {/* Main App Router */}
-        <AppRouter />
+          {/* Main App Router */}
+          <AppRouter />
+        </SubscriptionProvider>
       </AuthProvider>
     </BrowserRouter>
   );
 };
 
 export default App;
+
+

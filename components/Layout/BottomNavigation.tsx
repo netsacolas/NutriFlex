@@ -6,7 +6,8 @@ import {
   CalendarDaysIcon,
   HeartIcon,
   UserIcon,
-  WaterDropIcon
+  WaterDropIcon,
+  SparklesIcon
 } from './Icons';
 
 interface NavItem {
@@ -38,6 +39,11 @@ const BottomNavigation: React.FC = () => {
       path: '/health',
       label: 'Saúde',
       icon: <HeartIcon className="w-6 h-6" />
+    },
+    {
+      path: '/assinatura',
+      label: 'Premium',
+      icon: <SparklesIcon className="w-6 h-6" />
     },
     {
       path: '/profile',

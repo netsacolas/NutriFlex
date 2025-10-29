@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { nutritionChatService, ChatMessage, UserContext } from '../../services/nutritionChatService';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import logger from '../../utils/logger';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 
 interface Props {
   context: UserContext;
@@ -77,7 +78,38 @@ export const NutritionChat: React.FC<Props> = ({ context, onClose }) => {
       handleSend();
     }
   };
-
+  if (!aiChatEnabled) {
+    return (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl border border-emerald-100 space-y-4 text-center">
+          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
+            <span className="text-emerald-500 text-2xl">✨</span>
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">Assistente Premium</h3>
+          <p className="text-gray-600 text-sm">
+            O chat nutricional esta disponivel apenas no plano Premium. Assine para receber orientacoes personalizadas e analises completas do seu historico.
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => {
+                onClose();
+                window.location.href = '/assinatura';
+              }}
+              className="w-full py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+            >
+              Conhecer planos Premium
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full py-2 text-gray-500 hover:text-gray-700 text-sm"
+            >
+              Agora nao
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-card-bg rounded-xl w-full max-w-2xl h-[80vh] flex flex-col border border-border-color shadow-2xl">
@@ -182,3 +214,6 @@ export const NutritionChat: React.FC<Props> = ({ context, onClose }) => {
     </div>
   );
 };
+
+
+

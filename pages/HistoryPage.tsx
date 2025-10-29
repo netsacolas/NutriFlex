@@ -5,6 +5,7 @@ import { profileService } from '../services/profileService';
 import { mealHistoryService } from '../services/mealHistoryService';
 import { physicalActivityService } from '../services/physicalActivityService';
 import { weightHistoryService } from '../services/weightHistoryService';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import {
   CalendarDaysIcon,
   FireIcon,
@@ -42,6 +43,7 @@ const HistoryPage: React.FC = () => {
     id: null,
     name: ''
   });
+  const { limits } = useSubscription();
 
   useEffect(() => {
     loadData();
@@ -86,9 +88,9 @@ const HistoryPage: React.FC = () => {
       const filteredActivities = filterByDate(activitiesData, filter, 'performed_at');
       const filteredWeights = filterByDate(weightsData, filter, 'measured_at');
 
-      setMeals(filteredMeals);
-      setActivities(filteredActivities);
-      setWeights(filteredWeights);
+      setMeals(applyHistoryLimit(filteredMeals));
+      setActivities(applyHistoryLimit(filteredActivities));
+      setWeights(applyHistoryLimit(filteredWeights));
     } catch (error) {
       console.error('Error loading history:', error);
     } finally {
@@ -270,6 +272,21 @@ const HistoryPage: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4">
+        {historyLimited && (
+          <div className="mb-6 bg-white border border-emerald-100 rounded-xl p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-emerald-600">Plano Grátis</h2>
+            <p className="text-gray-800 text-sm mt-1">
+              Apenas os últimos {limits.historyItems} registros ficam disponíveis. Assine o Premium para desbloquear o histórico completo e relatórios avançados.
+            </p>
+            <button
+              onClick={() => navigate('/assinatura')}
+              className="mt-3 inline-flex items-center px-4 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+            >
+              Ver planos Premium
+            </button>
+          </div>
+        )}
+
         {/* Meals Tab */}
         {activeTab === 'meals' && (
           <div>
@@ -528,3 +545,7 @@ const HistoryPage: React.FC = () => {
 };
 
 export default HistoryPage;
+
+
+
+

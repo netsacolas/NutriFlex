@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { mealConsumptionService } from '../services/mealConsumptionService';
 import { useScrollLock } from '../hooks/useScrollLock';
 import type { MealResult, MealType } from '../types';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 interface Props {
   mealResult: MealResult;
@@ -34,6 +35,17 @@ export const SaveMealModal: React.FC<Props> = ({ mealResult, mealType, onClose, 
 
     try {
       const consumedAt = new Date(`${date}T${time}`);
+
+      if (limits.maxMealsPerDay !== null) {
+        const { data: mealsForDay } = await mealConsumptionService.getMealsByDate(consumedAt);
+
+        if ((mealsForDay?.length || 0) >= limits.maxMealsPerDay) {
+          setError('Plano gratuito permite registrar apenas 2 refeicoes por dia. Assine o Premium para liberar ilimitado.');
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error: saveError } = await mealConsumptionService.saveMealConsumption(
         mealResult,
         mealType,
@@ -147,3 +159,5 @@ export const SaveMealModal: React.FC<Props> = ({ mealResult, mealType, onClose, 
     </div>
   );
 };
+
+

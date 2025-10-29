@@ -193,3 +193,37 @@ export interface HydrationProgress {
     intakes_total: number;
     streak_days: number;
 }
+
+// Subscription plans
+export type SubscriptionPlan = 'free' | 'premium_monthly' | 'premium_quarterly' | 'premium_annual';
+
+export type SubscriptionStatusType = 'active' | 'incomplete' | 'past_due' | 'cancelled';
+
+export interface SubscriptionRecord {
+    id: string;
+    user_id: string;
+    plan: SubscriptionPlan;
+    status: SubscriptionStatusType;
+    current_period_start: string | null;
+    current_period_end: string | null;
+    kiwify_order_id: string | null;
+    kiwify_subscription_id: string | null;
+    kiwify_plan_id: string | null;
+    last_event_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PlanTierDefinition {
+    id: SubscriptionPlan;
+    name: string;
+    priceLabel: string;
+    priceCents: number;
+    billingPeriod: 'monthly' | 'quarterly' | 'annual' | 'lifetime';
+    features: string[];
+    limits: {
+        maxMealsPerDay: number | null;
+        historyItems: number | null;
+        aiChatEnabled: boolean;
+    };
+}

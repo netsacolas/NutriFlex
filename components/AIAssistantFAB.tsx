@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SparklesIcon } from './Layout/Icons';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 const AIAssistantFAB: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isPulse, setIsPulse] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const { limits } = useSubscription();
+  const aiChatEnabled = limits.aiChatEnabled;
 
   // Pulsar durante os primeiros 5 segundos
   useEffect(() => {
@@ -23,7 +27,11 @@ const AIAssistantFAB: React.FC = () => {
   }
 
   const handleClick = () => {
-    // Verificar se há histórico de conversa
+    if (!aiChatEnabled) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+
     const hasHistory = localStorage.getItem('chatHistory');
 
     if (hasHistory) {
@@ -31,12 +39,6 @@ const AIAssistantFAB: React.FC = () => {
     } else {
       navigate('/chat');
     }
-  };
-
-  const handleNewConversation = () => {
-    localStorage.removeItem('chatHistory');
-    setShowModal(false);
-    navigate('/chat');
   };
 
   const handleContinueConversation = () => {
@@ -108,8 +110,43 @@ const AIAssistantFAB: React.FC = () => {
           </div>
         </div>
       )}
+
+      {showUpgradePrompt && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
+              <SparklesIcon className="w-7 h-7 text-emerald-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 text-center">Assistente Premium</h3>
+            <p className="text-gray-600 text-sm text-center">
+              O chat inteligente faz parte do plano Premium. Assine para tirar duvidas ilimitadas com a IA e receber analises personalizadas.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setShowUpgradePrompt(false);
+                  navigate('/assinatura');
+                }}
+                className="w-full py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+              >
+                Ver planos Premium
+              </button>
+              <button
+                onClick={() => setShowUpgradePrompt(false)}
+                className="w-full py-2 text-gray-500 hover:text-gray-700 text-sm"
+              >
+                Agora nao
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
 
 export default AIAssistantFAB;
+
+
+
+

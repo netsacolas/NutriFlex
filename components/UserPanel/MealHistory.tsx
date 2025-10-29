@@ -10,6 +10,7 @@ import {
 } from '../icons';
 import Pagination from '../Pagination';
 import { usePagination } from '../../hooks/usePagination';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 
 export const MealHistory: React.FC = () => {
   const [history, setHistory] = useState<MealConsumption[]>([]);
@@ -17,6 +18,8 @@ export const MealHistory: React.FC = () => {
   const [error, setError] = useState('');
   const [selectedMeal, setSelectedMeal] = useState<MealConsumption | null>(null);
   const [filterDays, setFilterDays] = useState(30);
+  const { limits } = useSubscription();
+  const historyLimit = limits.historyItems;
 
   const mealTypeLabels: Record<MealType, string> = {
     breakfast: 'Café da Manhã',
@@ -55,9 +58,13 @@ export const MealHistory: React.FC = () => {
       return;
     }
 
-    setHistory(data || []);
+    const list = data || [];
+    const limitedList = historyLimit !== null ? list.slice(0, historyLimit) : list;
+    setHistory(limitedList);
     setLoading(false);
   };
+
+  const historyLimited = historyLimit !== null;
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja deletar esta refeição?')) return;
@@ -162,8 +169,13 @@ export const MealHistory: React.FC = () => {
           >
             90 dias
           </button>
-        </div>
       </div>
+    </div>
+    {historyLimited && (
+      <div className="bg-white border border-emerald-100 rounded-lg p-4 text-sm text-gray-700">
+        Plano Gratuito mostra apenas os ultimos {historyLimit ?? 0} registros. Assine o Premium para liberar o historico completo.
+      </div>
+    )}
 
       {/* Total de registros */}
       <div className="text-sm text-gray-600">
@@ -352,3 +364,7 @@ export const MealHistory: React.FC = () => {
     </div>
   );
 };
+
+
+
+
