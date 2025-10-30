@@ -97,14 +97,21 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       if (planId === 'free') {
+        logger.warn('Tentativa de abrir checkout para plano gratuito');
         return;
       }
+
+      logger.info('Iniciando checkout', { planId, userId: user.id, email: user.email });
 
       const url = subscriptionService.getCheckoutUrl(planId, user.id, user.email ?? undefined);
+
       if (!url) {
+        logger.error('URL de checkout nao gerada', { planId });
+        alert('Erro ao abrir checkout. Por favor, tente novamente ou entre em contato com o suporte.');
         return;
       }
 
+      logger.info('Redirecionando para checkout', { url });
       window.location.href = url;
     },
     [user]

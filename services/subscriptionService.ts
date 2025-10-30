@@ -125,6 +125,7 @@ export const subscriptionService = {
 
   getCheckoutUrl(plan: SubscriptionPlan, userId: string, email?: string): string | null {
     if (plan === 'free') {
+      logger.warn('Tentativa de checkout para plano gratuito');
       return null;
     }
 
@@ -133,8 +134,23 @@ export const subscriptionService = {
     }
 
     const baseUrl = checkoutUrls[plan];
+    logger.debug('Gerando URL de checkout', {
+      plan,
+      baseUrl,
+      hasBaseUrl: !!baseUrl,
+      envVars: {
+        monthly: import.meta.env.VITE_KIWIFY_CHECKOUT_MONTHLY,
+        quarterly: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY,
+        annual: import.meta.env.VITE_KIWIFY_CHECKOUT_ANNUAL
+      }
+    });
+
     if (!baseUrl) {
-      logger.error('Kiwify checkout URL missing for plan', { plan });
+      logger.error('Kiwify checkout URL missing for plan', {
+        plan,
+        availableUrls: Object.keys(checkoutUrls),
+        checkoutUrls
+      });
       return null;
     }
 
@@ -144,7 +160,10 @@ export const subscriptionService = {
       url.searchParams.set('email', email);
     }
     url.searchParams.set('source', 'nutrimais-app');
-    return url.toString();
+
+    const finalUrl = url.toString();
+    logger.info('URL de checkout gerada', { plan, finalUrl });
+    return finalUrl;
   },
 
   async ensureSubscriptionRecord(userId: string): Promise<void> {
