@@ -1,0 +1,151 @@
+═══════════════════════════════════════════════════════════════════════
+  🚀 RESUMO DO DEPLOY - Correção da Página de Histórico
+═══════════════════════════════════════════════════════════════════════
+
+📊 PROBLEMA IDENTIFICADO:
+──────────────────────────────────────────────────────────────────────
+❌ Erro no console de produção:
+   "Uncaught ReferenceError: historyLimited is not defined"
+   at index-Baqy6K4X.js:21:265626
+
+🔍 CAUSA:
+   Build antigo (index-Baqy6K4X.js) está em cache no servidor
+   Não contém as correções implementadas (historyLimited e applyHistoryLimit)
+
+✅ NOVO BUILD GERADO:
+──────────────────────────────────────────────────────────────────────
+✓ Build concluído em 11.10s
+✓ 239 modules transformados
+✓ Novo arquivo principal: index-CD37Wv14.js ⬅️ ESTE É DIFERENTE!
+
+📦 Arquivos gerados em: c:\NutriMais\dist\
+   - index.html (7.48 kB)
+   - assets/index-CD37Wv14.js (556.11 kB) ⭐ ARQUIVO PRINCIPAL
+   - assets/react-vendor-CeBThZ2K.js (11.67 kB)
+   - assets/supabase-DOZprbE_.js (165.24 kB)
+   - + outros assets
+
+═══════════════════════════════════════════════════════════════════════
+  📤 O QUE VOCÊ PRECISA FAZER AGORA:
+═══════════════════════════════════════════════════════════════════════
+
+1️⃣  LIMPAR CACHE DO SERVIDOR (MUITO IMPORTANTE!)
+
+   Se você usa VERCEL:
+   - Acesse https://vercel.com/dashboard
+   - Vá em Settings > Domains
+   - Clique em "Invalidate Cache"
+
+   Se você usa NETLIFY:
+   - Acesse https://app.netlify.com
+   - Vá em Deploys
+   - Clique em "Trigger deploy" > "Clear cache and deploy site"
+
+   Se usa FTP/cPanel:
+   - DELETE a pasta /assets/ do servidor ANTES de fazer upload
+   - Isso força o navegador a baixar os novos arquivos
+
+─────────────────────────────────────────────────────────────────────
+
+2️⃣  FAZER UPLOAD DOS NOVOS ARQUIVOS
+
+   📂 Envie TODO o conteúdo de: c:\NutriMais\dist\
+
+   Para o servidor: www.nutrimais.app
+
+   IMPORTANTE: Substitua TODOS os arquivos, não apenas alguns!
+
+─────────────────────────────────────────────────────────────────────
+
+3️⃣  VERIFICAR SE DEU CERTO
+
+   A) Limpe o cache do NAVEGADOR:
+      - Chrome/Edge: Ctrl + Shift + Delete
+      - Ou simplesmente: Ctrl + Shift + R (hard refresh)
+
+   B) Abra o console (F12) e vá para a aba "Network"
+
+   C) Acesse https://www.nutrimais.app
+
+   D) Procure pelo arquivo carregado:
+      ✅ CORRETO: index-CD37Wv14.js (novo)
+      ❌ ERRADO:  index-Baqy6K4X.js (antigo)
+
+   E) Vá para /history
+
+   F) No console, você DEVE ver:
+      ✅ [HistoryPage] Iniciando carregamento de dados...
+      ✅ [HistoryPage] Verificando sessão...
+      ✅ [HistoryPage] Sessão encontrada: ...
+      ✅ [HistoryPage] Carregamento concluído com sucesso!
+
+   G) No console, você NÃO deve mais ver:
+      ❌ historyLimited is not defined
+
+═══════════════════════════════════════════════════════════════════════
+  ⚠️  PROBLEMA SECUNDÁRIO IDENTIFICADO
+═══════════════════════════════════════════════════════════════════════
+
+O console também mostra:
+❌ Failed to load resource: 404
+   keawapzxqoyesptwpwav.supabase.co/rest/v1/user_subscriptions
+
+ISSO SIGNIFICA:
+   A tabela 'user_subscriptions' não existe no banco de produção
+   A migração 009_add_subscriptions.sql não foi aplicada
+
+IMPACTO:
+   ⚠️  Sistema de assinaturas não funciona
+   ⚠️  Limites de plano não são aplicados
+   ⚠️  Webhook da Kiwify vai falhar ao receber pagamentos
+
+SOLUÇÃO (Fazer DEPOIS de corrigir o histórico):
+
+   Opção A - Via Supabase CLI:
+   ```
+   supabase db push --project-ref keawapzxqoyesptwpwav
+   ```
+
+   Opção B - Via Editor SQL:
+   1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/editor
+   2. Abra: supabase/migrations/009_add_subscriptions.sql
+   3. Copie TODO o conteúdo
+   4. Cole no editor SQL do Supabase
+   5. Execute
+
+═══════════════════════════════════════════════════════════════════════
+  📚 DOCUMENTAÇÃO CRIADA
+═══════════════════════════════════════════════════════════════════════
+
+✓ DEPLOY_FIX_URGENTE.md
+  → Guia detalhado com todas as instruções
+
+✓ scripts/deploy-to-production.sh
+  → Script automatizado para próximos deploys
+
+✓ DEBUG_HISTORY_PRODUCTION.md
+  → Guia de troubleshooting se houver outros problemas
+
+═══════════════════════════════════════════════════════════════════════
+  ✅ CHECKLIST FINAL
+═══════════════════════════════════════════════════════════════════════
+
+[ ] Build realizado (✓ JÁ FEITO)
+[ ] Cache do servidor limpo
+[ ] Arquivos de dist/ enviados para www.nutrimais.app
+[ ] Cache do navegador limpo (Ctrl + Shift + R)
+[ ] Arquivo carregado é index-CD37Wv14.js (novo)
+[ ] Página /history abre sem tela preta
+[ ] Console mostra logs [HistoryPage]
+[ ] Console NÃO mostra "historyLimited is not defined"
+[ ] (Opcional) Migração 009_add_subscriptions.sql aplicada
+
+═══════════════════════════════════════════════════════════════════════
+
+Se tiver algum problema, me envie:
+1. Screenshot do console (F12)
+2. Nome do arquivo JS que está carregando
+3. Print da aba Network mostrando os arquivos carregados
+
+Gerado em: 2025-10-30 20:50 BRT
+Commit: 61e4668
