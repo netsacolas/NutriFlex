@@ -42,6 +42,18 @@ vi.mock('../../data/foodDatabase', () => ({
   searchFoods: vi.fn().mockReturnValue([]),
 }));
 
+vi.mock('../../contexts/SubscriptionContext', () => ({
+  useSubscription: () => ({
+    subscription: null,
+    plan: { id: 'free', limits: { maxMealsPerDay: 2 } },
+    isLoading: false,
+    isPremium: false,
+    limits: { maxMealsPerDay: 2, historyItems: 5, aiChatEnabled: false },
+    refresh: vi.fn(),
+    openCheckout: vi.fn(),
+  }),
+}));
+
 const { default: PlanMealPage } = await import('../PlanMealPage');
 
 const renderWithRouter = () =>
