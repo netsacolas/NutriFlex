@@ -13,6 +13,12 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+
+# Kiwify Secrets (NUNCA COMMITAR!)
+**/setup-kiwify-secrets.sh
+kiwify-credentials.*
+*kiwify*secret*
 
 # Logs
 npm-debug.log*
