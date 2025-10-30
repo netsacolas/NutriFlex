@@ -32,6 +32,7 @@ const HistoryPage: React.FC = () => {
 
   // UI states
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{
     show: boolean;
     type: 'meal' | 'activity' | 'weight' | null;
@@ -59,21 +60,35 @@ const HistoryPage: React.FC = () => {
   }, [filter]);
 
   const loadData = async () => {
+    console.log('[HistoryPage] Iniciando carregamento de dados...');
     setIsLoading(true);
+    setError(null);
+
     try {
+      console.log('[HistoryPage] Verificando sessão...');
       const session = await authService.getCurrentSession();
       if (!session) {
+        console.log('[HistoryPage] Sem sessão, redirecionando para login');
         navigate('/login');
         return;
       }
+      console.log('[HistoryPage] Sessão encontrada:', session.user.id);
 
       // Verificar se dados obrigatórios estão preenchidos
-      const { data: userProfile } = await profileService.getProfile();
+      console.log('[HistoryPage] Carregando perfil do usuário...');
+      const { data: userProfile, error: profileError } = await profileService.getProfile();
+
+      if (profileError) {
+        console.error('[HistoryPage] Erro ao carregar perfil:', profileError);
+        throw new Error(`Erro ao carregar perfil: ${profileError.message}`);
+      }
+
       if (userProfile) {
         const hasRequiredData = userProfile.weight && userProfile.height && userProfile.age && userProfile.gender;
+        console.log('[HistoryPage] Perfil carregado, dados completos:', hasRequiredData);
 
         if (!hasRequiredData) {
-          // Redirecionar para onboarding
+          console.log('[HistoryPage] Dados incompletos, redirecionando para onboarding');
           navigate('/onboarding');
           return;
         }
@@ -82,26 +97,62 @@ const HistoryPage: React.FC = () => {
       const userId = session.user.id;
 
       // Load all data
+      console.log('[HistoryPage] Carregando históricos...');
       const [mealsResult, activitiesResult, weightsResult] = await Promise.all([
         mealHistoryService.getUserMealHistory(userId),
         physicalActivityService.getUserActivities(365),
         weightHistoryService.getUserWeightHistory(userId)
       ]);
 
+      console.log('[HistoryPage] Dados carregados:', {
+        meals: mealsResult.data?.length || 0,
+        activities: activitiesResult.data?.length || 0,
+        weights: weightsResult.data?.length || 0,
+        mealsError: mealsResult.error,
+        activitiesError: activitiesResult.error,
+        weightsError: weightsResult.error
+      });
+
+      if (mealsResult.error) {
+        console.error('[HistoryPage] Erro ao carregar refeições:', mealsResult.error);
+      }
+      if (activitiesResult.error) {
+        console.error('[HistoryPage] Erro ao carregar atividades:', activitiesResult.error);
+      }
+      if (weightsResult.error) {
+        console.error('[HistoryPage] Erro ao carregar peso:', weightsResult.error);
+      }
+
       const mealsData = mealsResult.data || [];
       const activitiesData = activitiesResult.data || [];
       const weightsData = weightsResult.data || [];
 
       // Apply filter
+      console.log('[HistoryPage] Aplicando filtros...');
       const filteredMeals = filterByDate(mealsData, filter, 'consumed_at');
       const filteredActivities = filterByDate(activitiesData, filter, 'performed_at');
       const filteredWeights = filterByDate(weightsData, filter, 'measured_at');
 
-      setMeals(applyHistoryLimit(filteredMeals));
-      setActivities(applyHistoryLimit(filteredActivities));
-      setWeights(applyHistoryLimit(filteredWeights));
-    } catch (error) {
-      console.error('Error loading history:', error);
+      console.log('[HistoryPage] Aplicando limites do plano...');
+      const limitedMeals = applyHistoryLimit(filteredMeals);
+      const limitedActivities = applyHistoryLimit(filteredActivities);
+      const limitedWeights = applyHistoryLimit(filteredWeights);
+
+      console.log('[HistoryPage] Dados finais:', {
+        meals: limitedMeals.length,
+        activities: limitedActivities.length,
+        weights: limitedWeights.length
+      });
+
+      setMeals(limitedMeals);
+      setActivities(limitedActivities);
+      setWeights(limitedWeights);
+
+      console.log('[HistoryPage] Carregamento concluído com sucesso!');
+    } catch (error: any) {
+      console.error('[HistoryPage] ERRO CRÍTICO ao carregar histórico:', error);
+      const errorMessage = error?.message || 'Erro ao carregar histórico';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -209,8 +260,49 @@ const HistoryPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando histórico...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-8 border border-red-100">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Erro ao Carregar Histórico</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setError(null);
+                  loadData();
+                }}
+                className="w-full py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+              >
+                Tentar Novamente
+              </button>
+              <button
+                onClick={() => navigate('/app')}
+                className="w-full py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Voltar ao Início
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              Se o problema persistir, verifique o console do navegador (F12) para mais detalhes.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
