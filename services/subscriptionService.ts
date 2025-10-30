@@ -28,15 +28,17 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
   },
   premium_monthly: {
     id: 'premium_monthly',
-    name: 'Premium Mensal',
-    priceLabel: 'R$ 19,90 / mes',
+    name: 'Plano Mensal',
+    priceLabel: 'R$ 19,90/mês',
     priceCents: 1990,
     billingPeriod: 'monthly',
     features: [
-      'Cadastro ilimitado de refeicoes',
-      'Historico completo e relatorios',
-      'Assistente de IA completo (chat e analises)',
-      'Acesso total aos planos personalizados'
+      'Refeições ilimitadas por dia',
+      'Histórico completo sem restrições',
+      'Assistente de IA completo com chat',
+      'Análises nutricionais detalhadas',
+      'Relatórios personalizados',
+      'Suporte prioritário'
     ],
     limits: {
       maxMealsPerDay: null,
@@ -46,14 +48,16 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
   },
   premium_quarterly: {
     id: 'premium_quarterly',
-    name: 'Premium Trimestral',
-    priceLabel: 'R$ 49,90 / trimestre',
-    priceCents: 4990,
+    name: 'Plano Trimestral',
+    priceLabel: 'R$ 47,00/trimestre',
+    priceCents: 4700,
     billingPeriod: 'quarterly',
     features: [
-      'Todos os recursos Premium',
-      'Economia de 15% em relacao ao mensal',
-      'Renovacao automatica a cada 3 meses'
+      'Todos os recursos do plano Mensal',
+      'Economia de 21% vs. plano mensal',
+      'Acesso a recursos beta',
+      'Renovação automática trimestral',
+      'Garantia de satisfação'
     ],
     limits: {
       maxMealsPerDay: null,
@@ -63,14 +67,16 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
   },
   premium_annual: {
     id: 'premium_annual',
-    name: 'Premium Anual',
-    priceLabel: 'R$ 179,90 / ano',
+    name: 'Plano Anual',
+    priceLabel: 'R$ 179,90/ano',
     priceCents: 17990,
     billingPeriod: 'annual',
     features: [
-      'Todos os recursos Premium',
-      'Economia de 25% em relacao ao mensal',
-      'Relatorios historicos avançados'
+      'Todos os recursos do plano Mensal',
+      'Economia de 25% vs. plano mensal',
+      'Acesso prioritário a novidades',
+      'Relatórios históricos avançados',
+      'Melhor custo-benefício'
     ],
     limits: {
       maxMealsPerDay: null,
