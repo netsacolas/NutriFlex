@@ -49,12 +49,12 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
   premium_quarterly: {
     id: 'premium_quarterly',
     name: 'Plano Trimestral',
-    priceLabel: 'R$ 47,00/trimestre',
-    priceCents: 4700,
+    priceLabel: 'R$ 49,90/trimestre',
+    priceCents: 4990,
     billingPeriod: 'quarterly',
     features: [
       'Todos os recursos do plano Mensal',
-      'Economia de 21% vs. plano mensal',
+      'Economia de 16% vs. plano mensal',
       'Acesso a recursos beta',
       'Renovação automática trimestral',
       'Garantia de satisfação'
@@ -87,9 +87,9 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
 };
 
 const checkoutUrls: Partial<Record<Exclude<SubscriptionPlan, 'free'>, string>> = {
-  premium_monthly: import.meta.env.VITE_KIWIFY_CHECKOUT_MONTHLY,
-  premium_quarterly: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY,
-  premium_annual: import.meta.env.VITE_KIWIFY_CHECKOUT_ANNUAL
+  premium_monthly: import.meta.env.VITE_KIWIFY_CHECKOUT_MONTHLY || 'https://pay.kiwify.com.br/uJP288j',
+  premium_quarterly: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY || 'https://pay.kiwify.com.br/U170qMX',
+  premium_annual: import.meta.env.VITE_KIWIFY_CHECKOUT_ANNUAL || 'https://pay.kiwify.com.br/mHorNkF'
 };
 
 const mockSubscription: SubscriptionRecord = {

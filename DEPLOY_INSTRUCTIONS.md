@@ -7,9 +7,9 @@
 Para que os botões de assinatura funcionem em produção, você **DEVE** configurar as seguintes variáveis de ambiente no seu serviço de hosting:
 
 ```bash
-VITE_KIWIFY_CHECKOUT_MONTHLY=https://pay.kiwify.com.br/y3vvLeb
-VITE_KIWIFY_CHECKOUT_QUARTERLY=https://pay.kiwify.com.br/rIx7EEh
-VITE_KIWIFY_CHECKOUT_ANNUAL=https://pay.kiwify.com.br/qIQusYO
+VITE_KIWIFY_CHECKOUT_MONTHLY=https://pay.kiwify.com.br/uJP288j
+VITE_KIWIFY_CHECKOUT_QUARTERLY=https://pay.kiwify.com.br/U170qMX
+VITE_KIWIFY_CHECKOUT_ANNUAL=https://pay.kiwify.com.br/mHorNkF
 ```
 
 ### 📋 Como Configurar em Diferentes Plataformas
@@ -19,7 +19,7 @@ VITE_KIWIFY_CHECKOUT_ANNUAL=https://pay.kiwify.com.br/qIQusYO
 2. Vá em **Settings** → **Environment Variables**
 3. Adicione cada variável:
    - Name: `VITE_KIWIFY_CHECKOUT_MONTHLY`
-   - Value: `https://pay.kiwify.com.br/y3vvLeb`
+   - Value: `https://pay.kiwify.com.br/uJP288j`
    - Environment: **Production** (marque)
 4. Repita para `VITE_KIWIFY_CHECKOUT_QUARTERLY` e `VITE_KIWIFY_CHECKOUT_ANNUAL`
 5. Faça um **Redeploy** do projeto
@@ -45,9 +45,9 @@ VITE_SUPABASE_URL=https://keawapzxqoyesptwpwav.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8
 
 # Kiwify Checkout URLs
-VITE_KIWIFY_CHECKOUT_MONTHLY=https://pay.kiwify.com.br/y3vvLeb
-VITE_KIWIFY_CHECKOUT_QUARTERLY=https://pay.kiwify.com.br/rIx7EEh
-VITE_KIWIFY_CHECKOUT_ANNUAL=https://pay.kiwify.com.br/qIQusYO
+VITE_KIWIFY_CHECKOUT_MONTHLY=https://pay.kiwify.com.br/uJP288j
+VITE_KIWIFY_CHECKOUT_QUARTERLY=https://pay.kiwify.com.br/U170qMX
+VITE_KIWIFY_CHECKOUT_ANNUAL=https://pay.kiwify.com.br/mHorNkF
 ```
 
 3. Salve e faça o build:
@@ -68,8 +68,8 @@ Após o deploy, abra o console do navegador (F12) e:
 **✅ Sucesso:**
 ```
 [INFO] Iniciando checkout { planId: "premium_monthly", userId: "...", email: "..." }
-[INFO] URL de checkout gerada { plan: "premium_monthly", finalUrl: "https://pay.kiwify.com.br/y3vvLeb?..." }
-[INFO] Redirecionando para checkout { url: "https://pay.kiwify.com.br/y3vvLeb?..." }
+[INFO] URL de checkout gerada { plan: "premium_monthly", finalUrl: "https://pay.kiwify.com.br/uJP288j?..." }
+[INFO] Redirecionando para checkout { url: "https://pay.kiwify.com.br/uJP288j?..." }
 ```
 
 **❌ Erro (variáveis não configuradas):**
