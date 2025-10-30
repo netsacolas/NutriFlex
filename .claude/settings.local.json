@@ -7,7 +7,10 @@
       "Bash(git add:*)",
       "Bash(git reset:*)",
       "Bash(npm run dev:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
