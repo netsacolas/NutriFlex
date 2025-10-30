@@ -45,6 +45,15 @@ const HistoryPage: React.FC = () => {
   });
   const { limits } = useSubscription();
 
+  // Helper function to apply history limits based on subscription
+  const applyHistoryLimit = <T extends any[]>(items: T): T => {
+    if (limits.historyItems === null) return items;
+    return items.slice(0, limits.historyItems) as T;
+  };
+
+  // Check if history is limited by subscription
+  const historyLimited = limits.historyItems !== null;
+
   useEffect(() => {
     loadData();
   }, [filter]);
