@@ -79,17 +79,26 @@ const AuthPage: React.FC = () => {
 
     try {
       if (mode === 'login') {
+        console.log('[AuthPage] Iniciando login...', { email: trimmedEmail });
         const result = await authService.signIn(trimmedEmail, password);
+        console.log('[AuthPage] Resultado do login:', {
+          hasUser: !!result.user,
+          hasError: !!result.error,
+          errorMessage: result.error?.message
+        });
+
         if (result.error) {
           // Traduzir mensagens de erro do Supabase para português
           const errorMessage = result.error.message === 'Email not confirmed'
             ? 'Email não confirmado. Verifique sua caixa de entrada.'
             : result.error.message || 'Erro ao fazer login';
+          console.error('[AuthPage] Erro no login:', errorMessage);
           setError(errorMessage);
         } else {
+          console.log('[AuthPage] Login bem-sucedido! Navegando para /home...');
           navigate('/home');
         }
-      } else {
+      } else{
         const result = await authService.signUp(trimmedEmail, password, trimmedFullName);
         if (result.error) {
           setError(result.error.message || 'Erro ao criar conta');
@@ -105,8 +114,10 @@ const AuthPage: React.FC = () => {
         }
       }
     } catch (err: any) {
+      console.error('[AuthPage] Exceção capturada:', err);
       setError(err.message || 'Erro ao processar solicitação');
     } finally {
+      console.log('[AuthPage] Finalizando processo de autenticação');
       setIsLoading(false);
     }
   };
