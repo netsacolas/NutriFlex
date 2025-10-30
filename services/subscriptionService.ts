@@ -88,7 +88,7 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
 
 const checkoutUrls: Partial<Record<Exclude<SubscriptionPlan, 'free'>, string>> = {
   premium_monthly: import.meta.env.VITE_KIWIFY_CHECKOUT_MONTHLY || 'https://pay.kiwify.com.br/uJP288j',
-  premium_quarterly: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY || 'https://pay.kiwify.com.br/U170qMX',
+  premium_quarterly: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY || 'https://pay.kiwify.com.br/Omg0hAs',
   premium_annual: import.meta.env.VITE_KIWIFY_CHECKOUT_ANNUAL || 'https://pay.kiwify.com.br/mHorNkF'
 };
 
