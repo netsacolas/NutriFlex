@@ -49,13 +49,14 @@ const buildMockUser = (email: string): MockUser => {
 
 const setMockSession = (email: string) => {
   const user = buildMockUser(email);
+  const SESSION_DURATION = 100 * 60 * 60; // 100 horas em segundos
   mockState.user = user;
   mockState.session = {
     access_token: 'mock-access-token',
     refresh_token: 'mock-refresh-token',
     token_type: 'bearer',
-    expires_in: 60 * 60,
-    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
+    expires_in: SESSION_DURATION,
+    expires_at: Math.floor(Date.now() / 1000) + SESSION_DURATION,
     user,
   } as unknown as Session;
   notifyMockListeners(user);

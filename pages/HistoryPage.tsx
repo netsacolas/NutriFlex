@@ -311,7 +311,7 @@ const HistoryPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-20">
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 pt-12 pb-6 shadow-lg">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <div className="flex items-center mb-2">
             <CalendarDaysIcon className="w-7 h-7 text-white mr-3" />
             <h1 className="text-white text-2xl font-bold">Histórico</h1>
@@ -322,7 +322,7 @@ const HistoryPage: React.FC = () => {
 
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-2xl mx-auto px-4">
           <div className="flex justify-around">
             {tabs.map(tab => (
               <button
@@ -353,7 +353,7 @@ const HistoryPage: React.FC = () => {
       </div>
 
       {/* Filter Pills */}
-      <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="max-w-2xl mx-auto px-4 py-4">
         <div className="flex gap-2">
           {filters.map(f => (
             <button
@@ -372,7 +372,7 @@ const HistoryPage: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-2xl mx-auto px-4">
         {historyLimited && (
           <div className="mb-6 bg-white border border-emerald-100 rounded-xl p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-emerald-600">Plano Grátis</h2>

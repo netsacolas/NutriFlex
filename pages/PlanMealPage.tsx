@@ -15,6 +15,7 @@ import {
   CheckCircleIcon
 } from '../components/Layout/Icons';
 import Toast from '../components/Toast';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { MealResult, MealType, UserProfile } from '../types';
 
 const PlanMealPage: React.FC = () => {
@@ -22,7 +23,7 @@ const PlanMealPage: React.FC = () => {
 
   // Form State
   const [mealType, setMealType] = useState<MealType>('lunch');
-  const [targetCalories, setTargetCalories] = useState<number>(600);
+  const [targetCalories, setTargetCalories] = useState<number>(0);
   const [currentFood, setCurrentFood] = useState('');
   const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
   const [favoriteFoods, setFavoriteFoods] = useState<string[]>([]);
@@ -79,7 +80,7 @@ const PlanMealPage: React.FC = () => {
         navigate('/login');
         return;
       }
-      setCurrentUserId(session.user.id);
+
       await loadTodayMealCount(session.user.id);
 
       const { data: userProfile } = await profileService.getProfile();
@@ -93,6 +94,13 @@ const PlanMealPage: React.FC = () => {
           navigate('/onboarding');
           return;
         }
+
+        console.log('📊 Perfil carregado:', {
+          breakfast_calories: userProfile.breakfast_calories,
+          lunch_calories: userProfile.lunch_calories,
+          dinner_calories: userProfile.dinner_calories,
+          snack_calories: userProfile.snack_calories
+        });
 
         setProfile(userProfile);
         // Set default calories based on meal type
@@ -113,9 +121,15 @@ const PlanMealPage: React.FC = () => {
 
     const field = caloriesMap[type];
     const calories = prof[field] as number | undefined;
-    if (calories) {
-      setTargetCalories(calories);
-    }
+
+    console.log(`🎯 Definindo calorias para ${type}:`, {
+      field,
+      valor_perfil: calories,
+      valor_final: calories || 600
+    });
+
+    // Se existir meta específica, usar. Caso contrário, usar 600 como fallback
+    setTargetCalories(calories || 600);
   };
 
   const loadFavorites = () => {
@@ -530,14 +544,14 @@ const PlanMealPage: React.FC = () => {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 pt-12 pb-6 shadow-lg">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <h1 className="text-white text-2xl font-bold mb-2">Planejar Refeição</h1>
           <p className="text-white/80">Calcule as porções ideais com nossa IA</p>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-6">
         {limits.maxMealsPerDay !== null && (
           <div className="mb-6 space-y-3">
             <div className="bg-white border border-emerald-100 rounded-xl p-4 shadow-sm flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -758,167 +772,245 @@ const PlanMealPage: React.FC = () => {
           )}
         </button>
 
-        {/* Results Section */}
+        {/* Results Section - COMPACT & MODERN */}
         {showResult && editedResult && (
-          <div id="meal-results" className="mt-8 space-y-6 animate-fadeIn">
-            {/* Summary Card */}
-            <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-xl p-6 text-white shadow-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Resultado do Cálculo</h2>
-                <FireIcon className="w-8 h-8" />
+          <div id="meal-results" className="mt-4 space-y-3 animate-fadeIn">
+
+            {/* PORÇÕES - Layout Compacto */}
+            <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-3 py-2 flex items-center justify-between">
+                <h3 className="text-white font-bold text-sm">🍽️ Porções Calculadas</h3>
+                <span className="text-white/90 text-xs font-semibold">{editedResult.totalCalories} kcal</span>
               </div>
 
-              <div className="text-center mb-4">
-                <p className="text-4xl font-bold">{editedResult.totalCalories}</p>
-                <p className="text-white/80">calorias totais</p>
-              </div>
-
-              {/* Macro Bars */}
-              <div className="space-y-3">
-                {Object.entries(calculateMacroPercentages()).map(([macro, percentage]) => {
-                  const macroName = macro === 'carbs' ? 'Carboidratos' : macro === 'protein' ? 'Proteína' : 'Gordura';
-                  const macroGrams = macro === 'carbs' ? editedResult.totalMacros.carbs :
-                                    macro === 'protein' ? editedResult.totalMacros.protein :
-                                    editedResult.totalMacros.fat;
-
-                  return (
-                    <div key={macro}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="capitalize">{macroName}</span>
-                        <span className="font-semibold">{macroGrams.toFixed(1)}g ({percentage}%)</span>
-                      </div>
-                      <div className="w-full bg-white/20 rounded-full h-2">
-                        <div
-                          className={`h-full rounded-full ${getMacroColor(macro)}`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Glycemic Index & Load */}
-              {editedResult.glycemicData && (
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="text-center">
-                      <p className="text-xs text-white/70 mb-1">Índice Glicêmico</p>
-                      <p className="text-2xl font-bold">{editedResult.glycemicData.index.toFixed(0)}</p>
-                      <p className="text-xs text-white/70">
-                        {editedResult.glycemicData.index < 55 ? '✅ Baixo' :
-                         editedResult.glycemicData.index < 70 ? '⚠️ Moderado' : '❌ Alto'}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-white/70 mb-1">Carga Glicêmica</p>
-                      <p className="text-2xl font-bold">{editedResult.glycemicData.load.toFixed(1)}</p>
-                      <p className="text-xs text-white/70">
-                        {editedResult.glycemicData.load < 10 ? '✅ Baixa' :
-                         editedResult.glycemicData.load < 20 ? '⚠️ Moderada' : '❌ Alta'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Portions List */}
-            <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Porções Calculadas</h3>
-              <div className="space-y-4">
+              <div className="divide-y divide-gray-100">
                 {editedResult.portions.map((portion, index) => (
-                  <div key={index} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{portion.foodName}</h4>
-                        <p className="text-sm text-gray-500">{portion.homeMeasure}</p>
+                  <div key={index} className="p-3 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-gray-900 text-sm truncate">{portion.foodName}</h4>
+                        <p className="text-xs text-gray-500">{portion.homeMeasure}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <input
                           type="number"
+                          inputMode="numeric"
                           value={inputValues.get(portion.foodName) || ''}
                           onChange={(e) => handlePortionChange(portion.foodName, e.target.value)}
-                          className="w-20 px-2 py-1 text-center border border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                          className="w-16 px-2 py-1 text-center text-lg font-bold text-emerald-600 bg-emerald-50 border border-emerald-300 rounded focus:ring-2 focus:ring-emerald-400 focus:outline-none"
                         />
-                        <span className="text-sm text-gray-500">g</span>
+                        <span className="text-xs font-semibold text-gray-600">g</span>
+                        <div className="text-right">
+                          <div className="text-sm font-bold text-emerald-600">{portion.calories}</div>
+                          <div className="text-xs text-gray-500">kcal</div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
-                      <span>{portion.calories} kcal</span>
-                      <span>P: {portion.macros.protein.toFixed(1)}g</span>
-                      <span>C: {portion.macros.carbs.toFixed(1)}g</span>
-                      <span>G: {portion.macros.fat.toFixed(1)}g</span>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-semibold">
+                        P: {portion.macros.protein.toFixed(1)}g
+                      </span>
+                      <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded font-semibold">
+                        C: {portion.macros.carbs.toFixed(1)}g
+                      </span>
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded font-semibold">
+                        G: {portion.macros.fat.toFixed(1)}g
+                      </span>
+                      {portion.glycemicIndex !== undefined && portion.glycemicIndex > 0 && (
+                        <>
+                          <span className={`px-2 py-0.5 rounded font-semibold ${
+                            portion.glycemicIndex < 55 ? 'bg-green-100 text-green-700' :
+                            portion.glycemicIndex < 70 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            IG: {portion.glycemicIndex.toFixed(0)}
+                          </span>
+                        </>
+                      )}
                     </div>
-
-                    {/* Glycemic Data per Food */}
-                    {portion.glycemicIndex !== undefined && portion.glycemicIndex > 0 && (
-                      <div className="flex justify-between text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">IG:</span>
-                          <span className={`font-semibold ${
-                            portion.glycemicIndex < 55 ? 'text-green-600' :
-                            portion.glycemicIndex < 70 ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                            {portion.glycemicIndex.toFixed(0)}
-                          </span>
-                          <span className="text-gray-400">
-                            {portion.glycemicIndex < 55 ? '(Baixo)' :
-                             portion.glycemicIndex < 70 ? '(Moderado)' : '(Alto)'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">CG:</span>
-                          <span className={`font-semibold ${
-                            (() => {
-                              const cg = (portion.glycemicIndex * portion.macros.carbs) / 100;
-                              return cg < 10 ? 'text-green-600' :
-                                     cg < 20 ? 'text-yellow-600' : 'text-red-600';
-                            })()
-                          }`}>
-                            {((portion.glycemicIndex * portion.macros.carbs) / 100).toFixed(1)}
-                          </span>
-                          <span className="text-gray-400">
-                            {(() => {
-                              const cg = (portion.glycemicIndex * portion.macros.carbs) / 100;
-                              return cg < 10 ? '(Baixa)' :
-                                     cg < 20 ? '(Moderada)' : '(Alta)';
-                            })()}
-                          </span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* AI Suggestions */}
-            {mealResult?.suggestions && mealResult.suggestions.length > 0 && (
-              <div className="bg-purple-50 rounded-xl shadow-xl border border-purple-100 p-6">
-                <div className="flex items-start mb-3">
-                  <SparklesIcon className="w-6 h-6 text-purple-600 mr-2 flex-shrink-0" />
-                  <h3 className="text-lg font-semibold text-purple-900">Sugestões da IA</h3>
+            {/* ANÁLISE NUTRICIONAL - Compacta */}
+            <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-3 py-2">
+                <h3 className="text-white font-bold text-sm">📊 Análise Nutricional</h3>
+              </div>
+
+              <div className="p-3 space-y-3">
+                {/* Gráfico de Pizza Simples */}
+                <div className="relative w-full h-56 flex items-center justify-center overflow-visible">
+                  {/* Sombra elíptica realista */}
+                  <div className="absolute bottom-2 w-48 h-6 bg-black/15 rounded-full blur-lg"></div>
+
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <defs>
+                        {/* Gradientes - Azul */}
+                        <linearGradient id="gradBlue" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#60a5fa" stopOpacity={1}/>
+                          <stop offset="100%" stopColor="#2563eb" stopOpacity={1}/>
+                        </linearGradient>
+
+                        {/* Gradientes - Amarelo */}
+                        <linearGradient id="gradYellow" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#fcd34d" stopOpacity={1}/>
+                          <stop offset="100%" stopColor="#f59e0b" stopOpacity={1}/>
+                        </linearGradient>
+
+                        {/* Gradientes - Vermelho */}
+                        <linearGradient id="gradRed" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#fca5a5" stopOpacity={1}/>
+                          <stop offset="100%" stopColor="#ef4444" stopOpacity={1}/>
+                        </linearGradient>
+                      </defs>
+
+                      {/* Gráfico único */}
+                      <Pie
+                        data={[
+                          { name: 'Proteínas', value: editedResult.totalMacros.protein * 4, calories: Math.round(editedResult.totalMacros.protein * 4) },
+                          { name: 'Carboidratos', value: editedResult.totalMacros.carbs * 4, calories: Math.round(editedResult.totalMacros.carbs * 4) },
+                          { name: 'Gorduras', value: editedResult.totalMacros.fat * 9, calories: Math.round(editedResult.totalMacros.fat * 9) },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={0}
+                        outerRadius={90}
+                        paddingAngle={2}
+                        dataKey="value"
+                        stroke="#ffffff"
+                        strokeWidth={3}
+                        label={({ cx, cy, midAngle, outerRadius, calories }) => {
+                          const RADIAN = Math.PI / 180;
+                          const radius = outerRadius * 0.65;
+                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fill="white"
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              style={{
+                                fontSize: '16px',
+                                fontWeight: '900',
+                                textShadow: '0 2px 4px rgba(0,0,0,0.6)',
+                                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))'
+                              }}
+                            >
+                              {calories}
+                            </text>
+                          );
+                        }}
+                        labelLine={false}
+                      >
+                        <Cell fill="url(#gradBlue)" />
+                        <Cell fill="url(#gradYellow)" />
+                        <Cell fill="url(#gradRed)" />
+                      </Pie>
+
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                          border: 'none',
+                          borderRadius: '10px',
+                          padding: '12px 16px',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                        }}
+                        labelStyle={{ color: '#fff', fontWeight: '800', fontSize: '15px', marginBottom: '6px' }}
+                        itemStyle={{ color: '#e5e7eb', fontSize: '14px', fontWeight: '600' }}
+                        formatter={(value: number, name: string) => [`${Math.round(value)} kcal`, name]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  {/* Total de Calorias - Badge no canto */}
+                  <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg px-3 py-2 border-2 border-gray-200">
+                    <div className="text-xs text-gray-500 font-semibold">Total</div>
+                    <div className="text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      {editedResult.totalCalories}
+                    </div>
+                    <div className="text-xs text-gray-500 font-bold">kcal</div>
+                  </div>
                 </div>
-                <ul className="space-y-2">
+
+                {/* Macros em linha compacta */}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  {Object.entries(calculateMacroPercentages()).map(([macro, percentage]) => {
+                    const config: Record<string, { name: string, color: string, bg: string }> = {
+                      carbs: { name: 'Carbs', color: 'text-orange-600', bg: 'bg-orange-50' },
+                      protein: { name: 'Proteína', color: 'text-green-600', bg: 'bg-green-50' },
+                      fat: { name: 'Gordura', color: 'text-yellow-600', bg: 'bg-yellow-50' },
+                    };
+                    const macroGrams = macro === 'carbs' ? editedResult.totalMacros.carbs :
+                                      macro === 'protein' ? editedResult.totalMacros.protein :
+                                      editedResult.totalMacros.fat;
+
+                    return (
+                      <div key={macro} className={`${config[macro].bg} rounded p-2`}>
+                        <div className={`text-lg font-black ${config[macro].color}`}>{percentage}%</div>
+                        <div className="text-xs text-gray-600 font-semibold">{macroGrams.toFixed(1)}g</div>
+                        <div className="text-xs text-gray-500">{config[macro].name}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Métricas extras em linha */}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="bg-green-50 rounded p-2">
+                    <div className="text-sm font-black text-green-600">{Math.round(editedResult.totalMacros.fiber)}g</div>
+                    <div className="text-xs text-gray-500">Fibras</div>
+                  </div>
+                  {editedResult.glycemicData && (
+                    <>
+                      <div className="bg-yellow-50 rounded p-2">
+                        <div className="text-sm font-black text-yellow-600">{editedResult.glycemicData.index}</div>
+                        <div className="text-xs text-gray-500">
+                          IG {editedResult.glycemicData.index < 55 ? '✅' : editedResult.glycemicData.index < 70 ? '⚠️' : '❌'}
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 rounded p-2">
+                        <div className="text-sm font-black text-blue-600">{editedResult.glycemicData.load.toFixed(1)}</div>
+                        <div className="text-xs text-gray-500">
+                          CG {editedResult.glycemicData.load < 10 ? '✅' : editedResult.glycemicData.load < 20 ? '⚠️' : '❌'}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* AI Suggestions - Ultra Compacto */}
+            {mealResult?.suggestions && mealResult.suggestions.length > 0 && (
+              <div className="bg-purple-50 rounded-lg border border-purple-200 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <SparklesIcon className="w-4 h-4 text-purple-600" />
+                  <h4 className="text-sm font-bold text-purple-900">Dicas da IA</h4>
+                </div>
+                <ul className="space-y-1">
                   {mealResult.suggestions.map((suggestion, index) => (
-                    <li key={index} className="flex items-start text-purple-700">
-                      <CheckCircleIcon className="w-5 h-5 text-purple-500 mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm leading-relaxed">{suggestion}</span>
+                    <li key={index} className="flex items-start gap-1.5 text-xs text-purple-800">
+                      <span className="text-purple-500 mt-0.5">•</span>
+                      <span className="leading-snug">{suggestion}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
+            {/* Action Buttons - Compactos */}
+            <div className="flex gap-2">
               <button
                 onClick={handleSaveMeal}
-                className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+                className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-bold rounded-lg shadow hover:shadow-lg active:scale-95 transition-all"
               >
-                Salvar Refeição
+                ✓ Salvar Refeição
               </button>
               <button
                 onClick={() => {
@@ -926,9 +1018,9 @@ const PlanMealPage: React.FC = () => {
                   setMealResult(null);
                   setEditedResult(null);
                 }}
-                className="flex-1 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 active:scale-95 transition-all"
               >
-                Calcular Novamente
+                ↻ Nova Consulta
               </button>
             </div>
           </div>
