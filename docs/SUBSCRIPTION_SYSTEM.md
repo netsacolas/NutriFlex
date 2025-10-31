@@ -59,13 +59,13 @@ O NutriMais AI implementa um sistema completo de assinaturas integrado à plataf
 
 ### 💎 Plano Premium Trimestral ⭐ POPULAR
 
-**Preço:** R$ 49,90/trimestre
+**Preço:** R$ 5,00/trimestre
 **Duração:** 90 dias
 **ID:** `premium_quarterly`
 
 **Recursos:**
 - ✅ Todos os recursos do plano Mensal
-- ✅ **Economia de 16%** vs. plano mensal
+- ✅ **Melhor custo-benefício para iniciar**
 - ✅ Acesso a recursos beta
 - ✅ Renovação automática trimestral
 - ✅ Garantia de satisfação
@@ -266,7 +266,7 @@ graph LR
 ```env
 # Frontend (.env.local)
 VITE_KIWIFY_CHECKOUT_MONTHLY=https://pay.kiwify.com.br/uJP288j
-VITE_KIWIFY_CHECKOUT_QUARTERLY=https://pay.kiwify.com.br/Omg0hAs
+VITE_KIWIFY_CHECKOUT_QUARTERLY=https://pay.kiwify.com.br/htkTmiC
 VITE_KIWIFY_CHECKOUT_ANNUAL=https://pay.kiwify.com.br/mHorNkF
 
 # Backend (Supabase Secrets)

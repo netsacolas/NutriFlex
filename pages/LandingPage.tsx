@@ -537,12 +537,12 @@ const LandingPage: React.FC = () => {
               <div className="p-6">
                 <h3 className="text-2xl font-bold mb-2">Trimestral</h3>
                 <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold inline-block mb-2">
-                  Economize 16%
+                  Melhor Oferta!
                 </div>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold">R$ 49,90</span>
+                  <span className="text-4xl font-bold">R$ 5,00</span>
                   <span className="text-gray-600">/3 meses</span>
-                  <p className="text-sm text-gray-500">R$ 16,63/mês</p>
+                  <p className="text-sm text-gray-500">R$ 1,67/mês</p>
                 </div>
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-start">

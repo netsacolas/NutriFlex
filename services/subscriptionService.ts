@@ -49,12 +49,12 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
   premium_quarterly: {
     id: 'premium_quarterly',
     name: 'Plano Trimestral',
-    priceLabel: 'R$ 49,90/trimestre',
-    priceCents: 4990,
+    priceLabel: 'R$ 5,00/trimestre',
+    priceCents: 500,
     billingPeriod: 'quarterly',
     features: [
       'Todos os recursos do plano Mensal',
-      'Economia de 16% vs. plano mensal',
+      'Melhor custo-benefício para iniciar',
       'Acesso a recursos beta',
       'Renovação automática trimestral',
       'Garantia de satisfação'
@@ -88,7 +88,7 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
 
 const checkoutUrls: Partial<Record<Exclude<SubscriptionPlan, 'free'>, string>> = {
   premium_monthly: import.meta.env.VITE_KIWIFY_CHECKOUT_MONTHLY || 'https://pay.kiwify.com.br/uJP288j',
-  premium_quarterly: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY || 'https://pay.kiwify.com.br/Omg0hAs',
+  premium_quarterly: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY || 'https://pay.kiwify.com.br/htkTmiC',
   premium_annual: import.meta.env.VITE_KIWIFY_CHECKOUT_ANNUAL || 'https://pay.kiwify.com.br/mHorNkF'
 };
 
@@ -163,6 +163,12 @@ export const subscriptionService = {
 
     const finalUrl = url.toString();
     logger.info('URL de checkout gerada', { plan, finalUrl });
+    console.log('🔗 CHECKOUT URL GERADA:', {
+      plan,
+      baseUrl,
+      finalUrl,
+      env: import.meta.env.VITE_KIWIFY_CHECKOUT_QUARTERLY
+    });
     return finalUrl;
   },
 

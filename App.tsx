@@ -21,6 +21,7 @@ import ChatPage from './pages/ChatPage';
 import OnboardingPage from './pages/OnboardingPage';
 import HydrationPage from './pages/HydrationPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import ThankYouPage from './pages/ThankYouPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -125,6 +126,14 @@ const AppRouter: React.FC = () => {
           element={
             <ProtectedRoute>
               <SubscriptionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="obrigado"
+          element={
+            <ProtectedRoute>
+              <ThankYouPage />
             </ProtectedRoute>
           }
         />
