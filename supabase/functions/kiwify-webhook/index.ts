@@ -207,9 +207,11 @@ serve(async (req) => {
     last_event_at: new Date().toISOString(),
   };
 
-  const { error: upsertError } = await supabase
+  const { data: subscription, error: upsertError } = await supabase
     .from('user_subscriptions')
-    .upsert(updates, { onConflict: 'user_id' });
+    .upsert(updates, { onConflict: 'user_id' })
+    .select('id')
+    .single();
 
   if (upsertError) {
     console.error('Erro ao atualizar assinatura do usuario', upsertError);
@@ -217,6 +219,34 @@ serve(async (req) => {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+  }
+
+  // Registrar pagamento no histórico (se for evento de pagamento aprovado)
+  if (status === 'active' && (eventType.includes('approved') || eventType.includes('paid') || eventType.includes('completed'))) {
+    const amountCents = data.amount_cents || data.total_cents || data.value_cents || 0;
+    const paymentData = {
+      user_id: userId,
+      subscription_id: subscription?.id || null,
+      plan: resolvedPlan,
+      amount_cents: amountCents,
+      currency: data.currency || 'BRL',
+      payment_method: data.payment_method || null,
+      kiwify_order_id: data.order_id || data.purchase_id || null,
+      kiwify_transaction_id: data.transaction_id || data.payment_id || null,
+      payment_status: 'paid',
+      paid_at: data.paid_at || data.approved_at || new Date().toISOString(),
+    };
+
+    const { error: paymentError } = await supabase
+      .from('payment_history')
+      .insert(paymentData);
+
+    if (paymentError) {
+      console.warn('Erro ao registrar pagamento no historico', paymentError);
+      // Não retorna erro, apenas loga o aviso
+    } else {
+      console.log('Pagamento registrado no historico', { userId, amount: amountCents });
+    }
   }
 
   console.log('Assinatura atualizada com sucesso', { userId, status, plan: planToPersist });

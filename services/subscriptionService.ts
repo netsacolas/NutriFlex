@@ -250,5 +250,125 @@ export const subscriptionService = {
     return () => {
       void channel.unsubscribe();
     };
+  },
+
+  /**
+   * Calcula quantos dias faltam para o vencimento da assinatura
+   */
+  getDaysRemaining(subscription: SubscriptionRecord | null): number | null {
+    if (!subscription || !subscription.current_period_end || subscription.status !== 'active') {
+      return null;
+    }
+
+    const endDate = new Date(subscription.current_period_end);
+    const now = new Date();
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return Math.max(0, diffDays);
+  },
+
+  /**
+   * Verifica se a assinatura expira em breve (3 dias ou menos)
+   */
+  isExpiringSoon(subscription: SubscriptionRecord | null): boolean {
+    const daysRemaining = this.getDaysRemaining(subscription);
+    if (daysRemaining === null) {
+      return false;
+    }
+    return daysRemaining <= 3 && daysRemaining > 0;
+  },
+
+  /**
+   * Verifica se a assinatura está expirada
+   */
+  isExpired(subscription: SubscriptionRecord | null): boolean {
+    if (!subscription || !subscription.current_period_end) {
+      return false;
+    }
+
+    const endDate = new Date(subscription.current_period_end);
+    const now = new Date();
+    return endDate < now && subscription.status === 'active';
+  },
+
+  /**
+   * Busca histórico de pagamentos do usuário
+   */
+  async getPaymentHistory(limit: number = 10): Promise<any[]> {
+    if (isE2EMock) {
+      return [];
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from('payment_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('paid_at', { ascending: false, nullsFirst: false })
+        .limit(limit);
+
+      if (error) {
+        logger.error('Failed to fetch payment history', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      logger.error('getPaymentHistory failed', error);
+      return [];
+    }
+  },
+
+  /**
+   * Formata data de vencimento para exibição
+   */
+  formatExpirationDate(subscription: SubscriptionRecord | null): string | null {
+    if (!subscription || !subscription.current_period_end) {
+      return null;
+    }
+
+    try {
+      return new Date(subscription.current_period_end).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Retorna mensagem de status da assinatura
+   */
+  getSubscriptionStatusMessage(subscription: SubscriptionRecord | null): string {
+    if (!subscription) {
+      return 'Plano Grátis';
+    }
+
+    if (subscription.plan === 'free') {
+      return 'Plano Grátis';
+    }
+
+    if (this.isExpired(subscription)) {
+      return 'Assinatura expirada - Renovação necessária';
+    }
+
+    const daysRemaining = this.getDaysRemaining(subscription);
+    if (daysRemaining === null) {
+      return 'Plano Premium Ativo';
+    }
+
+    if (this.isExpiringSoon(subscription)) {
+      return `Expira em ${daysRemaining} dia${daysRemaining === 1 ? '' : 's'} - Renove agora!`;
+    }
+
+    return `Válido por mais ${daysRemaining} dias`;
   }
 };

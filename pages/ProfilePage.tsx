@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import PaymentSection from '../components/PaymentSection';
 import {
   UserIcon,
   CheckCircleIcon,
@@ -169,55 +170,9 @@ const ProfilePage: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-xl shadow-xl border border-emerald-100 p-6 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Plano NutriMais</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {isPremium ? 'Premium ativo' : 'Plano gratuito em uso'} · Status: {subscriptionStatus}
-              </p>
-              <p className="text-sm text-gray-600">
-                Validade: {subscriptionEndsAt}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {!isPremium && (
-                <button
-                  onClick={() => openCheckout('premium_monthly')}
-                  className="px-4 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
-                >
-                  Assinar Premium
-                </button>
-              )}
-              <button
-                onClick={() => navigate('/assinatura')}
-                className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Gerenciar plano
-              </button>
-              <button
-                onClick={() => refresh()}
-                className="px-4 py-2 border border-gray-200 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Atualizar
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-              <p className="font-semibold text-emerald-700">Refeicoes por dia</p>
-              <p>{activeSubscriptionPlan.limits.maxMealsPerDay !== null ? `${activeSubscriptionPlan.limits.maxMealsPerDay} registradas` : 'Ilimitado'}</p>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-              <p className="font-semibold text-emerald-700">Historico</p>
-              <p>{activeSubscriptionPlan.limits.historyItems !== null ? `Ultimos ${activeSubscriptionPlan.limits.historyItems} registros` : 'Completo'}</p>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-              <p className="font-semibold text-emerald-700">Assistente de IA</p>
-              <p>{activeSubscriptionPlan.limits.aiChatEnabled ? 'Acesso completo' : 'Disponivel no Premium'}</p>
-            </div>
-          </div>
+        {/* Seção de Pagamentos e Assinatura */}
+        <div className="mb-6">
+          <PaymentSection />
         </div>
 
         {/* Avatar Card */}
