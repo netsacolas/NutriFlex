@@ -418,6 +418,29 @@ export class KiwifyApiClient {
     };
   }
 
+  async fetchProducts(params: { perPage?: number } = {}): Promise<PaginatedResponse<JsonRecord>> {
+    const payload = await this.requestJson(`/v1/products`, {
+      method: 'GET',
+      query: {
+        per_page: params.perPage,
+      },
+    });
+
+    const { items, meta } = extractItems<JsonRecord>(payload);
+    const nextPage = typeof meta.next_page === 'number' ? meta.next_page : null;
+    const nextCursor = (meta.next_cursor || meta.cursor || meta.nextPageToken) as string | undefined;
+    const hasMore = parseBoolean(meta.has_more) || Boolean(nextPage) || Boolean(nextCursor);
+
+    return {
+      items,
+      meta,
+      hasMore,
+      nextPage,
+      nextCursor: nextCursor ?? null,
+      raw: payload,
+    };
+  }
+
   async cancelSubscription(subscriptionId: string): Promise<void> {
     const response = await this.request(`/v1/subscriptions/${subscriptionId}`, { method: 'DELETE' });
     if (!response.ok) {

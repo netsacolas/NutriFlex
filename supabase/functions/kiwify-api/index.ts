@@ -209,11 +209,37 @@ serve(async (req) => {
       case 'oauth_status': {
         const forceRefresh = body.force_refresh === true;
         const status = await client.tokenMetadata(forceRefresh);
+        const accountId = Deno.env.get('KIWIFY_ACCOUNT_ID');
+
         logger.info('oauth_status', { source: status.source, expires_at: status.expiresAt });
+
         return okResponse({
+          authenticated: Boolean(status.expiresAt && status.expiresAt > Date.now()),
           token_valid: Boolean(status.expiresAt && status.expiresAt > Date.now()),
+          expires_in: status.expiresAt ? Math.floor((status.expiresAt - Date.now()) / 1000) : 0,
           expires_at: status.expiresAt,
           source: status.source,
+          account_id: accountId,
+        }, correlationId);
+      }
+
+      case 'list_products': {
+        // Lista produtos da conta para obter Product IDs
+        const products = await client.fetchProducts({
+          perPage: body.per_page as number | undefined,
+        });
+
+        logger.info('list_products_success', { count: products.items.length });
+
+        return okResponse({
+          products: products.items.map(p => ({
+            id: p.id,
+            name: p.name,
+            status: p.status,
+            price: p.price,
+            currency: p.currency,
+          })),
+          meta: products.meta,
         }, correlationId);
       }
 
