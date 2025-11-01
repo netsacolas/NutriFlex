@@ -260,7 +260,7 @@ Retorne a resposta em JSON neste formato exato:
     await supabaseClient.from('gemini_requests').insert({
       user_id: user.id,
       user_email: user.email,
-      request_type: 'meal_calculation',
+      request_type: 'meal_planning',
       created_at: new Date().toISOString(),
     });
 
