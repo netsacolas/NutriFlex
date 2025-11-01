@@ -197,7 +197,42 @@ NutriMais/
 ## Servicos e Integracoes
 - `services/geminiService.ts`: encapsula chamadas as Edge Functions que conversam com o Gemini (prompt engineering e limites de taxa).
 - `services/authService.ts`: wrapper de autenticacao e recuperacao de sessao do Supabase.
+
 - `services/profileService.ts`: sincroniza dados de perfil, garantindo que o onboarding permanece obrigatorio.
+- `supabase/functions/kiwify-webhook`: processa eventos da Kiwify quando a API ativa estiver indisponivel (modo webhook).
+
+### Fluxo de assinaturas via webhook Kiwify
+
+```
+Kiwify -> Edge Function kiwify-webhook (Supabase) -> user_subscriptions / payment_history
+                                               -> logs estruturados (event_correlation_id)
+```
+
+- **Variaveis de ambiente obrigatorias**: `KIWIFY_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+- **Variaveis auxiliares**: `KIWIFY_PLAN_MONTHLY_ID`, `KIWIFY_PLAN_QUARTERLY_ID`, `KIWIFY_PLAN_ANNUAL_ID` (mapeamento direto por ID).
+- **Seguranca**: verificacao HMAC com JSON compacto (sem o campo `signature`), tenta SHA-1 e fallback SHA-256. Segredos nao sao logados.
+- **Logs estruturados**: cada requisicao gera `event_correlation_id`. Estrutura: `{ level, message, event_correlation_id, event_type, order_id, subscription_id, customer_email, user_id, action, outcome }`.
+- **Observabilidade**: `supabase functions logs kiwify-webhook --follow --project-ref <ref>`; filtrar pelo `event_correlation_id` para depurar fluxos reais.
+
+Tabela de mapeamento resumida:
+
+| Evento / status recebido | Status final | Plano final |
+|--------------------------|--------------|-------------|
+| `approved`, `paid`, `completed`, `active` | `active` | `premium_*` conforme ID ou frequencia |
+| contem `cancel` | `cancelled` | `free` |
+| `past_due`, `overdue` | `past_due` | `free` |
+| demais | `incomplete` | `free` |
+
+Checklist apos deploy:
+
+1. Revisar segredos (`KIWIFY_WEBHOOK_SECRET`, `KIWIFY_PLAN_*_ID`).
+2. Confirmar indice unico `payment_history(kiwify_order_id)` ativo (migration 011).
+3. Executar `supabase functions deploy kiwify-webhook`.
+4. Realizar compra teste e validar assinatura (status `active`, plano premium, 1 linha em `payment_history`).
+5. Reenviar o mesmo webhook e observar log `skip_duplicate_payment`.
+6. Processar cancelamento e conferir `status = cancelled` e `plan = free`.
+7. Verificar logs `webhook_processed` com `outcome=success`.
+
 - `services/subscriptionService.ts`: centraliza limites do plano (refeicoes, historico, chat) e gera links de checkout Kiwify.
 - `services/calorieGoalService.ts`: calcula metas caloricas personalizadas (TMB, fator de atividade e objetivo).
 - `contexts/SubscriptionContext.tsx`: provider global que expoe `plan`, `limits`, `openCheckout` e escuta mudancas via realtime.
