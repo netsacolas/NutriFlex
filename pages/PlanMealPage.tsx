@@ -6,6 +6,7 @@ import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 import { searchFoods } from '../data/foodDatabase';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { supabase } from '../services/supabaseClient';
 import {
   SparklesIcon,
   StarIcon,
@@ -49,6 +50,7 @@ const PlanMealPage: React.FC = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const { limits } = useSubscription();
   const [todayMealsCount, setTodayMealsCount] = useState(0);
+  const [todayAiGenerationsCount, setTodayAiGenerationsCount] = useState(0);
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
 
   useEffect(() => {
@@ -67,6 +69,31 @@ const PlanMealPage: React.FC = () => {
     }
   };
 
+  const loadTodayAiGenerationsCount = async (userId: string) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from('gemini_requests')
+        .select('id', { count: 'exact' })
+        .eq('user_id', userId)
+        .eq('request_type', 'meal_planning')
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lte('created_at', `${today}T23:59:59.999Z`);
+
+      if (error) {
+        console.error('Error counting AI generations:', error);
+        return;
+      }
+
+      const count = data?.length || 0;
+      setTodayAiGenerationsCount(count);
+      console.log(`📊 Gerações de IA hoje: ${count}`);
+    } catch (error) {
+      console.error('Error loading AI generations count:', error);
+    }
+  };
+
   useEffect(() => {
     if (limits.maxMealsPerDay === null) {
       setShowUpgradeNotice(false);
@@ -82,6 +109,7 @@ const PlanMealPage: React.FC = () => {
       }
 
       await loadTodayMealCount(session.user.id);
+      await loadTodayAiGenerationsCount(session.user.id);
 
       const { data: userProfile } = await profileService.getProfile();
 
@@ -258,6 +286,22 @@ const PlanMealPage: React.FC = () => {
   const handleCalculate = async () => {
     if (selectedFoods.length === 0) return;
 
+    // ✅ VERIFICAR LIMITE ANTES DE CHAMAR A IA
+    if (limits.maxMealsPerDay !== null && todayAiGenerationsCount >= limits.maxMealsPerDay) {
+      setShowUpgradeNotice(true);
+      setToast({
+        message: `Plano gratuito permite apenas ${limits.maxMealsPerDay} gerações de IA por dia. Assine o Premium para liberar ilimitado.`,
+        type: 'error'
+      });
+      setTimeout(() => {
+        document.getElementById('upgrade-notice')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 100);
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setShowResult(false);
@@ -268,6 +312,12 @@ const PlanMealPage: React.FC = () => {
         targetCalories,
         mealType
       );
+
+      // Atualizar contagem após geração bem-sucedida
+      const session = await authService.getCurrentSession();
+      if (session) {
+        await loadTodayAiGenerationsCount(session.user.id);
+      }
 
       // Validar ranges flexíveis e saudáveis
       const sumProtein = result.portions.reduce((sum, p) => sum + p.macros.protein, 0);
@@ -460,15 +510,8 @@ const PlanMealPage: React.FC = () => {
   const handleSaveMeal = async () => {
     if (!editedResult) return;
 
-    if (limits.maxMealsPerDay !== null && todayMealsCount >= limits.maxMealsPerDay) {
-      setShowUpgradeNotice(true);
-      setToast({
-        message: 'Plano gratuito permite registrar apenas 2 refeicoes por dia. Assine o Premium para liberar ilimitado.',
-        type: 'error'
-      });
-      return;
-    }
-
+    // Nota: A verificação de limite foi movida para antes da geração da IA (handleCalculate)
+    // Aqui apenas salvamos o resultado já gerado no histórico
     try {
       const session = await authService.getCurrentSession();
       if (!session) {
@@ -558,10 +601,13 @@ const PlanMealPage: React.FC = () => {
               <div>
                 <p className="text-sm text-emerald-600 font-semibold">Plano Grátis ativo</p>
                 <p className="text-gray-800 font-medium">
-                  Refeições registradas hoje: {todayMealsCount}/{limits.maxMealsPerDay}
+                  Gerações de IA hoje: {todayAiGenerationsCount}/{limits.maxMealsPerDay}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  O plano Premium libera registros ilimitados, histórico completo e o assistente de IA.
+                  Cada cálculo de porções conta como 1 geração. Refeições registradas: {todayMealsCount}
+                </p>
+                <p className="text-xs text-gray-500">
+                  O plano Premium libera gerações ilimitadas, histórico completo e assistente de IA.
                 </p>
               </div>
               <button
@@ -573,9 +619,9 @@ const PlanMealPage: React.FC = () => {
             </div>
 
             {showUpgradeNotice && (
-              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+              <div id="upgrade-notice" className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                 <p className="text-orange-700 text-sm font-medium">
-                  Você atingiu o limite diário do Plano Grátis. Para continuar registrando refeições e liberar todos os recursos profissionais, faça o upgrade para o Premium.
+                  ⚠️ Você atingiu o limite diário do Plano Grátis ({limits.maxMealsPerDay} gerações de IA por dia). Para continuar planejando refeições e liberar todos os recursos profissionais, faça o upgrade para o Premium.
                 </p>
                 <button
                   onClick={() => navigate('/assinatura')}
