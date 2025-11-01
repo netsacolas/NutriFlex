@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Completo - Integração Kiwify</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1a202c;
+            margin-bottom: 8px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .test-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .test-card h2 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .test-card p {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result.success {
+            background: #f0fff4;
+            border: 2px solid #48bb78;
+            color: #22543d;
+        }
+
+        .result.error {
+            background: #fff5f5;
+            border: 2px solid #f56565;
+            color: #742a2a;
+        }
+
+        .result.loading {
+            background: #ebf8ff;
+            border: 2px solid #4299e1;
+            color: #2c5282;
+        }
+
+        .result.info {
+            background: #fffaf0;
+            border: 2px solid #ed8936;
+            color: #7c2d12;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .status-badge.success { background: #48bb78; color: white; }
+        .status-badge.error { background: #f56565; color: white; }
+        .status-badge.pending { background: #cbd5e0; color: #4a5568; }
+
+        .instructions {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+
+        .instructions h3 {
+            color: #7c2d12;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .summary {
+            background: #ebf8ff;
+            border: 2px solid #4299e1;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+        }
+
+        .summary h2 {
+            color: #2c5282;
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #bee3f8;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico Completo - Kiwify</h1>
+        <p class="subtitle">Testes detalhados para identificar problemas na integração</p>
+
+        <div class="instructions">
+            <h3>📋 Como usar:</h3>
+            <ol style="margin-left: 20px; color: #744210;">
+                <li>Execute os testes na ORDEM (de cima para baixo)</li>
+                <li>Cada teste mostra detalhes técnicos do erro</li>
+                <li>Copie os erros e me envie para análise</li>
+            </ol>
+        </div>
+
+        <div class="test-grid">
+            <!-- Teste 1: Verificar variáveis de ambiente -->
+            <div class="test-card">
+                <h2>🔧 1. Variáveis de Ambiente
+                    <span class="status-badge pending" id="test1-status">Aguardando</span>
+                </h2>
+                <p>Verifica se os Secrets estão configurados no Supabase</p>
+                <button onclick="testEnvVars()" id="test1-btn">Verificar Secrets</button>
+                <div id="test1-result"></div>
+            </div>
+
+            <!-- Teste 2: Conectividade básica -->
+            <div class="test-card">
+                <h2>🌐 2. Conectividade API
+                    <span class="status-badge pending" id="test2-status">Aguardando</span>
+                </h2>
+                <p>Testa se a Edge Function está respondendo</p>
+                <button onclick="testConnectivity()" id="test2-btn">Testar Conexão</button>
+                <div id="test2-result"></div>
+            </div>
+
+            <!-- Teste 3: Autenticação OAuth -->
+            <div class="test-card">
+                <h2>🔐 3. OAuth Kiwify
+                    <span class="status-badge pending" id="test3-status">Aguardando</span>
+                </h2>
+                <p>Testa obtenção de token OAuth direto da Kiwify</p>
+                <button onclick="testOAuthDirect()" id="test3-btn">Testar OAuth</button>
+                <div id="test3-result"></div>
+            </div>
+
+            <!-- Teste 4: Edge Function oauth_status -->
+            <div class="test-card">
+                <h2>⚡ 4. Edge Function Status
+                    <span class="status-badge pending" id="test4-status">Aguardando</span>
+                </h2>
+                <p>Testa action oauth_status via Edge Function</p>
+                <button onclick="testEdgeFunctionStatus()" id="test4-btn">Testar Action</button>
+                <div id="test4-result"></div>
+            </div>
+
+            <!-- Teste 5: Listar produtos -->
+            <div class="test-card">
+                <h2>📦 5. Listar Produtos
+                    <span class="status-badge pending" id="test5-status">Aguardando</span>
+                </h2>
+                <p>Testa busca de produtos via API</p>
+                <button onclick="testListProducts()" id="test5-btn">Listar Produtos</button>
+                <div id="test5-result"></div>
+            </div>
+
+            <!-- Teste 6: Headers e CORS -->
+            <div class="test-card">
+                <h2>📡 6. Headers e CORS
+                    <span class="status-badge pending" id="test6-status">Aguardando</span>
+                </h2>
+                <p>Verifica headers enviados e resposta CORS</p>
+                <button onclick="testHeaders()" id="test6-btn">Testar Headers</button>
+                <div id="test6-result"></div>
+            </div>
+        </div>
+
+        <div class="summary" id="summary" style="display: none;">
+            <h2>📊 Resumo do Diagnóstico</h2>
+            <div id="summary-content"></div>
+        </div>
+
+        <div class="action-buttons">
+            <button onclick="runAllTests()" id="run-all-btn">▶️ Executar Todos os Testes</button>
+            <button onclick="copyResults()" class="btn-secondary">📋 Copiar Resultados</button>
+            <button onclick="clearResults()" class="btn-secondary">🗑️ Limpar</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+        // Credenciais para teste direto
+        const KIWIFY_CLIENT_ID = '4c7f47409-c212-45d1-aaf9-4a5d43dac808';
+        const KIWIFY_CLIENT_SECRET = '00d8f9dc83a5afeeee0fe459cfb5265272b95e5458c4908411273e5dfac';
+        const KIWIFY_ACCOUNT_ID = 'av8qNBGVVoyVD75';
+
+        let testResults = {};
+
+        function setStatus(testNum, status, text) {
+            const badge = document.getElementById(`test${testNum}-status`);
+            badge.className = `status-badge ${status}`;
+            badge.textContent = text;
+        }
+
+        function showResult(testNum, className, message) {
+            const result = document.getElementById(`test${testNum}-result`);
+            result.className = `result ${className}`;
+            result.textContent = message;
+            testResults[`test${testNum}`] = { className, message };
+        }
+
+        async function testEnvVars() {
+            const btn = document.getElementById('test1-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Testando...';
+            setStatus(1, 'pending', 'Testando...');
+
+            try {
+                showResult(1, 'loading', '⏳ Enviando requisição para verificar secrets...\n');
+
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({ action: 'oauth_status' })
+                });
+
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error(`Resposta não é JSON válido:\n${text.substring(0, 500)}`);
+                }
+
+                if (data.error && data.error.includes('KIWIFY_')) {
+                    throw new Error(`❌ SECRETS NÃO CONFIGURADOS:\n\n${data.error}\n\n📝 SOLUÇÃO:\n1. Acesse: ${SUPABASE_URL.replace('.supabase.co', '')}/dashboard/project/keawapzxqoyesptwpwav/settings/vault/secrets\n2. Adicione os 3 secrets conforme instruções`);
+                }
+
+                setStatus(1, 'success', '✓ OK');
+                showResult(1, 'success', `✅ SECRETS CONFIGURADOS CORRETAMENTE\n\nResposta completa:\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                setStatus(1, 'error', '✗ Erro');
+                showResult(1, 'error', `❌ ERRO:\n\n${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Testar Novamente';
+            }
+        }
+
+        async function testConnectivity() {
+            const btn = document.getElementById('test2-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Testando...';
+            setStatus(2, 'pending', 'Testando...');
+
+            try {
+                showResult(2, 'loading', '⏳ Verificando conectividade básica...\n');
+
+                const startTime = Date.now();
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({ action: 'invalid_action_test' })
+                });
+
+                const latency = Date.now() - startTime;
+                const text = await response.text();
+
+                setStatus(2, 'success', '✓ OK');
+                showResult(2, 'success', `✅ EDGE FUNCTION RESPONDENDO\n\nStatus: ${response.status}\nLatência: ${latency}ms\nHeaders:\n${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}\n\nResposta:\n${text.substring(0, 500)}`);
+            } catch (error) {
+                setStatus(2, 'error', '✗ Erro');
+                showResult(2, 'error', `❌ ERRO DE CONECTIVIDADE:\n\n${error.message}\n\n🔧 POSSÍVEL CAUSA:\n- Edge Function não deployada\n- Problema de rede\n- URL incorreta`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Testar Novamente';
+            }
+        }
+
+        async function testOAuthDirect() {
+            const btn = document.getElementById('test3-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Testando...';
+            setStatus(3, 'pending', 'Testando...');
+
+            try {
+                showResult(3, 'loading', '⏳ Obtendo token OAuth diretamente da Kiwify...\n');
+
+                const response = await fetch('https://public-api.kiwify.com/oauth/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        grant_type: 'client_credentials',
+                        client_id: KIWIFY_CLIENT_ID,
+                        client_secret: KIWIFY_CLIENT_SECRET
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Kiwify respondeu ${response.status}:\n${JSON.stringify(data, null, 2)}\n\n🔧 POSSÍVEL CAUSA:\n- Credenciais inválidas\n- Client ID ou Secret incorretos`);
+                }
+
+                if (!data.access_token) {
+                    throw new Error(`Token não retornado:\n${JSON.stringify(data, null, 2)}`);
+                }
+
+                setStatus(3, 'success', '✓ OK');
+                showResult(3, 'success', `✅ OAUTH FUNCIONANDO\n\nToken obtido: ${data.access_token.substring(0, 30)}...\nExpira em: ${data.expires_in}s\nTipo: ${data.token_type}\n\n✓ Credenciais válidas\n✓ API Kiwify acessível`);
+            } catch (error) {
+                setStatus(3, 'error', '✗ Erro');
+                showResult(3, 'error', `❌ ERRO OAuth:\n\n${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Testar Novamente';
+            }
+        }
+
+        async function testEdgeFunctionStatus() {
+            const btn = document.getElementById('test4-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Testando...';
+            setStatus(4, 'pending', 'Testando...');
+
+            try {
+                showResult(4, 'loading', '⏳ Testando action oauth_status na Edge Function...\n');
+
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({ action: 'oauth_status' })
+                });
+
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error(`Resposta não é JSON:\n${text.substring(0, 500)}`);
+                }
+
+                if (data.error) {
+                    if (data.error.includes('Unknown action') || data.error.includes('desconhecida')) {
+                        throw new Error(`❌ ACTION NÃO EXISTE\n\n${data.error}\n\n🔧 SOLUÇÃO:\n1. Execute: supabase functions deploy kiwify-api\n2. Aguarde 1 minuto\n3. Teste novamente`);
+                    }
+                    throw new Error(`Erro: ${data.error}\n\nDetalhes:\n${JSON.stringify(data, null, 2)}`);
+                }
+
+                if (!data.authenticated) {
+                    throw new Error(`OAuth não autenticado:\n${JSON.stringify(data, null, 2)}`);
+                }
+
+                setStatus(4, 'success', '✓ OK');
+                showResult(4, 'success', `✅ EDGE FUNCTION FUNCIONANDO\n\n${JSON.stringify(data, null, 2)}\n\n✓ Action oauth_status existe\n✓ Token obtido com sucesso\n✓ Account ID: ${data.account_id}`);
+            } catch (error) {
+                setStatus(4, 'error', '✗ Erro');
+                showResult(4, 'error', `❌ ERRO:\n\n${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Testar Novamente';
+            }
+        }
+
+        async function testListProducts() {
+            const btn = document.getElementById('test5-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Testando...';
+            setStatus(5, 'pending', 'Testando...');
+
+            try {
+                showResult(5, 'loading', '⏳ Listando produtos via API...\n');
+
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({ action: 'list_products', per_page: 10 })
+                });
+
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error(`Resposta não é JSON:\n${text.substring(0, 500)}`);
+                }
+
+                if (data.error) {
+                    throw new Error(`Erro da API:\n${JSON.stringify(data, null, 2)}`);
+                }
+
+                if (!data.products || !Array.isArray(data.products)) {
+                    throw new Error(`Formato inesperado:\n${JSON.stringify(data, null, 2)}`);
+                }
+
+                setStatus(5, 'success', '✓ OK');
+                let output = `✅ PRODUTOS ENCONTRADOS (${data.products.length})\n\n`;
+                data.products.forEach((p, i) => {
+                    output += `${i+1}. ${p.name}\n   ID: ${p.id}\n   Preço: R$ ${p.price}\n   Status: ${p.status}\n\n`;
+                });
+                showResult(5, 'success', output);
+            } catch (error) {
+                setStatus(5, 'error', '✗ Erro');
+                showResult(5, 'error', `❌ ERRO:\n\n${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Testar Novamente';
+            }
+        }
+
+        async function testHeaders() {
+            const btn = document.getElementById('test6-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Testando...';
+            setStatus(6, 'pending', 'Testando...');
+
+            try {
+                showResult(6, 'loading', '⏳ Verificando headers...\n');
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                };
+
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ action: 'oauth_status' })
+                });
+
+                const responseHeaders = Object.fromEntries(response.headers.entries());
+
+                setStatus(6, 'success', '✓ OK');
+                showResult(6, 'success', `✅ HEADERS OK\n\nHeaders enviados:\n${JSON.stringify(headers, null, 2)}\n\nHeaders recebidos:\n${JSON.stringify(responseHeaders, null, 2)}\n\nStatus: ${response.status}\nCORS: ${responseHeaders['access-control-allow-origin'] || 'N/A'}`);
+            } catch (error) {
+                setStatus(6, 'error', '✗ Erro');
+                showResult(6, 'error', `❌ ERRO:\n\n${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Testar Novamente';
+            }
+        }
+
+        async function runAllTests() {
+            const btn = document.getElementById('run-all-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Executando...';
+
+            await testEnvVars();
+            await new Promise(r => setTimeout(r, 1000));
+
+            await testConnectivity();
+            await new Promise(r => setTimeout(r, 1000));
+
+            await testOAuthDirect();
+            await new Promise(r => setTimeout(r, 1000));
+
+            await testEdgeFunctionStatus();
+            await new Promise(r => setTimeout(r, 1000));
+
+            await testListProducts();
+            await new Promise(r => setTimeout(r, 1000));
+
+            await testHeaders();
+
+            btn.disabled = false;
+            btn.textContent = '▶️ Executar Todos os Testes';
+
+            showSummary();
+        }
+
+        function showSummary() {
+            const summary = document.getElementById('summary');
+            const content = document.getElementById('summary-content');
+
+            let html = '';
+            let passed = 0;
+            let failed = 0;
+
+            for (let i = 1; i <= 6; i++) {
+                const result = testResults[`test${i}`];
+                if (result) {
+                    const status = result.className === 'success' ? '✅' : '❌';
+                    const testName = document.querySelector(`#test${i}-status`).parentElement.textContent.trim().split('\n')[0];
+                    html += `<div class="summary-item"><span>${status} ${testName}</span></div>`;
+                    if (result.className === 'success') passed++;
+                    else failed++;
+                }
+            }
+
+            html = `<div style="margin-bottom: 16px; font-size: 18px; color: #2c5282;">Aprovados: ${passed} | Falharam: ${failed}</div>` + html;
+            content.innerHTML = html;
+            summary.style.display = 'block';
+        }
+
+        function copyResults() {
+            let text = '=== DIAGNÓSTICO KIWIFY ===\n\n';
+            for (let i = 1; i <= 6; i++) {
+                const result = testResults[`test${i}`];
+                if (result) {
+                    const testName = document.querySelector(`#test${i}-status`).parentElement.textContent.trim().split('\n')[0];
+                    text += `\n${testName}\n${'='.repeat(50)}\n${result.message}\n\n`;
+                }
+            }
+            navigator.clipboard.writeText(text);
+            alert('Resultados copiados para a área de transferência!');
+        }
+
+        function clearResults() {
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`test${i}-result`).textContent = '';
+                setStatus(i, 'pending', 'Aguardando');
+            }
+            document.getElementById('summary').style.display = 'none';
+            testResults = {};
+        }
+    </script>
+</body>
+</html>
