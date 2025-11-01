@@ -12,7 +12,9 @@
       "Bash(findstr:*)",
       "Bash(npm run build:*)",
       "Bash(git merge:*)",
-      "Bash(supabase db push:*)"
+      "Bash(supabase db push:*)",
+      "Bash(npx supabase:*)",
+      "Bash(move \"src\\pages\\AdminPanel.tsx\" \"pages\\AdminPanel.tsx\")"
     ],
     "deny": [],
     "ask": []
