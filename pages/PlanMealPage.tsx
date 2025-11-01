@@ -73,11 +73,11 @@ const PlanMealPage: React.FC = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('gemini_requests')
-        .select('id', { count: 'exact' })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('request_type', 'meal_planning')
+        .in('request_type', ['meal_planning', 'meal_calculation'])
         .gte('created_at', `${today}T00:00:00.000Z`)
         .lte('created_at', `${today}T23:59:59.999Z`);
 
@@ -86,9 +86,9 @@ const PlanMealPage: React.FC = () => {
         return;
       }
 
-      const count = data?.length || 0;
-      setTodayAiGenerationsCount(count);
-      console.log(`📊 Gerações de IA hoje: ${count}`);
+      const totalGenerations = count ?? 0;
+      setTodayAiGenerationsCount(totalGenerations);
+      console.log(`📊 Gerações de IA hoje: ${totalGenerations}`);
     } catch (error) {
       console.error('Error loading AI generations count:', error);
     }
