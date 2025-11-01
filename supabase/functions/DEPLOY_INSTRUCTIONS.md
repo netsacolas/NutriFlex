@@ -1,17 +1,17 @@
-# =€ Deploy da Edge Function - Gemini Proxy
+# = Deploy da Edge Function - Gemini Proxy
 
-Este documento contém instruções completas para fazer deploy da Edge Function que funciona como proxy seguro para a API do Gemini.
+Este documento contm instrues completas para fazer deploy da Edge Function que funciona como proxy seguro para a API do Gemini.
 
 ---
 
-## Pré-requisitos
+## Pr-requisitos
 
 1. **Supabase CLI instalado**
    ```bash
    # Instalar Supabase CLI
    npm install -g supabase
 
-   # Verificar instalação
+   # Verificar instalao
    supabase --version
    ```
 
@@ -24,14 +24,14 @@ Este documento contém instruções completas para fazer deploy da Edge Function qu
 
 ---
 
-## Passo 1: Executar Migração do Banco de Dados
+## Passo 1: Executar Migrao do Banco de Dados
 
 A Edge Function precisa de uma tabela para fazer rate limiting.
 
 1. Acesse o SQL Editor do Supabase:
    https://supabase.com/dashboard/project/keawapzxqoyesptpwpwav/sql
 
-2. Execute o conteúdo do arquivo:
+2. Execute o contedo do arquivo:
    `migrations/005_add_gemini_requests_table.sql`
 
 3. Verifique que a tabela foi criada:
@@ -43,9 +43,9 @@ A Edge Function precisa de uma tabela para fazer rate limiting.
 
 ## Passo 2: Configurar Secrets no Supabase
 
-A chave da API do Gemini deve ficar guardada como um "secret" no Supabase, nunca no código.
+A chave da API do Gemini deve ficar guardada como um "secret" no Supabase, nunca no cdigo.
 
-### Via Dashboard (Mais fácil)
+### Via Dashboard (Mais fcil)
 
 1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptpwpwav/settings/vault
 2. Clique em **"New Secret"**
@@ -77,23 +77,23 @@ supabase secrets set GEMINI_API_KEY=sua_nova_chave_aqui
 2. Clique em **"Deploy new function"**
 3. Preencha:
    - **Function name**: `gemini-proxy`
-   - **Code**: Copie todo o conteúdo de `supabase/functions/gemini-proxy/index.ts`
+   - **Code**: Copie todo o contedo de `supabase/functions/gemini-proxy/index.ts`
 4. Clique em **"Deploy function"**
-5. Copie a URL da função (será algo como: `https://keawapzxqoyesptpwpwav.supabase.co/functions/v1/gemini-proxy`)
+5. Copie a URL da funo (ser algo como: `https://keawapzxqoyesptpwpwav.supabase.co/functions/v1/gemini-proxy`)
 
-### Via CLI (Recomendado para atualizações futuras)
+### Via CLI (Recomendado para atualizaes futuras)
 
 ```bash
-# 1. Login (se ainda não fez)
+# 1. Login (se ainda no fez)
 supabase login
 
-# 2. Link ao projeto (se ainda não fez)
+# 2. Link ao projeto (se ainda no fez)
 supabase link --project-ref keawapzxqoyesptpwpwav
 
-# 3. Deploy da função
+# 3. Deploy da funo
 supabase functions deploy gemini-proxy
 
-# 4. A URL será mostrada no terminal
+# 4. A URL ser mostrada no terminal
 # Exemplo: https://keawapzxqoyesptpwpwav.supabase.co/functions/v1/gemini-proxy
 ```
 
@@ -101,15 +101,15 @@ supabase functions deploy gemini-proxy
 
 ## Passo 4: Atualizar o Frontend
 
-Agora que a Edge Function está no ar, precisamos atualizar o código do frontend para usá-la em vez de chamar o Gemini diretamente.
+Agora que a Edge Function est no ar, precisamos atualizar o cdigo do frontend para us-la em vez de chamar o Gemini diretamente.
 
 ### O que fazer:
 
-1. **Criar novo serviço**: `services/geminiProxyService.ts`
+1. **Criar novo servio**: `services/geminiProxyService.ts`
 2. **Atualizar**: `services/geminiService.ts` para usar o proxy
-3. **Remover**: `VITE_GEMINI_API_KEY` do `.env.local` (não é mais necessário no frontend)
+3. **Remover**: `VITE_GEMINI_API_KEY` do `.env.local` (no  mais necessrio no frontend)
 
-**NOTA:** Vou criar esses arquivos nos próximos passos após confirmar que a Edge Function está funcionando.
+**NOTA:** Vou criar esses arquivos nos prximos passos aps confirmar que a Edge Function est funcionando.
 
 ---
 
@@ -119,9 +119,9 @@ Agora que a Edge Function está no ar, precisamos atualizar o código do frontend 
 
 ```bash
 # 1. Fazer login e obter token
-# (Você precisará do token de um usuário autenticado)
+# (Voc precisar do token de um usurio autenticado)
 
-# 2. Testar a função
+# 2. Testar a funo
 curl -X POST \
   'https://keawapzxqoyesptpwpwav.supabase.co/functions/v1/gemini-proxy' \
   -H "Authorization: Bearer SEU_TOKEN_AQUI" \
@@ -129,21 +129,21 @@ curl -X POST \
   -d '{
     "mealType": "lunch",
     "targetCalories": 600,
-    "foods": ["arroz integral", "frango grelhado", "brócolis"]
+    "foods": ["arroz integral", "frango grelhado", "brcolis"]
   }'
 ```
 
 ### Teste via Supabase Dashboard
 
 1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptpwpwav/functions
-2. Clique na função `gemini-proxy`
+2. Clique na funo `gemini-proxy`
 3. Clique em **"Invoke function"**
 4. Cole o JSON de teste:
    ```json
    {
      "mealType": "lunch",
      "targetCalories": 600,
-     "foods": ["arroz integral", "frango grelhado", "brócolis"]
+     "foods": ["arroz integral", "frango grelhado", "brcolis"]
    }
    ```
 5. Clique em **"Invoke"**
@@ -167,18 +167,18 @@ supabase functions logs gemini-proxy --follow
 
 ---
 
-## Resolução de Problemas
+## Resoluo de Problemas
 
 ### Erro: "API key missing"
 
-**Causa:** O secret `GEMINI_API_KEY` não foi configurado ou não está acessível pela função.
+**Causa:** O secret `GEMINI_API_KEY` no foi configurado ou no est acessvel pela funo.
 
-**Solução:**
+**Soluo:**
 ```bash
 # Verificar secrets existentes
 supabase secrets list
 
-# Se não aparecer, adicionar novamente
+# Se no aparecer, adicionar novamente
 supabase secrets set GEMINI_API_KEY=sua_chave_aqui
 
 # Fazer redeploy
@@ -187,48 +187,48 @@ supabase functions deploy gemini-proxy
 
 ### Erro: "Unauthorized"
 
-**Causa:** Token de autenticação inválido ou ausente.
+**Causa:** Token de autenticao invlido ou ausente.
 
-**Solução:**
-- Verificar que o header `Authorization: Bearer TOKEN` está sendo enviado
-- Verificar que o usuário está autenticado no frontend
+**Soluo:**
+- Verificar que o header `Authorization: Bearer TOKEN` est sendo enviado
+- Verificar que o usurio est autenticado no frontend
 - Testar com um token novo (fazer login novamente)
 
 ### Erro: "Rate limit exceeded"
 
-**Causa:** Usuário fez mais de 20 requisições na última hora.
+**Causa:** Usurio fez mais de 20 requisies na ltima hora.
 
-**Solução:**
-- É um comportamento esperado (segurança)
-- Esperar 1 hora ou ajustar o limite no código da função (linha 82)
+**Soluo:**
+-  um comportamento esperado (segurana)
+- Esperar 1 hora ou ajustar o limite no cdigo da funo (linha 82)
 - Para desenvolvimento, pode aumentar temporariamente para 100
 
 ### Erro: "CORS"
 
-**Causa:** Configuração de CORS incorreta.
+**Causa:** Configurao de CORS incorreta.
 
-**Solução:**
-- Verificar que as linhas 18-21 do código têm os headers corretos
-- Verificar que a função retorna `corsHeaders` em TODAS as respostas
+**Soluo:**
+- Verificar que as linhas 18-21 do cdigo tm os headers corretos
+- Verificar que a funo retorna `corsHeaders` em TODAS as respostas
 
 ---
 
-## Segurança Implementada
+## Segurana Implementada
 
- **Autenticação**: Só usuários logados podem chamar
- **Rate Limiting**: Máximo 20 requisições/hora por usuário
- **Validação de Input**: Calorias entre 50-10000, 1-20 alimentos
+ **Autenticao**: S usurios logados podem chamar
+ **Rate Limiting**: Mximo 20 requisies/hora por usurio
+ **Validao de Input**: Calorias entre 50-10000, 1-20 alimentos
  **API Key no servidor**: Nunca exposta ao cliente
- **CORS configurado**: Aceita requisições do frontend
- **RLS ativado**: Usuários só veem suas próprias requisições
+ **CORS configurado**: Aceita requisies do frontend
+ **RLS ativado**: Usurios s veem suas prprias requisies
 
 ---
 
 ## Custos Estimados
 
 ### Edge Functions (Supabase)
-- **Free Tier**: 500,000 invocations/mês
-- **Pro Plan**: 2,000,000 invocations/mês inclusos
+- **Free Tier**: 500,000 invocations/ms
+- **Pro Plan**: 2,000,000 invocations/ms inclusos
 - **Custo adicional**: $2 por 1M invocations
 
 ### Gemini API (Google)
@@ -236,16 +236,16 @@ supabase functions deploy gemini-proxy
 - **Acima disso**: Varia por modelo
 - **gemini-2.0-flash-exp**: Geralmente gratuito em preview
 
-Com 100 usuários ativos fazendo 20 cálculos/mês cada:
-- **Total**: 2,000 requests/mês
+Com 100 usurios ativos fazendo 20 clculos/ms cada:
+- **Total**: 2,000 requests/ms
 - **Custo Edge Functions**: $0 (dentro do free tier)
 - **Custo Gemini API**: $0 (dentro do free tier)
 
 ---
 
-## Próximos Passos
+## Prximos Passos
 
-Após confirmar que a Edge Function está funcionando:
+Aps confirmar que a Edge Function est funcionando:
 
 1.  Criar `services/geminiProxyService.ts`
 2.  Atualizar frontend para usar o proxy
@@ -255,41 +255,42 @@ Após confirmar que a Edge Function está funcionando:
 
 ---
 
-## Comandos Úteis
+## Comandos teis
 
 ```bash
 # Ver status do link com o projeto
 supabase status
 
-# Listar funções deployed
+# Listar funes deployed
 supabase functions list
 
-# Fazer redeploy após alterações
+# Fazer redeploy aps alteraes
 supabase functions deploy gemini-proxy
 
 # Ver logs em tempo real
 supabase functions logs gemini-proxy --follow
 
-# Deletar função (cuidado!)
+# Deletar funo (cuidado!)
 supabase functions delete gemini-proxy
 ```
 
 ---
 
-**Dúvidas?**
+**Dvidas?**
 - Docs Supabase Edge Functions: https://supabase.com/docs/guides/functions
 - Docs Gemini API: https://ai.google.dev/docs
 
 ---
 
 **Criado em**: 2025-10-25
-**Última atualização**: 2025-10-25
+**ltima atualizao**: 2025-10-25
 
-## Kiwify webhook
+## Kiwify API
 
-1. Configure as variaveis de ambiente KIWIFY_PLAN_MONTHLY_ID, KIWIFY_PLAN_QUARTERLY_ID, KIWIFY_PLAN_ANNUAL_ID e KIWIFY_WEBHOOK_SECRET no painel do Supabase.
-2. Execute supabase functions deploy kiwify-webhook para publicar a funcao.
-3. No painel da Kiwify, cadastre o endpoint: https://<PROJETO>.functions.supabase.co/kiwify-webhook com o mesmo segredo configurado.
-4. Teste o webhook enviando uma notificacao manual e verifique os logs com supabase functions logs kiwify-webhook --follow.
+1. Configure no Vault: `KIWIFY_CLIENT_ID`, `KIWIFY_CLIENT_SECRET`, `KIWIFY_ACCOUNT_ID`, `KIWIFY_PLAN_*_ID`.
+2. Execute `supabase functions deploy kiwify-api kiwify-sync --project-ref <PROJETO>`.
+3. Agende o job incremental: `supabase functions schedule create --cron '*/15 * * * *' kiwify-sync`.
+4. Teste manual: `supabase functions invoke kiwify-api --body '{"action":"oauth_status"}'` e `supabase functions invoke kiwify-sync` (janela 24h).
+5. Monitore logs com `supabase functions logs kiwify-api --follow` e `supabase functions logs kiwify-sync --follow`.
 
-**Atualizado em**: 2025-10-29
+**Atualizado em**: 2025-11-03

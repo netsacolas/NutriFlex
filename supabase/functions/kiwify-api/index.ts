@@ -1,283 +1,237 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
-const KIWIFY_BASE_URL = 'https://api.kiwify.com.br';
+import { createLogger, serializeError } from '../_shared/logger.ts';
+import { getFirstNonEmpty } from '../_shared/kiwify.ts';
+import { KiwifyApiClient } from '../_shared/kiwifyClient.ts';
+import { runManualSync } from '../_shared/kiwifySyncEngine.ts';
 
-interface KiwifyTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-interface SubscriptionData {
-  id: string;
-  status: string;
-  customer: {
-    email: string;
-    name: string;
-  };
-  plan: {
-    id: string;
-    name: string;
-  };
-  current_period_start: string;
-  current_period_end: string;
-  external_id?: string;
-}
+const createSupabaseClient = () => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-// Cache do token de acesso (em memória)
-let cachedToken: { token: string; expiresAt: number } | null = null;
-
-/**
- * Obtém access token da Kiwify (com cache)
- */
-async function getKiwifyAccessToken(): Promise<string> {
-  const now = Date.now();
-
-  // Retorna token do cache se ainda válido (55 min de cache para token de 60 min)
-  if (cachedToken && cachedToken.expiresAt > now) {
-    console.log('[Kiwify API] Using cached access token');
-    return cachedToken.token;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase credentials not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).');
   }
 
-  console.log('[Kiwify API] Fetching new access token');
+  return createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+};
 
-  const clientId = Deno.env.get('KIWIFY_CLIENT_ID');
-  const clientSecret = Deno.env.get('KIWIFY_CLIENT_SECRET');
+const badRequest = (message: string, correlationId: string): Response =>
+  new Response(JSON.stringify({ error: message, correlation_id: correlationId }), {
+    status: 400,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 
-  if (!clientId || !clientSecret) {
-    throw new Error('Kiwify credentials not configured in Supabase Secrets');
-  }
-
-  const response = await fetch(`${KIWIFY_BASE_URL}/oauth/token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      grant_type: 'client_credentials',
-      client_id: clientId,
-      client_secret: clientSecret,
+const okResponse = (payload: unknown, correlationId: string): Response =>
+  new Response(
+    JSON.stringify({
+      correlation_id: correlationId,
+      ...((typeof payload === 'object' && payload !== null) ? payload : { data: payload }),
     }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[Kiwify API] Token error:', errorText);
-    throw new Error(`Failed to get Kiwify token: ${response.status}`);
-  }
-
-  const data: KiwifyTokenResponse = await response.json();
-
-  // Cache token por 55 minutos (expires_in é 3600 = 60 min)
-  cachedToken = {
-    token: data.access_token,
-    expiresAt: now + (data.expires_in - 300) * 1000, // -5 min de segurança
-  };
-
-  return data.access_token;
-}
-
-/**
- * Faz requisição autenticada à API Kiwify
- */
-async function kiwifyRequest(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<Response> {
-  const token = await getKiwifyAccessToken();
-
-  const response = await fetch(`${KIWIFY_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
+    {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     },
-  });
-
-  return response;
-}
-
-/**
- * Lista assinaturas de um usuário
- */
-async function listSubscriptions(externalId: string): Promise<SubscriptionData[]> {
-  const response = await kiwifyRequest(
-    `/v1/subscriptions?external_id=${externalId}`
   );
 
-  if (!response.ok) {
-    throw new Error(`Failed to list subscriptions: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.data || [];
-}
-
-/**
- * Obtém detalhes de uma assinatura específica
- */
-async function getSubscription(subscriptionId: string): Promise<SubscriptionData> {
-  const response = await kiwifyRequest(`/v1/subscriptions/${subscriptionId}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to get subscription: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.data;
-}
-
-/**
- * Cancela uma assinatura
- */
-async function cancelSubscription(subscriptionId: string, userId: string): Promise<void> {
-  // Validar que a assinatura pertence ao usuário
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const { data: subscription, error } = await supabase
-    .from('user_subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('kiwify_subscription_id', subscriptionId)
-    .single();
-
-  if (error || !subscription) {
-    throw new Error('Subscription not found or unauthorized');
-  }
-
-  // Cancelar na Kiwify
-  const response = await kiwifyRequest(`/v1/subscriptions/${subscriptionId}`, {
-    method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to cancel subscription: ${response.status}`);
-  }
-
-  // Atualizar status local
-  await supabase
-    .from('user_subscriptions')
-    .update({
-      status: 'canceled',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', subscription.id);
-
-  console.log(`[Kiwify API] Subscription ${subscriptionId} canceled for user ${userId}`);
-}
-
-/**
- * Sincroniza status de assinatura da Kiwify para o banco local
- */
-async function syncSubscription(userId: string): Promise<void> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  // Buscar assinaturas ativas na Kiwify
-  const kiwifySubs = await listSubscriptions(userId);
-
-  // Atualizar banco local
-  for (const sub of kiwifySubs) {
-    const { error } = await supabase
-      .from('user_subscriptions')
-      .upsert({
-        user_id: userId,
-        kiwify_subscription_id: sub.id,
-        status: sub.status === 'active' ? 'active' : 'canceled',
-        current_period_start: sub.current_period_start,
-        current_period_end: sub.current_period_end,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id',
-      });
-
-    if (error) {
-      console.error('[Kiwify API] Sync error:', error);
-    }
-  }
-
-  console.log(`[Kiwify API] Synced ${kiwifySubs.length} subscriptions for user ${userId}`);
-}
-
 serve(async (req) => {
-  // CORS headers
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
+
+  const correlationId = crypto.randomUUID();
+  const logger = createLogger(correlationId);
 
   try {
-    const { action, subscription_id, user_id, external_id } = await req.json();
+    const supabase = createSupabaseClient();
+    const client = new KiwifyApiClient(logger);
 
-    console.log(`[Kiwify API] Action: ${action}`, { user_id, subscription_id });
+    const body = req.method === 'POST' ? await req.json() : {};
+    const action = (body?.action as string | undefined) ?? null;
 
-    let result;
-
-    switch (action) {
-      case 'list_subscriptions':
-        if (!external_id && !user_id) {
-          throw new Error('external_id or user_id required');
-        }
-        result = await listSubscriptions(external_id || user_id);
-        break;
-
-      case 'get_subscription':
-        if (!subscription_id) {
-          throw new Error('subscription_id required');
-        }
-        result = await getSubscription(subscription_id);
-        break;
-
-      case 'cancel_subscription':
-        if (!subscription_id || !user_id) {
-          throw new Error('subscription_id and user_id required');
-        }
-        await cancelSubscription(subscription_id, user_id);
-        result = { success: true, message: 'Subscription canceled' };
-        break;
-
-      case 'sync_subscription':
-        if (!user_id) {
-          throw new Error('user_id required');
-        }
-        await syncSubscription(user_id);
-        result = { success: true, message: 'Subscriptions synced' };
-        break;
-
-      default:
-        throw new Error(`Unknown action: ${action}`);
+    if (!action) {
+      return badRequest('Campo "action" é obrigatório.', correlationId);
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    logger.info('kiwify_api_request', { action });
+
+    switch (action) {
+      case 'list_subscriptions': {
+        const externalId = getFirstNonEmpty(
+          body.external_id as string | undefined,
+          body.user_id as string | undefined,
+        );
+        const email = body.email as string | undefined;
+
+        if (!externalId && !email) {
+          return badRequest('Informe "user_id/external_id" ou "email" para listar assinaturas.', correlationId);
+        }
+
+        const result = await client.fetchSubscriptions({
+          externalId: externalId ?? undefined,
+          email: email ?? undefined,
+          perPage: body.per_page as number | undefined,
+        });
+
+        logger.info('list_subscriptions_success', {
+          count: result.items.length,
+          has_more: result.hasMore,
+        });
+
+        return okResponse({ data: result.items, meta: result.meta }, correlationId);
+      }
+
+      case 'get_subscription': {
+        const subscriptionId = body.subscription_id as string | undefined;
+        if (!subscriptionId) {
+          return badRequest('Campo "subscription_id" é obrigatório.', correlationId);
+        }
+
+        const result = await client.fetchSubscriptions({ subscriptionId });
+        const subscription = result.items[0] ?? null;
+
+        if (!subscription) {
+          return new Response(
+            JSON.stringify({ error: 'Assinatura não encontrada.', correlation_id: correlationId }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        logger.info('get_subscription_success', { subscription_id: subscriptionId });
+        return okResponse({ data: subscription }, correlationId);
+      }
+
+      case 'cancel_subscription': {
+        const subscriptionId = body.subscription_id as string | undefined;
+        const userId = body.user_id as string | undefined;
+
+        if (!subscriptionId || !userId) {
+          return badRequest('Campos "subscription_id" e "user_id" são obrigatórios.', correlationId);
+        }
+
+        const { data: subscriptionRecord, error } = await supabase
+          .from('user_subscriptions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('kiwify_subscription_id', subscriptionId)
+          .maybeSingle();
+
+        if (error) {
+          logger.error('cancel_subscription_lookup_failed', serializeError(error));
+          return new Response(
+            JSON.stringify({ error: 'Falha ao validar assinatura.', correlation_id: correlationId }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        if (!subscriptionRecord) {
+          return new Response(
+            JSON.stringify({ error: 'Assinatura não pertence ao usuário informado.', correlation_id: correlationId }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        await client.cancelSubscription(subscriptionId);
+        logger.info('cancel_subscription_success', { subscription_id: subscriptionId, user_id: userId });
+
+        // Atualiza estado local após cancelamento
+        const syncResult = await runManualSync({
+          supabase,
+          client,
+          logger,
+          subscriptionIds: [subscriptionId],
+          userIds: [userId],
+        });
+
+        return okResponse({ success: true, sync: syncResult }, correlationId);
+      }
+
+      case 'sync_subscription': {
+        const userId = body.user_id as string | undefined;
+        if (!userId) {
+          return badRequest('Campo "user_id" é obrigatório para sincronização.', correlationId);
+        }
+
+        const syncResult = await runManualSync({
+          supabase,
+          client,
+          logger,
+          userIds: [userId],
+        });
+
+        logger.info('sync_subscription_completed', {
+          user_id: userId,
+          subscriptions: syncResult.subscriptionsPersisted,
+          payments: syncResult.paymentsInserted,
+        });
+
+        return okResponse({ success: true, result: syncResult }, correlationId);
+      }
+
+      case 'sync_manual': {
+        const emails = (body.emails as string[] | undefined) ?? [];
+        const userIds = (body.user_ids as string[] | undefined) ?? (body.user_id ? [body.user_id] : []);
+        const subscriptionIds = (body.subscription_ids as string[] | undefined) ?? (body.subscription_id ? [body.subscription_id] : []);
+
+        if (emails.length === 0 && userIds.length === 0 && subscriptionIds.length === 0) {
+          return badRequest('Informe ao menos "emails", "user_ids" ou "subscription_ids" para sincronização manual.', correlationId);
+        }
+
+        const syncResult = await runManualSync({
+          supabase,
+          client,
+          logger,
+          emails,
+          userIds,
+          subscriptionIds,
+          since: body.since as string | undefined,
+          until: body.until as string | undefined,
+          includePayments: body.include_payments !== false,
+        });
+
+        logger.info('sync_manual_completed', {
+          emails: emails.length,
+          user_ids: userIds.length,
+          subscription_ids: subscriptionIds.length,
+          subscriptions: syncResult.subscriptionsPersisted,
+          payments: syncResult.paymentsInserted,
+        });
+
+        return okResponse({ success: true, result: syncResult }, correlationId);
+      }
+
+      case 'oauth_status': {
+        const forceRefresh = body.force_refresh === true;
+        const status = await client.tokenMetadata(forceRefresh);
+        logger.info('oauth_status', { source: status.source, expires_at: status.expiresAt });
+        return okResponse({
+          token_valid: Boolean(status.expiresAt && status.expiresAt > Date.now()),
+          expires_at: status.expiresAt,
+          source: status.source,
+        }, correlationId);
+      }
+
+      default:
+        return badRequest(`Ação desconhecida: ${action}`, correlationId);
+    }
   } catch (error) {
-    console.error('[Kiwify API] Error:', error);
+    logger.error('kiwify_api_failure', serializeError(error));
 
     return new Response(
       JSON.stringify({
-        error: error.message || 'Internal server error',
+        error: 'Erro interno na integração com a Kiwify.',
+        correlation_id: correlationId,
       }),
       {
         status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
   }
 });
