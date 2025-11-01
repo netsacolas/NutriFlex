@@ -12,7 +12,8 @@
       "Bash(findstr:*)",
       "Bash(npm run build:*)",
       "Bash(git merge:*)",
-      "Bash(supabase db push:*)"
+      "Bash(supabase db push:*)",
+      "Bash(supabase functions logs:*)"
     ],
     "deny": [],
     "ask": []

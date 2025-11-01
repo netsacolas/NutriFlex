@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Detalhado de Erro - Kiwify</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #000;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        h1 { color: #00ff00; margin-bottom: 20px; }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover { background: #00cc00; }
+        .output {
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .error { color: #ff0000; }
+        .success { color: #00ff00; }
+        .info { color: #ffff00; }
+        .section {
+            border-top: 1px solid #333;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste Detalhado de Erro - Kiwify API</h1>
+
+        <button onclick="testarComDetalhes()">🚀 EXECUTAR TESTE COMPLETO</button>
+        <button onclick="limpar()" style="background: #666; color: white;">🗑️ Limpar</button>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+        function log(className, message) {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = `output ${className}`;
+            div.textContent = message;
+            output.appendChild(div);
+        }
+
+        function limpar() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        async function testarComDetalhes() {
+            limpar();
+
+            log('info', '='.repeat(80));
+            log('info', 'TESTE 1: Verificar URL e conectividade básica');
+            log('info', '='.repeat(80));
+            log('', `URL: ${SUPABASE_URL}/functions/v1/kiwify-api`);
+            log('', `Timestamp: ${new Date().toISOString()}`);
+            log('', '');
+
+            try {
+                // Teste 1: Ping básico
+                log('info', '⏳ Fazendo ping básico na Edge Function...');
+                const pingStart = Date.now();
+                const pingResponse = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin
+                    }
+                });
+                const pingTime = Date.now() - pingStart;
+
+                log('success', `✅ Edge Function respondeu em ${pingTime}ms`);
+                log('', `Status: ${pingResponse.status}`);
+                log('', `Headers CORS:`);
+                pingResponse.headers.forEach((value, key) => {
+                    log('', `   ${key}: ${value}`);
+                });
+                log('', '');
+
+            } catch (error) {
+                log('error', `❌ Erro no ping: ${error.message}`);
+            }
+
+            // Teste 2: oauth_status com todos os detalhes
+            log('info', '='.repeat(80));
+            log('info', 'TESTE 2: Action oauth_status (capturando erro completo)');
+            log('info', '='.repeat(80));
+
+            try {
+                log('info', '⏳ Enviando requisição...');
+
+                const requestBody = { action: 'oauth_status' };
+                log('', `Body enviado:\n${JSON.stringify(requestBody, null, 2)}`);
+                log('', '');
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                };
+
+                log('', 'Headers enviados:');
+                Object.entries(headers).forEach(([key, value]) => {
+                    const displayValue = key.toLowerCase().includes('auth') || key === 'apikey'
+                        ? value.substring(0, 30) + '...'
+                        : value;
+                    log('', `   ${key}: ${displayValue}`);
+                });
+                log('', '');
+
+                const startTime = Date.now();
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(requestBody)
+                });
+                const responseTime = Date.now() - startTime;
+
+                log('', `⏱️ Tempo de resposta: ${responseTime}ms`);
+                log('', `📊 Status HTTP: ${response.status} ${response.statusText}`);
+                log('', '');
+
+                log('', 'Headers de resposta:');
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
+                    log('', `   ${key}: ${value}`);
+                });
+                log('', '');
+
+                const text = await response.text();
+                log('', `📄 Body da resposta (${text.length} bytes):`);
+                log('', text);
+                log('', '');
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                    log('success', '✅ Resposta é JSON válido');
+                    log('', '\n📋 JSON formatado:');
+                    log('', JSON.stringify(data, null, 2));
+                } catch (e) {
+                    log('error', `❌ Resposta NÃO é JSON válido: ${e.message}`);
+                }
+
+                // Análise do erro
+                log('', '');
+                log('info', '='.repeat(80));
+                log('info', 'ANÁLISE DO ERRO');
+                log('info', '='.repeat(80));
+
+                if (response.status === 500) {
+                    log('error', '❌ ERRO 500 - Erro interno no servidor');
+
+                    if (data && data.error) {
+                        log('', `Mensagem de erro: ${data.error}`);
+
+                        if (data.correlation_id) {
+                            log('', `Correlation ID: ${data.correlation_id}`);
+                            log('info', '\n⚠️ IMPORTANTE: Copie este correlation_id para buscar nos logs do Supabase');
+                        }
+
+                        // Diagnóstico baseado na mensagem
+                        if (data.error.includes('Missing Kiwify credentials')) {
+                            log('', '\n🔧 CAUSA PROVÁVEL:');
+                            log('', '   Secrets não configurados no Supabase Vault');
+                            log('', '\n💡 SOLUÇÃO:');
+                            log('', '   1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/settings/vault/secrets');
+                            log('', '   2. Adicione os 3 secrets: KIWIFY_CLIENT_ID, KIWIFY_CLIENT_SECRET, KIWIFY_ACCOUNT_ID');
+                        } else if (data.error.includes('Failed to obtain Kiwify OAuth token')) {
+                            log('', '\n🔧 CAUSA PROVÁVEL:');
+                            log('', '   Credenciais inválidas ou erro ao buscar token OAuth');
+                            log('', '\n💡 SOLUÇÃO:');
+                            log('', '   1. Verifique se os Secrets estão corretos');
+                            log('', '   2. Teste OAuth direto (veja console do navegador)');
+                        } else if (data.error.includes('Erro interno')) {
+                            log('', '\n🔧 CAUSA PROVÁVEL:');
+                            log('', '   Erro não tratado dentro da Edge Function');
+                            log('', '\n💡 PRÓXIMO PASSO:');
+                            log('', '   Precisamos ver os logs do Supabase com o correlation_id');
+                            log('', '   Se você tiver acesso ao dashboard:');
+                            log('', '   1. Vá em: Edge Functions → kiwify-api → Logs');
+                            log('', `   2. Busque por: ${data.correlation_id}`);
+                            log('', '   3. Copie o stack trace completo');
+                        }
+                    }
+                } else if (response.ok) {
+                    log('success', '✅ Requisição bem-sucedida!');
+                } else {
+                    log('error', `❌ Status inesperado: ${response.status}`);
+                }
+
+            } catch (error) {
+                log('error', `❌ ERRO FATAL: ${error.message}`);
+                log('', `Stack trace:\n${error.stack}`);
+            }
+
+            // Teste 3: Tentar OAuth direto (vai falhar por CORS, mas mostra o erro)
+            log('', '');
+            log('info', '='.repeat(80));
+            log('info', 'TESTE 3: OAuth direto com Kiwify (vai falhar por CORS, é esperado)');
+            log('info', '='.repeat(80));
+
+            try {
+                const oauthResponse = await fetch('https://public-api.kiwify.com/oauth/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        grant_type: 'client_credentials',
+                        client_id: '4c7f47409-c212-45d1-aaf9-4a5d43dac808',
+                        client_secret: '00d8f9dc83a5afeeee0fe459cfb5265272b95e5458c4908411273e5dfac'
+                    })
+                });
+
+                const oauthData = await oauthResponse.json();
+                log('success', '✅ OAuth funcionou (inesperado, mas bom sinal!)');
+                log('', JSON.stringify(oauthData, null, 2));
+            } catch (error) {
+                log('info', '⚠️ CORS bloqueou (isso é NORMAL e esperado)');
+                log('', `Erro: ${error.message}`);
+                log('', '\nIsso significa que:');
+                log('', '   ✓ A API Kiwify está acessível');
+                log('', '   ✓ O problema está na Edge Function');
+            }
+
+            log('', '');
+            log('info', '='.repeat(80));
+            log('success', 'TESTE COMPLETO FINALIZADO');
+            log('info', '='.repeat(80));
+            log('', '\n📋 PRÓXIMOS PASSOS:');
+            log('', '1. Copie TODO este output (Ctrl+A, Ctrl+C)');
+            log('', '2. Cole para o Claude analisar');
+            log('', '3. Se tiver acesso ao Supabase Dashboard, pegue os logs usando o correlation_id');
+        }
+    </script>
+</body>
+</html>
