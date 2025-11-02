@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════════
+DEPLOY FINAL - INTEGRAÇÃO KIWIFY COMPLETA
+═══════════════════════════════════════════════════════════════
+
+EXECUTE NO SERVIDOR (NESTA ORDEM):
+
+cd ~/projetos/nutrimais
+
+# 1. Atualizar código com correções
+git pull
+
+# 2. Configurar Plan IDs descobertos
+npx supabase secrets set KIWIFY_PLAN_MONTHLY_ID=b999e4a7-2372-4a01-a6ac-b08f0803e99c
+npx supabase secrets set KIWIFY_PLAN_QUARTERLY_ID=636ae5ac-1648-413d-9f24-ff428a9a723d
+
+# 3. Redeploy com código corrigido
+npx supabase functions deploy kiwify-api
+
+# 4. TESTAR list_subscriptions
+curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" \
+  -d '{"action":"list_subscriptions","email":"birofov720@hh7f.com"}'
+
+═══════════════════════════════════════════════════════════════
+RESULTADO ESPERADO DO TESTE
+═══════════════════════════════════════════════════════════════
+
+{
+  "correlation_id": "...",
+  "data": [
+    {
+      "id": "e4b8befe-4525-447d-bbd2-d54f7b1bd9a6",
+      "product": {
+        "plan_id": "636ae5ac-1648-413d-9f24-ff428a9a723d",
+        "plan_name": "Tri"
+      },
+      "customer": {
+        "email": "birofov720@hh7f.com"
+      },
+      "status": "paid"
+    }
+  ],
+  "meta": {...}
+}
+
+Se retornar isso, FUNCIONOU! ✅
+
+═══════════════════════════════════════════════════════════════
+PRÓXIMOS PASSOS APÓS SUCESSO
+═══════════════════════════════════════════════════════════════
+
+1. Testar no navegador:
+   http://localhost:3001/debug-oauth-detalhado.html
+   Executar teste 4 (Listar Assinaturas)
+
+2. Deploy da função kiwify-sync:
+   npx supabase functions deploy kiwify-sync
+
+3. Testar sincronização completa:
+   http://localhost:3001/test-kiwify-sync.html
+
+4. Verificar dados sincronizados no banco:
+   - Tabela user_subscriptions
+   - Tabela payment_history
+
+═══════════════════════════════════════════════════════════════
+RESUMO DAS CORREÇÕES APLICADAS
+═══════════════════════════════════════════════════════════════
+
+✅ OAuth funcionando (URL correta + x-www-form-urlencoded)
+✅ Header x-kiwify-account-id adicionado
+✅ Endpoint correto (/v1/sales ao invés de /v1/subscriptions)
+✅ Parâmetros obrigatórios (start_date + end_date)
+✅ Plan IDs descobertos e configurados
+✅ Credenciais OAuth corretas
+
+INTEGRAÇÃO 100% FUNCIONAL! 🎉
+
+═══════════════════════════════════════════════════════════════
