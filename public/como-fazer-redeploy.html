@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Como Fazer Redeploy das Edge Functions</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 18px;
+    }
+    .step {
+      background: #f8f9fa;
+      border-left: 5px solid #f5576c;
+      padding: 25px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    .step h3 {
+      color: #f5576c;
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
+    .step p, .step li {
+      line-height: 1.8;
+      color: #555;
+      margin: 10px 0;
+    }
+    .step ol {
+      margin-left: 30px;
+    }
+    .screenshot {
+      border: 3px solid #ddd;
+      border-radius: 8px;
+      margin: 15px 0;
+      max-width: 100%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .highlight {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .highlight strong {
+      color: #856404;
+    }
+    .success {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .success strong {
+      color: #155724;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .link-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .link-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+    }
+    .warning {
+      background: #fff3e0;
+      border-left: 5px solid #ff9800;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 8px;
+    }
+    .warning strong {
+      color: #e65100;
+    }
+    .code-inline {
+      background: #f5f5f5;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+      font-size: 14px;
+    }
+    .visual-indicator {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: inline-block;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Como Fazer Redeploy das Edge Functions</h1>
+    <p class="subtitle">Guia visual passo a passo para fazer redeploy no Supabase Dashboard</p>
+
+    <div class="highlight">
+      <strong>⚡ Por que fazer redeploy?</strong><br>
+      Quando você adiciona ou modifica Secrets (variáveis de ambiente), as Edge Functions não atualizam automaticamente.
+      É necessário fazer um novo deploy para que as funções "vejam" os novos valores.
+    </div>
+
+    <div class="step">
+      <h3>Passo 1: Acessar Edge Functions</h3>
+      <p>Clique no botão abaixo para abrir a página de Edge Functions:</p>
+      <div class="button-group">
+        <a href="https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions" target="_blank" class="link-button">
+          🔗 Abrir Edge Functions
+        </a>
+      </div>
+      <p>Você verá uma lista com todas as funções deployadas:</p>
+      <ul style="margin-left: 30px;">
+        <li><code class="code-inline">kiwify-api</code> (a que vamos fazer redeploy)</li>
+        <li><code class="code-inline">kiwify-sync</code> (também vamos fazer redeploy)</li>
+        <li>admin-operations</li>
+        <li>gemini-proxy</li>
+        <li>etc...</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3>Passo 2: Localizar a Função kiwify-api</h3>
+      <p>Na lista de Edge Functions, procure pela linha que diz:</p>
+      <div class="visual-indicator">
+        📦 kiwify-api
+      </div>
+      <p>Você verá informações como:</p>
+      <ul style="margin-left: 30px;">
+        <li><strong>NAME:</strong> kiwify-api</li>
+        <li><strong>URL:</strong> https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api</li>
+        <li><strong>CREATED:</strong> 30 Oct, 2025 15:20</li>
+        <li><strong>LAST UPDATED:</strong> an hour ago</li>
+        <li><strong>DEPLOYMENTS:</strong> 30</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3>Passo 3: Clicar nos 3 Pontinhos (⋮)</h3>
+      <p>No lado direito da linha <code class="code-inline">kiwify-api</code>, você verá <strong>3 pontinhos verticais (⋮)</strong>:</p>
+      <div class="visual-indicator">
+        ⋮
+      </div>
+      <p>Clique nesses 3 pontinhos. Um menu vai aparecer com as opções:</p>
+      <ul style="margin-left: 30px;">
+        <li>📊 View details</li>
+        <li>📝 View logs</li>
+        <li><strong style="color: #f5576c;">🚀 Deploy new version</strong> ← <strong>CLIQUE AQUI</strong></li>
+        <li>🗑️ Delete function</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3>Passo 4: Clicar em "Deploy new version"</h3>
+      <p>Clique na opção <strong>"Deploy new version"</strong></p>
+
+      <div class="warning">
+        <strong>⚠️ ATENÇÃO:</strong><br>
+        Você pode ver uma das seguintes opções:
+        <ol>
+          <li><strong>Modal com editor de código</strong> - Você verá o código TypeScript da função</li>
+          <li><strong>Modal simples</strong> - Apenas confirmação de deploy</li>
+        </ol>
+        Em ambos os casos, pode prosseguir sem alterar nada!
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>Passo 5: Confirmar o Deploy</h3>
+      <p>Se abriu um modal com código:</p>
+      <ol>
+        <li><strong>NÃO altere o código</strong> (mantenha como está)</li>
+        <li>Procure pelo botão verde <strong>"Deploy"</strong> no canto inferior direito</li>
+        <li>Clique em <strong>"Deploy"</strong></li>
+      </ol>
+
+      <p>Se abriu um modal simples:</p>
+      <ol>
+        <li>Clique diretamente em <strong>"Deploy"</strong> ou <strong>"Confirm"</strong></li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h3>Passo 6: Aguardar Deploy</h3>
+      <p>Você verá uma animação de loading. Aguarde até aparecer:</p>
+      <div class="success">
+        <strong>✅ Successfully deployed</strong><br>
+        ou<br>
+        <strong>✅ Deployed</strong>
+      </div>
+      <p>Isso significa que o deploy foi concluído com sucesso!</p>
+
+      <div class="highlight">
+        <strong>💡 Dica:</strong> O status na lista também vai mudar de "an hour ago" para "a few seconds ago" ou "just now".
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>Passo 7: Repetir para kiwify-sync</h3>
+      <p>Agora repita os passos 2 a 6 para a função <code class="code-inline">kiwify-sync</code>:</p>
+      <ol>
+        <li>Procure <code class="code-inline">kiwify-sync</code> na lista</li>
+        <li>Clique nos 3 pontinhos (⋮)</li>
+        <li>Clique em "Deploy new version"</li>
+        <li>Clique em "Deploy"</li>
+        <li>Aguarde "Successfully deployed"</li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h3>Passo 8: Verificar Deploys</h3>
+      <p>Confirme que ambas as funções foram deployadas:</p>
+      <div class="success">
+        ✅ <code class="code-inline">kiwify-api</code> - LAST UPDATED: just now<br>
+        ✅ <code class="code-inline">kiwify-sync</code> - LAST UPDATED: just now
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>✅ Pronto! Agora Teste</h3>
+      <p>Com as funções re-deployadas, os novos Secrets estarão ativos. Teste agora:</p>
+      <div class="button-group">
+        <a href="http://localhost:3001/test-kiwify-oauth.html" target="_blank" class="link-button">
+          🧪 Testar OAuth
+        </a>
+        <a href="http://localhost:3001/test-kiwify-discover-plans.html" target="_blank" class="link-button">
+          🔍 Descobrir Planos
+        </a>
+        <a href="http://localhost:3001/test-kiwify-sync.html" target="_blank" class="link-button">
+          🔄 Testar Sincronização
+        </a>
+      </div>
+    </div>
+
+    <div class="warning">
+      <strong>❌ Se o deploy falhar:</strong>
+      <ol>
+        <li>Verifique se todos os 5 Secrets estão configurados:
+          <ul>
+            <li>KIWIFY_CLIENT_ID</li>
+            <li>KIWIFY_CLIENT_SECRET</li>
+            <li>KIWIFY_ACCOUNT_ID</li>
+            <li>SUPABASE_URL</li>
+            <li>SUPABASE_SERVICE_ROLE_KEY</li>
+          </ul>
+        </li>
+        <li>Vá em Edge Functions → kiwify-api → View logs para ver o erro</li>
+        <li>Confira se o CLIENT_SECRET está completo (sem espaços)</li>
+      </ol>
+    </div>
+
+    <div class="success" style="text-align: center; margin-top: 40px; font-size: 18px;">
+      <strong>🎉 Parabéns!</strong><br>
+      Agora suas Edge Functions estão com os novos Secrets configurados!<br>
+      Teste a integração com as ferramentas acima.
+    </div>
+  </div>
+</body>
+</html>
