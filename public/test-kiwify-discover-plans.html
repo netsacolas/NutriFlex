@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Descobrir IDs dos Planos Kiwify</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    .input-group {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    input[type="email"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    .result {
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .result pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .result-info {
+      background: #e3f2fd;
+      border-left-color: #2196F3;
+      color: #0d47a1;
+    }
+    .result-success {
+      background: #e8f5e9;
+      border-left-color: #4CAF50;
+      color: #1b5e20;
+    }
+    .result-error {
+      background: #ffebee;
+      border-left-color: #f44336;
+      color: #c62828;
+    }
+    .result-warning {
+      background: #fff3e0;
+      border-left-color: #ff9800;
+      color: #e65100;
+    }
+    #output {
+      margin-top: 30px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    #output:empty::before {
+      content: "Os resultados aparecerão aqui...";
+      color: #999;
+      font-style: italic;
+      display: block;
+      padding: 20px;
+      text-align: center;
+    }
+    .highlight-box {
+      background: #f0f7ff;
+      border: 2px solid #2196F3;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .highlight-box h3 {
+      color: #2196F3;
+      margin-bottom: 15px;
+    }
+    .code-box {
+      background: #263238;
+      color: #aed581;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Descobrir IDs dos Planos Kiwify</h1>
+    <p class="subtitle">Ferramenta para identificar os IDs únicos dos planos Mensal, Trimestral e Anual</p>
+
+    <div class="highlight-box">
+      <h3>📋 Como usar:</h3>
+      <ol style="margin-left: 20px; line-height: 1.8;">
+        <li>Digite o email de um usuário que tenha uma compra ativa na Kiwify</li>
+        <li>Clique em "Descobrir Planos"</li>
+        <li>Copie os IDs encontrados e cole no arquivo <code>.env.local</code></li>
+        <li>Configure os mesmos IDs nos Secrets do Supabase</li>
+      </ol>
+    </div>
+
+    <div class="input-group">
+      <label for="userEmail">📧 Email do usuário com compra ativa:</label>
+      <input type="email" id="userEmail" placeholder="usuario@exemplo.com" />
+    </div>
+
+    <div class="button-group">
+      <button class="btn-primary" onclick="discoverPlans()">🔍 Descobrir Planos</button>
+      <button class="btn-secondary" onclick="clearResults()">🗑️ Limpar Resultados</button>
+    </div>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+    async function discoverPlans() {
+      const email = document.getElementById('userEmail').value.trim();
+
+      if (!email) {
+        showResult('⚠️ Por favor, digite um email válido', 'warning');
+        return;
+      }
+
+      if (!email.includes('@')) {
+        showResult('⚠️ Email inválido. Certifique-se de incluir o @dominio.com', 'warning');
+        return;
+      }
+
+      showResult('🔄 Buscando assinaturas na Kiwify...', 'info');
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            action: 'list_subscriptions',
+            email: email
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          showResult(`❌ Erro na API: ${result.error || 'Falha na requisição'}`, 'error');
+          showResult(`Detalhes técnicos:\n${JSON.stringify(result, null, 2)}`, 'error');
+          return;
+        }
+
+        if (!result.data || result.data.length === 0) {
+          showResult('⚠️ Nenhuma assinatura encontrada para este email', 'warning');
+          showResult(`
+Possíveis motivos:
+• Email não possui compras na Kiwify
+• Email está escrito incorretamente
+• Assinatura foi cancelada ou expirou
+• Problemas de autenticação com a API Kiwify
+
+Tente com outro email que você sabe que tem compra ativa.
+          `, 'warning');
+          return;
+        }
+
+        showResult(`✅ Encontradas ${result.data.length} assinatura(s)!`, 'success');
+
+        const planIds = new Map();
+
+        result.data.forEach((subscription, index) => {
+          const planId = subscription.plan_id || subscription.product_id || subscription.plan?.id || '❓ DESCONHECIDO';
+          const frequency = subscription.frequency || subscription.billing_period || subscription.plan?.frequency || '❓ DESCONHECIDO';
+          const status = subscription.status || subscription.subscription_status || '❓ DESCONHECIDO';
+          const customerEmail = subscription.customer?.email || subscription.customer_email || 'N/A';
+
+          showResult(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 Assinatura #${index + 1}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🆔 ID da Assinatura: ${subscription.id}
+🎯 Plano ID: ${planId}
+📅 Frequência: ${frequency}
+✅ Status: ${status}
+📧 Email: ${customerEmail}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          `, 'info');
+
+          const freqLower = frequency.toLowerCase();
+          if (freqLower.includes('month') && !freqLower.includes('quarter')) {
+            planIds.set('MENSAL', planId);
+          } else if (freqLower.includes('quarter') || freqLower.includes('trimest')) {
+            planIds.set('TRIMESTRAL', planId);
+          } else if (freqLower.includes('year') || freqLower.includes('annual') || freqLower.includes('ano')) {
+            planIds.set('ANUAL', planId);
+          }
+        });
+
+        if (planIds.size > 0) {
+          let envVars = '';
+          const lines = [];
+
+          if (planIds.has('MENSAL')) {
+            lines.push(`KIWIFY_PLAN_MONTHLY_ID=${planIds.get('MENSAL')}`);
+          }
+          if (planIds.has('TRIMESTRAL')) {
+            lines.push(`KIWIFY_PLAN_QUARTERLY_ID=${planIds.get('TRIMESTRAL')}`);
+          }
+          if (planIds.has('ANUAL')) {
+            lines.push(`KIWIFY_PLAN_ANNUAL_ID=${planIds.get('ANUAL')}`);
+          }
+
+          envVars = lines.join('\\n');
+
+          const resultHtml = `
+<div style="background: #263238; color: #aed581; padding: 20px; border-radius: 8px; margin: 15px 0; font-family: 'Courier New', monospace;">
+<strong style="color: #4CAF50; font-size: 18px;">✅ COPIE ESTAS VARIÁVEIS:</strong><br><br>
+<strong style="color: #81c784;">1️⃣ Adicione ao arquivo .env.local:</strong><br>
+<div style="background: #1e272e; padding: 15px; border-radius: 5px; margin: 10px 0;">
+${lines.join('<br>')}
+</div>
+<br>
+<strong style="color: #81c784;">2️⃣ Configure nos Secrets do Supabase:</strong><br>
+<div style="background: #1e272e; padding: 15px; border-radius: 5px; margin: 10px 0;">
+${lines.map(line => `npx supabase secrets set ${line.replace('=', '="')}"`)join('<br>')}
+</div>
+<br>
+<em style="color: #ffa726;">Após configurar, reinicie o servidor: npm run dev</em>
+</div>
+          `;
+
+          document.getElementById('output').insertAdjacentHTML('beforeend', resultHtml);
+        } else {
+          showResult('⚠️ Não foi possível identificar automaticamente os tipos de plano. Verifique a frequência/período de cobrança acima.', 'warning');
+        }
+
+        showResult(`\n📄 Resposta completa da API:\n${JSON.stringify(result, null, 2)}`, 'info');
+
+      } catch (error) {
+        showResult(`❌ Erro de conexão: ${error.message}`, 'error');
+        showResult(`
+Possíveis causas:
+• Edge Function kiwify-api não está deployada
+• Problemas de rede/CORS
+• Credenciais OAuth da Kiwify incorretas
+
+Verifique o console do navegador (F12) para mais detalhes.
+        `, 'error');
+        console.error('Erro completo:', error);
+      }
+    }
+
+    function showResult(message, type = 'info') {
+      const output = document.getElementById('output');
+      const div = document.createElement('div');
+      div.className = `result result-${type}`;
+      div.innerHTML = `<pre>${message}</pre>`;
+      output.appendChild(div);
+      div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearResults() {
+      document.getElementById('output').innerHTML = '';
+    }
+
+    // Auto-focus no campo de email
+    document.getElementById('userEmail').focus();
+  </script>
+</body>
+</html>

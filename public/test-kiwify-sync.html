@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testar Sincronização Kiwify</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    .input-group {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    input[type="email"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #11998e;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+    }
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    .btn-tertiary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-tertiary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .result {
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .result pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .result-info {
+      background: #e3f2fd;
+      border-left-color: #2196F3;
+      color: #0d47a1;
+    }
+    .result-success {
+      background: #e8f5e9;
+      border-left-color: #4CAF50;
+      color: #1b5e20;
+    }
+    .result-error {
+      background: #ffebee;
+      border-left-color: #f44336;
+      color: #c62828;
+    }
+    .result-warning {
+      background: #fff3e0;
+      border-left-color: #ff9800;
+      color: #e65100;
+    }
+    #output {
+      margin-top: 30px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    #output:empty::before {
+      content: "Os resultados aparecerão aqui...";
+      color: #999;
+      font-style: italic;
+      display: block;
+      padding: 20px;
+      text-align: center;
+    }
+    .highlight-box {
+      background: #f0fff4;
+      border: 2px solid #11998e;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .highlight-box h3 {
+      color: #11998e;
+      margin-bottom: 15px;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .metric-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .metric-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 Testar Sincronização Kiwify</h1>
+    <p class="subtitle">Ferramenta para sincronizar manualmente compras e pagamentos da Kiwify</p>
+
+    <div class="highlight-box">
+      <h3>📋 Como usar:</h3>
+      <ol style="margin-left: 20px; line-height: 1.8;">
+        <li>Digite o email do usuário que realizou a compra na Kiwify</li>
+        <li>Clique em "Sincronizar Agora"</li>
+        <li>Aguarde o resultado da sincronização</li>
+        <li>Verifique se os dados foram atualizados corretamente no banco</li>
+      </ol>
+    </div>
+
+    <div class="input-group">
+      <label for="userEmail">📧 Email do usuário:</label>
+      <input type="email" id="userEmail" placeholder="usuario@exemplo.com" />
+    </div>
+
+    <div class="button-group">
+      <button class="btn-primary" onclick="syncManual()">🔄 Sincronizar Agora</button>
+      <button class="btn-tertiary" onclick="checkSubscription()">👁️ Ver Assinatura Atual</button>
+      <button class="btn-secondary" onclick="clearResults()">🗑️ Limpar</button>
+    </div>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+    async function syncManual() {
+      const email = document.getElementById('userEmail').value.trim();
+
+      if (!email || !email.includes('@')) {
+        showResult('⚠️ Por favor, digite um email válido', 'warning');
+        return;
+      }
+
+      showResult('🔄 Iniciando sincronização manual...', 'info');
+      showResult(`📧 Email: ${email}`, 'info');
+
+      try {
+        const startTime = Date.now();
+
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            action: 'sync_manual',
+            emails: [email],
+            include_payments: true
+          })
+        });
+
+        const endTime = Date.now();
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          showResult(`❌ Erro na sincronização: ${result.error || 'Falha desconhecida'}`, 'error');
+          showResult(`Detalhes técnicos:\n${JSON.stringify(result, null, 2)}`, 'error');
+          return;
+        }
+
+        showResult(`✅ Sincronização concluída em ${duration}s!`, 'success');
+
+        const r = result.result || {};
+
+        const metricsHtml = `
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-label">Assinaturas</div>
+    <div class="metric-value">${r.subscriptionsPersisted || 0}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Pagamentos</div>
+    <div class="metric-value">${r.paymentsInserted || 0}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Usuários</div>
+    <div class="metric-value">${r.usersMatched || 0}</div>
+  </div>
+  <div class="metric-card" style="background: ${r.errors > 0 ? 'linear-gradient(135deg, #f44336 0%, #e91e63 100%)' : 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)'};">
+    <div class="metric-label">Erros</div>
+    <div class="metric-value">${r.errors || 0}</div>
+  </div>
+</div>
+        `;
+
+        document.getElementById('output').insertAdjacentHTML('beforeend', metricsHtml);
+
+        showResult(`
+📊 Resumo Detalhado:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📥 Assinaturas buscadas: ${r.subscriptionsFetched || 0}
+💾 Assinaturas sincronizadas: ${r.subscriptionsPersisted || 0}
+💳 Pagamentos buscados: ${r.paymentsFetched || 0}
+✅ Pagamentos inseridos: ${r.paymentsInserted || 0}
+⏭️  Pagamentos pulados: ${r.paymentsSkipped || 0}
+👤 Usuários encontrados: ${r.usersMatched || 0}
+❌ Usuários não encontrados: ${r.usersMissing || 0}
+🔴 Erros: ${r.errors || 0}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ Período: ${r.since || 'N/A'} até ${r.until || 'agora'}
+🕐 Iniciado: ${r.startedAt || 'N/A'}
+🏁 Finalizado: ${r.finishedAt || 'N/A'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        `, 'success');
+
+        if (r.subscriptionsPersisted > 0) {
+          showResult(`
+✅ Próximos passos:
+1. Verifique no banco de dados se a assinatura foi atualizada
+2. Faça login com este email no sistema
+3. Confirme que o plano está correto no perfil
+          `, 'success');
+        } else if (r.subscriptionsFetched === 0) {
+          showResult(`
+⚠️ Nenhuma assinatura encontrada!
+
+Possíveis causas:
+• Email não possui compras ativas na Kiwify
+• Email está escrito incorretamente
+• Problemas com credenciais OAuth da Kiwify
+
+Tente:
+• Verificar se o email está correto
+• Usar a ferramenta "Descobrir Planos" primeiro
+• Verificar logs das Edge Functions no Supabase
+          `, 'warning');
+        } else {
+          showResult(`
+⚠️ Assinaturas encontradas mas não sincronizadas!
+
+Possíveis causas:
+• Usuário não está cadastrado no sistema
+• IDs dos planos não estão configurados
+• Problemas com mapeamento de status
+
+Verifique:
+• Se o usuário criou conta no sistema
+• Se KIWIFY_PLAN_*_ID estão configurados
+• Logs detalhados abaixo
+          `, 'warning');
+        }
+
+        showResult(`\n📄 Resposta completa da API:\n${JSON.stringify(result, null, 2)}`, 'info');
+
+      } catch (error) {
+        showResult(`❌ Erro de conexão: ${error.message}`, 'error');
+        showResult(`
+Possíveis causas:
+• Edge Function kiwify-api não está deployada
+• Problemas de rede/CORS
+• Credenciais OAuth incorretas
+
+Verifique o console do navegador (F12) para mais detalhes.
+        `, 'error');
+        console.error('Erro completo:', error);
+      }
+    }
+
+    async function checkSubscription() {
+      const email = document.getElementById('userEmail').value.trim();
+
+      if (!email || !email.includes('@')) {
+        showResult('⚠️ Por favor, digite um email válido', 'warning');
+        return;
+      }
+
+      showResult('👁️ Buscando assinatura atual...', 'info');
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            action: 'list_subscriptions',
+            email: email
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          showResult(`❌ Erro: ${result.error}`, 'error');
+          return;
+        }
+
+        if (!result.data || result.data.length === 0) {
+          showResult('⚠️ Nenhuma assinatura encontrada na Kiwify para este email', 'warning');
+          return;
+        }
+
+        showResult(`✅ Encontradas ${result.data.length} assinatura(s) na Kiwify:`, 'success');
+
+        result.data.forEach((sub, index) => {
+          const planId = sub.plan_id || sub.product_id || sub.plan?.id || 'N/A';
+          const frequency = sub.frequency || sub.billing_period || sub.plan?.frequency || 'N/A';
+          const status = sub.status || sub.subscription_status || 'N/A';
+
+          showResult(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 Assinatura #${index + 1}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🆔 ID: ${sub.id}
+🎯 Plano ID: ${planId}
+📅 Frequência: ${frequency}
+✅ Status: ${status}
+💰 Valor: ${sub.amount ? (sub.amount / 100).toFixed(2) : 'N/A'} ${sub.currency || 'BRL'}
+📅 Criada em: ${sub.created_at || 'N/A'}
+📅 Próx. pagamento: ${sub.next_payment || sub.current_period_end || 'N/A'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          `, 'info');
+        });
+
+      } catch (error) {
+        showResult(`❌ Erro: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+
+    function showResult(message, type = 'info') {
+      const output = document.getElementById('output');
+      const div = document.createElement('div');
+      div.className = `result result-${type}`;
+      div.innerHTML = `<pre>${message}</pre>`;
+      output.appendChild(div);
+      div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearResults() {
+      document.getElementById('output').innerHTML = '';
+    }
+
+    // Auto-focus no campo de email
+    document.getElementById('userEmail').focus();
+  </script>
+</body>
+</html>
