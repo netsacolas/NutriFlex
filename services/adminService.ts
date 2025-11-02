@@ -170,20 +170,7 @@ class AdminService {
         return false
       }
 
-      if (user.email) {
-        const { data: isAdminResult, error: rpcError } = await supabase.rpc('is_admin', {
-          user_email: user.email
-        })
-
-        if (!rpcError && typeof isAdminResult === 'boolean') {
-          return isAdminResult
-        }
-
-        if (rpcError) {
-          logger.warn('Falha ao verificar is_admin RPC', rpcError)
-        }
-      }
-
+      // Verificar diretamente na tabela admin_users
       const { data, error } = await supabase
         .from('admin_users')
         .select('id')
