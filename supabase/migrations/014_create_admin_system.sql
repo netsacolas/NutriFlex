@@ -23,9 +23,7 @@ CREATE POLICY "Admins can read admin_users"
   ON public.admin_users
   FOR SELECT
   TO authenticated
-  USING (
-    email IN (SELECT email FROM public.admin_users WHERE user_id = auth.uid())
-  );
+  USING (user_id = auth.uid());
 
 -- Function to check if user is admin
 CREATE OR REPLACE FUNCTION public.is_admin(user_email TEXT)
