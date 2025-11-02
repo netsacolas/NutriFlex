@@ -1,0 +1,75 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMANDOS CORRIGIDOS - EXECUTE NO SERVIDOR LINUX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ Primeiro, navegue até o diretório do projeto:
+
+cd ~/projetos/nutrimais
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2️⃣ Ver logs recentes (últimos 30):
+
+npx supabase functions logs kiwify-api
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3️⃣ OU use a API diretamente (sem precisar do CLI):
+
+curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/_analytics/logs \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" \
+  -H "Content-Type: application/json" \
+  -d '{"function": "kiwify-api", "limit": 30}'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4️⃣ ALTERNATIVA MELHOR: Use o Dashboard do Supabase
+
+👉 Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions/kiwify-api/logs
+
+Você verá os logs diretamente na interface, incluindo:
+- Todos os correlation_ids
+- Mensagens de erro completas
+- Stack traces
+- Timestamps
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CORRELATION IDs RECENTES (do seu teste):
+
+52137de8-c529-4dd7-9dec-4c1e9b6df423  (teste 2 - OAuth Status)
+6aa62db2-df07-4049-84d8-109f81fbd54f  (teste 3 - Refresh)
+4ff37a48-6521-490a-98fe-15df42114dbb  (teste 4 - List)
+
+Procure por esses IDs nos logs!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BASEADO NO ERRO 500 (Erro Interno), O PROBLEMA PROVÁVEL É:
+
+1. CLIENT_SECRET incompleto ou com espaços extras
+2. Algum secret não configurado corretamente
+3. Erro na validação das credenciais no código
+
+SOLUÇÃO PREVENTIVA (execute enquanto verifica logs):
+
+# Reconfigure todos os secrets com valores exatos:
+npx supabase secrets set KIWIFY_CLIENT_ID="4c747409-c212-45d1-aaf9-4a5d43dac808"
+npx supabase secrets set KIWIFY_CLIENT_SECRET="00d8f9dc83a5afeeee0fe459cfb5265272b95e5458c4908411273e5dfac03401"
+npx supabase secrets set KIWIFY_ACCOUNT_ID="av8qNBGVVoyVD75"
+
+# Depois faça redeploy:
+npx supabase functions deploy kiwify-api
+
+# E teste novamente:
+curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" \
+  -d '{"action":"oauth_status"}'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IMPORTANTE: Me envie screenshot dos logs do Dashboard ou copie/cole
+   o resultado do comando 2 ou 4 acima
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
