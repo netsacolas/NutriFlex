@@ -1,0 +1,54 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COPIE E COLE ESTES COMANDOS NO SERVIDOR LINUX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 1. Login (você já fez, mas caso precise fazer de novo)
+npx supabase login --token sbp_5eb242df6cf6ad87fcebb50038ca3e68a954d540
+
+# 2. Deploy kiwify-sync (a função que faltou)
+npx supabase functions deploy kiwify-sync --project-ref keawapzxqoyesptwpwav
+
+# 3. Listar secrets configurados
+npx supabase secrets list --project-ref keawapzxqoyesptwpwav
+
+# 4. Ver logs para identificar o erro
+npx supabase functions logs kiwify-api --project-ref keawapzxqoyesptwpwav --limit 20
+
+# 5. Testar a função diretamente (ver se retorna erro ou sucesso)
+curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" -d '{"action":"oauth_status"}'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANTE: ME ENVIE O RESULTADO DO COMANDO 5
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+O comando 5 vai mostrar a resposta da API.
+
+Se retornar:
+{
+  "token_valid": true,
+  ...
+}
+→ FUNCIONOU! ✅
+
+Se retornar:
+{
+  "error": "Erro interno...",
+  "correlation_id": "..."
+}
+→ Há um problema. Me envie o correlation_id e vamos ver os logs.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SE O COMANDO 4 (logs) MOSTRAR ERRO RELACIONADO A CLIENT_SECRET:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Configure novamente com o valor COMPLETO da imagem:
+
+npx supabase secrets set KIWIFY_CLIENT_SECRET="00d8f9dc83a5afeeee0fe459cfb5265272b95e5458c4908411273e5dfac03401" --project-ref keawapzxqoyesptwpwav
+
+Depois redeploy:
+
+npx supabase functions deploy kiwify-api --project-ref keawapzxqoyesptwpwav
+
+E teste novamente (comando 5).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
