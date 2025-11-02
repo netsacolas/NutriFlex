@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guia Visual: Configurar Kiwify</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 18px;
+    }
+    .step {
+      background: #f8f9fa;
+      border-left: 5px solid #667eea;
+      padding: 25px;
+      margin: 20px 0;
+      border-radius: 8px;
+      position: relative;
+    }
+    .step-number {
+      position: absolute;
+      top: -15px;
+      left: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .step h3 {
+      color: #667eea;
+      margin: 10px 0 15px 0;
+      font-size: 22px;
+    }
+    .step p {
+      line-height: 1.8;
+      color: #555;
+      margin: 10px 0;
+    }
+    .link-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin: 10px 10px 10px 0;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .link-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .code-box {
+      background: #263238;
+      color: #aed581;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      margin: 15px 0;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .warning-box {
+      background: #fff3e0;
+      border-left: 5px solid #ff9800;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 8px;
+    }
+    .warning-box strong {
+      color: #e65100;
+    }
+    .success-box {
+      background: #e8f5e9;
+      border-left: 5px solid #4CAF50;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 8px;
+    }
+    .success-box strong {
+      color: #1b5e20;
+    }
+    .checklist {
+      background: white;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .checklist h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+    .checklist label {
+      display: block;
+      padding: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+      border-radius: 5px;
+    }
+    .checklist label:hover {
+      background: #f0f4ff;
+    }
+    .checklist input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .progress-bar {
+      background: #e0e0e0;
+      height: 30px;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    .progress-fill {
+      background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+      height: 100%;
+      width: 0%;
+      transition: width 0.5s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Guia Visual: Configurar Kiwify</h1>
+    <p class="subtitle">Siga os 10 passos abaixo para resolver o erro de integração</p>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress">0%</div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">1</div>
+      <h3>📝 Pegar a Service Role Key</h3>
+      <p>Acesse o dashboard do Supabase e copie a chave de serviço:</p>
+      <a href="https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/settings/api" target="_blank" class="link-button">
+        🔗 Abrir Settings → API
+      </a>
+      <p>Na página, procure por <strong>"Project API keys"</strong> e copie a chave <strong>"service_role"</strong> (marcada como secret).</p>
+      <div class="warning-box">
+        <strong>⚠️ IMPORTANTE:</strong> Esta chave é sensível! Não compartilhe publicamente.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <h3>🔐 Configurar Secrets no Supabase</h3>
+      <p>Agora vamos criar 5 secrets:</p>
+      <a href="https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/settings/vault/secrets" target="_blank" class="link-button">
+        🔗 Abrir Settings → Vault → Secrets
+      </a>
+
+      <p>Clique em <strong>"New secret"</strong> para cada um:</p>
+
+      <div class="code-box">
+<strong>Secret 1:</strong>
+Name: KIWIFY_CLIENT_ID
+Value: 4c747409-c212-45d1-aaf9-4a5d43dac808
+
+<strong>Secret 2:</strong>
+Name: KIWIFY_CLIENT_SECRET
+Value: [cole seu client_secret completo]
+
+<strong>Secret 3:</strong>
+Name: KIWIFY_ACCOUNT_ID
+Value: av8qNBGVVoyVD75
+
+<strong>Secret 4:</strong>
+Name: SUPABASE_URL
+Value: https://keawapzxqoyesptwpwav.supabase.co
+
+<strong>Secret 5:</strong>
+Name: SUPABASE_SERVICE_ROLE_KEY
+Value: [cole a chave do Passo 1]
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <h3>✅ Verificar Secrets Criados</h3>
+      <p>Volte para a página de Secrets e confirme que aparecem <strong>5 linhas</strong>:</p>
+      <div class="success-box">
+        ✅ KIWIFY_CLIENT_ID<br>
+        ✅ KIWIFY_CLIENT_SECRET<br>
+        ✅ KIWIFY_ACCOUNT_ID<br>
+        ✅ SUPABASE_URL<br>
+        ✅ SUPABASE_SERVICE_ROLE_KEY
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">4</div>
+      <h3>🚀 Redeploy das Edge Functions</h3>
+      <p>Após criar os secrets, você DEVE fazer redeploy:</p>
+      <a href="https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions" target="_blank" class="link-button">
+        🔗 Abrir Edge Functions
+      </a>
+
+      <p><strong>Para cada função (kiwify-api e kiwify-sync):</strong></p>
+      <ol style="margin-left: 30px; line-height: 2;">
+        <li>Clique nos <strong>3 pontinhos (⋮)</strong></li>
+        <li>Clique em <strong>"Deploy new version"</strong></li>
+        <li>Clique em <strong>"Deploy"</strong></li>
+        <li>Aguarde status <strong>"Deployed"</strong> (verde)</li>
+      </ol>
+
+      <div class="warning-box">
+        <strong>⚠️ CRÍTICO:</strong> Sem redeploy, os secrets não serão aplicados!
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">5</div>
+      <h3>🔍 Testar OAuth</h3>
+      <p>Agora vamos verificar se a autenticação está funcionando:</p>
+      <a href="http://localhost:3001/test-kiwify-oauth.html" target="_blank" class="link-button">
+        🧪 Abrir Teste OAuth
+      </a>
+
+      <p>Clique em <strong>"Verificar Status OAuth"</strong></p>
+
+      <div class="success-box">
+        <strong>✅ Resultado esperado:</strong><br>
+        "Autenticação OAuth VÁLIDA"<br>
+        Status: VÁLIDO
+      </div>
+
+      <div class="warning-box">
+        <strong>❌ Se der erro:</strong> Volte ao Passo 2 e verifique os secrets
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">6</div>
+      <h3>🔎 Descobrir IDs dos Planos</h3>
+      <p>Use a ferramenta para identificar os IDs únicos dos planos:</p>
+      <a href="http://localhost:3001/test-kiwify-discover-plans.html" target="_blank" class="link-button">
+        🧪 Abrir Descobrir Planos
+      </a>
+
+      <p>Digite o email: <code>birofov720@hh7f.com</code></p>
+      <p>Copie os IDs que aparecerem (formato: <code>KIWIFY_PLAN_MONTHLY_ID=prod_abc123</code>)</p>
+    </div>
+
+    <div class="step">
+      <div class="step-number">7</div>
+      <h3>📌 Configurar IDs dos Planos</h3>
+      <p>Volte para a página de Secrets e adicione mais 3:</p>
+      <a href="https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/settings/vault/secrets" target="_blank" class="link-button">
+        🔗 Abrir Secrets
+      </a>
+
+      <div class="code-box">
+Name: KIWIFY_PLAN_MONTHLY_ID
+Value: [ID descoberto no Passo 6]
+
+Name: KIWIFY_PLAN_QUARTERLY_ID
+Value: [ID descoberto no Passo 6]
+
+Name: KIWIFY_PLAN_ANNUAL_ID
+Value: [ID descoberto no Passo 6]
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">8</div>
+      <h3>🔄 Redeploy Novamente</h3>
+      <p>Faça deploy novamente das Edge Functions:</p>
+      <a href="https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions" target="_blank" class="link-button">
+        🔗 Abrir Edge Functions
+      </a>
+      <p>Repita o processo do Passo 4 para <strong>kiwify-api</strong> e <strong>kiwify-sync</strong></p>
+    </div>
+
+    <div class="step">
+      <div class="step-number">9</div>
+      <h3>✅ Testar Sincronização</h3>
+      <p>Agora teste a sincronização completa:</p>
+      <a href="http://localhost:3001/test-kiwify-sync.html" target="_blank" class="link-button">
+        🧪 Abrir Teste Sincronização
+      </a>
+
+      <p>Digite o email: <code>birofov720@hh7f.com</code></p>
+      <p>Clique em <strong>"Sincronizar Agora"</strong></p>
+
+      <div class="success-box">
+        <strong>✅ Resultado esperado:</strong><br>
+        "Sincronização concluída!"<br>
+        Assinaturas sincronizadas: 1
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">10</div>
+      <h3>🎯 Verificar no Banco</h3>
+      <p>Confirme que os dados foram salvos corretamente:</p>
+      <a href="https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/editor" target="_blank" class="link-button">
+        🔗 Abrir SQL Editor
+      </a>
+
+      <p>Execute a query:</p>
+      <div class="code-box">
+SELECT
+  u.email,
+  s.plan,
+  s.status,
+  s.current_period_end
+FROM user_subscriptions s
+JOIN auth.users u ON u.id = s.user_id
+WHERE u.email = 'birofov720@hh7f.com';
+      </div>
+
+      <div class="success-box">
+        <strong>✅ Deve mostrar:</strong><br>
+        plan: premium_monthly (não 'free')<br>
+        status: active
+      </div>
+    </div>
+
+    <div class="checklist">
+      <h3>📋 Checklist de Conclusão</h3>
+      <label><input type="checkbox" onchange="updateProgress()"> Service Role Key copiada</label>
+      <label><input type="checkbox" onchange="updateProgress()"> 5 Secrets configurados (KIWIFY_* e SUPABASE_*)</label>
+      <label><input type="checkbox" onchange="updateProgress()"> Redeploy de kiwify-api feito</label>
+      <label><input type="checkbox" onchange="updateProgress()"> Redeploy de kiwify-sync feito</label>
+      <label><input type="checkbox" onchange="updateProgress()"> test-kiwify-oauth.html mostra "VÁLIDO"</label>
+      <label><input type="checkbox" onchange="updateProgress()"> IDs dos planos descobertos</label>
+      <label><input type="checkbox" onchange="updateProgress()"> 3 Secrets de PLAN_ID configurados</label>
+      <label><input type="checkbox" onchange="updateProgress()"> Redeploy feito novamente</label>
+      <label><input type="checkbox" onchange="updateProgress()"> Sincronização funcionando (assinaturas > 0)</label>
+      <label><input type="checkbox" onchange="updateProgress()"> Plano correto no banco (não é 'free')</label>
+    </div>
+
+    <div class="success-box" style="text-align: center; margin-top: 40px; font-size: 18px;">
+      <strong>🎉 Parabéns!</strong><br>
+      Após completar todos os passos, sua integração com a Kiwify estará 100% funcional!
+    </div>
+  </div>
+
+  <script>
+    function updateProgress() {
+      const checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
+      const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+      const total = checkboxes.length;
+      const percentage = Math.round((checked / total) * 100);
+
+      const progressFill = document.getElementById('progress');
+      progressFill.style.width = percentage + '%';
+      progressFill.textContent = percentage + '%';
+
+      if (percentage === 100) {
+        progressFill.style.background = 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)';
+        setTimeout(() => {
+          alert('🎉 Parabéns! Você completou todos os passos!\n\nSua integração com a Kiwify está configurada!');
+        }, 500);
+      }
+    }
+  </script>
+</body>
+</html>
