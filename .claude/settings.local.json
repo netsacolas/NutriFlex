@@ -14,7 +14,8 @@
       "Bash(git merge:*)",
       "Bash(supabase db push:*)",
       "Bash(npx supabase:*)",
-      "Bash(move \"src\\pages\\AdminPanel.tsx\" \"pages\\AdminPanel.tsx\")"
+      "Bash(move \"src\\pages\\AdminPanel.tsx\" \"pages\\AdminPanel.tsx\")",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
