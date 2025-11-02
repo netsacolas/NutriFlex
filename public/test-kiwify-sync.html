@@ -384,21 +384,28 @@ Verifique o console do navegador (F12) para mais detalhes.
         showResult(`✅ Encontradas ${result.data.length} assinatura(s) na Kiwify:`, 'success');
 
         result.data.forEach((sub, index) => {
-          const planId = sub.plan_id || sub.product_id || sub.plan?.id || 'N/A';
-          const frequency = sub.frequency || sub.billing_period || sub.plan?.frequency || 'N/A';
+          const planId = sub.product?.plan_id || sub.plan_id || sub.product_id || 'N/A';
+          const planName = sub.product?.plan_name || sub.plan?.name || 'N/A';
+          const productName = sub.product?.name || 'N/A';
           const status = sub.status || sub.subscription_status || 'N/A';
+          const customerEmail = sub.customer?.email || 'N/A';
+          const customerName = sub.customer?.name || 'N/A';
 
           showResult(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 Assinatura #${index + 1}
+📋 Venda #${index + 1}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🆔 ID: ${sub.id}
-🎯 Plano ID: ${planId}
-📅 Frequência: ${frequency}
+📦 Produto: ${productName}
+🎯 Plano: ${planName}
+🆔 Plano ID: ${planId}
 ✅ Status: ${status}
-💰 Valor: ${sub.amount ? (sub.amount / 100).toFixed(2) : 'N/A'} ${sub.currency || 'BRL'}
-📅 Criada em: ${sub.created_at || 'N/A'}
-📅 Próx. pagamento: ${sub.next_payment || sub.current_period_end || 'N/A'}
+💰 Valor: R$ ${(sub.net_amount / 100).toFixed(2)}
+💳 Método: ${sub.payment_method || 'N/A'}
+👤 Cliente: ${customerName}
+📧 Email: ${customerEmail}
+📅 Criada em: ${new Date(sub.created_at).toLocaleString('pt-BR')}
+📅 Atualizada: ${new Date(sub.updated_at).toLocaleString('pt-BR')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           `, 'info');
         });
