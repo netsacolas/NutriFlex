@@ -349,7 +349,7 @@ export class KiwifyApiClient {
     const { subscriptionId, cursor, ...rest } = params;
 
     if (subscriptionId) {
-      const payload = await this.requestJson<JsonRecord>(`/v1/subscriptions/${subscriptionId}`);
+      const payload = await this.requestJson<JsonRecord>(`/v1/sales/${subscriptionId}`);
       const { items, meta } = extractItems<JsonRecord>(payload);
       return {
         items: items.length > 0 ? items : [payload],
@@ -361,15 +361,19 @@ export class KiwifyApiClient {
       };
     }
 
-    const payload = await this.requestJson(`/v1/subscriptions`, {
+    // Kiwify API requires start_date and end_date for /v1/sales
+    // Default to last 90 days if not provided
+    const now = new Date();
+    const defaultEndDate = now.toISOString().split('T')[0];
+    const defaultStartDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const payload = await this.requestJson(`/v1/sales`, {
       method: 'GET',
       query: {
         page: rest.page,
         per_page: rest.perPage,
-        updated_from: rest.updatedFrom,
-        updated_to: rest.updatedTo,
-        email: rest.email,
-        external_id: rest.externalId,
+        start_date: rest.updatedFrom || defaultStartDate,
+        end_date: rest.updatedTo || defaultEndDate,
       },
       headers: cursor ? { 'x-kiwify-cursor': cursor } : undefined,
     });
