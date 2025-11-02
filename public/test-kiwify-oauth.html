@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testar OAuth Kiwify</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      flex: 1;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+    }
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    .result {
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .result pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .result-info {
+      background: #e3f2fd;
+      border-left-color: #2196F3;
+      color: #0d47a1;
+    }
+    .result-success {
+      background: #e8f5e9;
+      border-left-color: #4CAF50;
+      color: #1b5e20;
+    }
+    .result-error {
+      background: #ffebee;
+      border-left-color: #f44336;
+      color: #c62828;
+    }
+    .result-warning {
+      background: #fff3e0;
+      border-left-color: #ff9800;
+      color: #e65100;
+    }
+    #output {
+      margin-top: 30px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    #output:empty::before {
+      content: "Os resultados aparecerão aqui...";
+      color: #999;
+      font-style: italic;
+      display: block;
+      padding: 20px;
+      text-align: center;
+    }
+    .highlight-box {
+      background: #fff5f5;
+      border: 2px solid #f5576c;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .highlight-box h3 {
+      color: #f5576c;
+      margin-bottom: 15px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      margin: 5px 0;
+    }
+    .status-valid {
+      background: #4CAF50;
+      color: white;
+    }
+    .status-invalid {
+      background: #f44336;
+      color: white;
+    }
+    .status-unknown {
+      background: #ff9800;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Testar Autenticação OAuth Kiwify</h1>
+    <p class="subtitle">Ferramenta para verificar se as credenciais OAuth estão configuradas corretamente</p>
+
+    <div class="highlight-box">
+      <h3>📋 O que este teste faz:</h3>
+      <ul style="margin-left: 20px; line-height: 1.8;">
+        <li>Verifica se a Edge Function <code>kiwify-api</code> está deployada</li>
+        <li>Testa a autenticação OAuth com a Kiwify</li>
+        <li>Valida se o token de acesso foi obtido com sucesso</li>
+        <li>Mostra quando o token expira</li>
+        <li>Identifica problemas de configuração</li>
+      </ul>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-primary" onclick="testOAuthStatus()">🔍 Verificar Status OAuth</button>
+      <button class="btn-primary" onclick="testOAuthRefresh()">🔄 Forçar Refresh Token</button>
+      <button class="btn-secondary" onclick="clearResults()">🗑️ Limpar</button>
+    </div>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+    async function testOAuthStatus() {
+      showResult('🔍 Verificando status do token OAuth...', 'info');
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            action: 'oauth_status',
+            force_refresh: false
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          showResult(`❌ Erro ao verificar OAuth: ${result.error || 'Falha desconhecida'}`, 'error');
+
+          if (result.error && result.error.includes('credentials')) {
+            showResult(`
+⚠️ PROBLEMA DETECTADO: Credenciais OAuth não configuradas!
+
+Passos para resolver:
+1. Verifique se as variáveis estão no .env.local:
+   - KIWIFY_CLIENT_ID
+   - KIWIFY_CLIENT_SECRET
+   - KIWIFY_ACCOUNT_ID
+
+2. Configure os Secrets no Supabase:
+   Dashboard → Settings → Vault → Secrets
+   ou via CLI:
+   npx supabase secrets set KIWIFY_CLIENT_ID="..."
+   npx supabase secrets set KIWIFY_CLIENT_SECRET="..."
+   npx supabase secrets set KIWIFY_ACCOUNT_ID="..."
+
+3. Redeploy da Edge Function:
+   npx supabase functions deploy kiwify-api
+            `, 'error');
+          }
+
+          showResult(`Detalhes técnicos:\n${JSON.stringify(result, null, 2)}`, 'error');
+          return;
+        }
+
+        const isValid = result.token_valid;
+        const expiresAt = result.expires_at;
+        const source = result.source;
+
+        if (isValid) {
+          const expiresDate = new Date(expiresAt);
+          const now = new Date();
+          const hoursUntilExpiry = ((expiresAt - now.getTime()) / (1000 * 60 * 60)).toFixed(1);
+
+          const statusHtml = `
+<div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 15px 0;">
+  <h3 style="color: #4CAF50; margin-bottom: 15px;">✅ Autenticação OAuth VÁLIDA</h3>
+  <div style="line-height: 1.8;">
+    <strong>Status:</strong> <span class="status-badge status-valid">VÁLIDO</span><br>
+    <strong>Fonte do Token:</strong> ${source || 'N/A'}<br>
+    <strong>Expira em:</strong> ${expiresDate.toLocaleString('pt-BR')}<br>
+    <strong>Tempo restante:</strong> ${hoursUntilExpiry} horas<br>
+  </div>
+</div>
+          `;
+
+          document.getElementById('output').insertAdjacentHTML('beforeend', statusHtml);
+
+          showResult(`
+✅ Token OAuth funcionando corretamente!
+
+Próximos passos:
+1. Use a ferramenta "Descobrir Planos" para encontrar os IDs
+2. Configure os IDs no .env.local e nos Secrets
+3. Teste a sincronização de compras
+          `, 'success');
+
+        } else {
+          showResult(`
+⚠️ Token OAuth INVÁLIDO ou EXPIRADO
+
+Status: ${isValid ? 'Válido' : 'Inválido'}
+Expira em: ${expiresAt ? new Date(expiresAt).toLocaleString('pt-BR') : 'Desconhecido'}
+Fonte: ${source || 'N/A'}
+
+Tente:
+1. Clicar em "Forçar Refresh Token"
+2. Verificar se as credenciais estão corretas
+3. Verificar logs da Edge Function no Supabase
+          `, 'warning');
+        }
+
+        showResult(`\n📄 Resposta completa da API:\n${JSON.stringify(result, null, 2)}`, 'info');
+
+      } catch (error) {
+        showResult(`❌ Erro de conexão: ${error.message}`, 'error');
+        showResult(`
+Possíveis causas:
+• Edge Function kiwify-api não está deployada
+• Problemas de rede/CORS
+• Supabase URL ou ANON_KEY incorretos
+
+Verifique:
+1. Se a função está deployada: supabase functions list
+2. Console do navegador (F12) para mais detalhes
+3. Dashboard do Supabase → Edge Functions
+        `, 'error');
+        console.error('Erro completo:', error);
+      }
+    }
+
+    async function testOAuthRefresh() {
+      showResult('🔄 Forçando refresh do token OAuth...', 'info');
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/kiwify-api`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            action: 'oauth_status',
+            force_refresh: true
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          showResult(`❌ Erro ao fazer refresh: ${result.error || 'Falha desconhecida'}`, 'error');
+          showResult(`Detalhes técnicos:\n${JSON.stringify(result, null, 2)}`, 'error');
+          return;
+        }
+
+        showResult('✅ Token atualizado com sucesso!', 'success');
+        showResult(`
+📊 Novo Token:
+   Válido: ${result.token_valid ? 'Sim' : 'Não'}
+   Expira em: ${result.expires_at ? new Date(result.expires_at).toLocaleString('pt-BR') : 'N/A'}
+   Fonte: ${result.source || 'N/A'}
+        `, 'success');
+
+        showResult(`\n📄 Resposta completa:\n${JSON.stringify(result, null, 2)}`, 'info');
+
+      } catch (error) {
+        showResult(`❌ Erro: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+
+    function showResult(message, type = 'info') {
+      const output = document.getElementById('output');
+      const div = document.createElement('div');
+      div.className = `result result-${type}`;
+      div.innerHTML = `<pre>${message}</pre>`;
+      output.appendChild(div);
+      div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearResults() {
+      document.getElementById('output').innerHTML = '';
+    }
+
+    // Auto-test ao carregar
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        showResult('👋 Bem-vindo! Clique em "Verificar Status OAuth" para começar.', 'info');
+      }, 500);
+    });
+  </script>
+</body>
+</html>
