@@ -1,0 +1,63 @@
+═══════════════════════════════════════════════════════════════
+SOLUÇÃO FINAL - KIWIFY OAUTH FUNCIONANDO
+═══════════════════════════════════════════════════════════════
+
+PROBLEMAS IDENTIFICADOS E CORRIGIDOS:
+
+1. ❌ URL incorreta: /oauth/token
+   ✅ URL correta: /v1/oauth/token
+
+2. ❌ Content-Type: application/json
+   ✅ Content-Type: application/x-www-form-urlencoded
+
+3. ❌ Credenciais antigas/inválidas
+   ✅ Credenciais atualizadas do painel Kiwify
+
+═══════════════════════════════════════════════════════════════
+EXECUTE NO SERVIDOR (NESTA ORDEM)
+═══════════════════════════════════════════════════════════════
+
+cd ~/projetos/nutrimais
+
+# 1. Atualizar código do Git
+git pull
+
+# 2. Reconfigurar secrets com as credenciais CORRETAS
+npx supabase secrets set KIWIFY_CLIENT_ID=3d72644f-8407-4adf-af03-b8754105d659
+npx supabase secrets set KIWIFY_CLIENT_SECRET=6ac6905be677659ffd1e370bdf01bad7aaf3b8a86d979b2bbac1a5eb5d15c507
+npx supabase secrets set KIWIFY_ACCOUNT_ID=av8qNBGVVoyVD75
+
+# 3. Verificar secrets
+npx supabase secrets list
+
+# 4. Redeploy da função com código corrigido
+npx supabase functions deploy kiwify-api
+
+# 5. Testar
+curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" \
+  -d '{"action":"oauth_status"}'
+
+═══════════════════════════════════════════════════════════════
+RESULTADO ESPERADO DO TESTE
+═══════════════════════════════════════════════════════════════
+
+{
+  "token_valid": true,
+  "expires_at": 1762210665000,
+  "source": "api"
+}
+
+Se ver isso, FUNCIONOU! ✅
+
+═══════════════════════════════════════════════════════════════
+PRÓXIMOS PASSOS APÓS SUCESSO
+═══════════════════════════════════════════════════════════════
+
+1. Deploy da função kiwify-sync
+2. Descobrir Plan IDs usando test-kiwify-discover-plans.html
+3. Configurar KIWIFY_PLAN_MONTHLY_ID, QUARTERLY e ANNUAL
+4. Testar sincronização completa
+
+═══════════════════════════════════════════════════════════════

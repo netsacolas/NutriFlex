@@ -220,16 +220,18 @@ export class KiwifyApiClient {
 
     this.logger.info('oauth_token_refresh', { source: forceRefresh ? 'forced' : 'cache_miss' });
 
-    const response = await fetch(`${BASE_URL}/oauth/token`, {
+    const params = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+    });
+
+    const response = await fetch(`${BASE_URL}/v1/oauth/token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
-        grant_type: 'client_credentials',
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-      }),
+      body: params.toString(),
     });
 
     if (!response.ok) {
