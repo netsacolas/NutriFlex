@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste Edge Function Admin</title>
+  <style>
+    body {
+      font-family: monospace;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #00ff00;
+    }
+    button {
+      background: #00ff00;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      margin: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #00cc00;
+    }
+    .result {
+      background: #000;
+      padding: 16px;
+      margin: 16px 0;
+      border: 1px solid #00ff00;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .success { color: #00ff00; }
+    .error { color: #ff0000; }
+    .warning { color: #ffaa00; }
+    h1 { color: #00ff00; }
+    h2 { color: #00cc00; margin-top: 32px; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Teste da Edge Function Admin</h1>
+  <p>Este arquivo testa se a Edge Function admin-operations está funcionando.</p>
+
+  <h2>PASSO 1: Teste de Ping (sem autenticação)</h2>
+  <button onclick="testPing()">🏓 Testar Ping</button>
+  <div id="ping-result" class="result"></div>
+
+  <h2>PASSO 2: Verificar se você está logado</h2>
+  <button onclick="checkAuth()">👤 Verificar Login</button>
+  <div id="auth-result" class="result"></div>
+
+  <h2>PASSO 3: Verificar se você é Admin</h2>
+  <button onclick="checkAdmin()">🛡️ Verificar Admin</button>
+  <div id="admin-result" class="result"></div>
+
+  <h2>PASSO 4: Testar listagem de usuários</h2>
+  <button onclick="testListUsers()">📋 Listar Usuários</button>
+  <div id="list-result" class="result"></div>
+
+  <h2>PASSO 5: Testar métricas</h2>
+  <button onclick="testMetrics()">📊 Buscar Métricas</button>
+  <div id="metrics-result" class="result"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://keawapzxqoyesptwpwav.supabase.co'
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8'
+    const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-operations`
+
+    function log(elementId, message, type = 'success') {
+      const el = document.getElementById(elementId)
+      el.className = `result ${type}`
+      el.textContent = message
+    }
+
+    async function testPing() {
+      log('ping-result', '⏳ Testando...', 'warning')
+      try {
+        const response = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ action: 'get_metrics', type: 'plan' })
+        })
+
+        const text = await response.text()
+
+        if (response.status === 401) {
+          log('ping-result',
+            `✅ FUNÇÃO ESTÁ FUNCIONANDO!\n\n` +
+            `Status: 401 Unauthorized (esperado sem login)\n` +
+            `Resposta: ${text}\n\n` +
+            `➡️ Isso significa que a Edge Function foi deployada e está respondendo.\n` +
+            `➡️ Agora faça login e teste os próximos passos.`,
+            'success'
+          )
+        } else if (response.ok) {
+          log('ping-result',
+            `✅ FUNÇÃO RESPONDEU!\n\nStatus: ${response.status}\nResposta:\n${text}`,
+            'success'
+          )
+        } else {
+          log('ping-result',
+            `⚠️ Função respondeu mas com erro\n\nStatus: ${response.status}\nResposta: ${text}`,
+            'warning'
+          )
+        }
+      } catch (error) {
+        log('ping-result',
+          `❌ ERRO: Função NÃO está deployada ou não está acessível!\n\n` +
+          `${error.message}\n\n` +
+          `➡️ Faça o deploy da função seguindo o GUIA_RAPIDO_DEPLOY.md`,
+          'error'
+        )
+      }
+    }
+
+    async function checkAuth() {
+      log('auth-result', '⏳ Verificando...', 'warning')
+      try {
+        const authData = localStorage.getItem('sb-keawapzxqoyesptwpwav-auth-token')
+
+        if (!authData) {
+          log('auth-result',
+            `❌ Você NÃO está logado!\n\n` +
+            `➡️ Faça login na aplicação primeiro e depois volte aqui.`,
+            'error'
+          )
+          return null
+        }
+
+        const auth = JSON.parse(authData)
+        const token = auth.access_token
+        const email = auth.user?.email
+
+        if (!token) {
+          log('auth-result',
+            `❌ Token não encontrado no localStorage!\n\n` +
+            `➡️ Faça login novamente.`,
+            'error'
+          )
+          return null
+        }
+
+        // Verificar se o token é válido
+        const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (response.ok) {
+          const user = await response.json()
+          log('auth-result',
+            `✅ Você está logado!\n\n` +
+            `Email: ${user.email}\n` +
+            `ID: ${user.id}\n\n` +
+            `Token válido: ✓`,
+            'success'
+          )
+          return token
+        } else {
+          log('auth-result',
+            `❌ Token expirado ou inválido!\n\n` +
+            `Status: ${response.status}\n\n` +
+            `➡️ Faça logout e login novamente.`,
+            'error'
+          )
+          return null
+        }
+      } catch (error) {
+        log('auth-result', `❌ ERRO: ${error.message}`, 'error')
+        return null
+      }
+    }
+
+    async function checkAdmin() {
+      log('admin-result', '⏳ Verificando...', 'warning')
+
+      const token = await checkAuth()
+      if (!token) {
+        log('admin-result', '❌ Faça login primeiro!', 'error')
+        return
+      }
+
+      try {
+        const response = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ action: 'check_admin' })
+        })
+
+        const data = await response.json()
+
+        if (response.ok && data.isAdmin) {
+          log('admin-result',
+            `✅ Você é ADMIN!\n\n` +
+            `${JSON.stringify(data, null, 2)}`,
+            'success'
+          )
+        } else if (response.status === 403 || (response.ok && !data.isAdmin)) {
+          log('admin-result',
+            `❌ Você NÃO é admin!\n\n` +
+            `Execute esta query no SQL Editor:\n\n` +
+            `INSERT INTO public.admin_users (user_id, email)\n` +
+            `SELECT id, 'mariocromia@gmail.com'\n` +
+            `FROM auth.users\n` +
+            `WHERE email = 'mariocromia@gmail.com'\n` +
+            `ON CONFLICT (email) DO NOTHING;`,
+            'error'
+          )
+        } else {
+          log('admin-result',
+            `⚠️ Resposta inesperada\n\n` +
+            `Status: ${response.status}\n` +
+            `Resposta: ${JSON.stringify(data, null, 2)}`,
+            'warning'
+          )
+        }
+      } catch (error) {
+        log('admin-result', `❌ ERRO: ${error.message}`, 'error')
+      }
+    }
+
+    async function testListUsers() {
+      log('list-result', '⏳ Testando...', 'warning')
+
+      const token = await checkAuth()
+      if (!token) {
+        log('list-result', '❌ Faça login primeiro!', 'error')
+        return
+      }
+
+      try {
+        const response = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            action: 'list_users',
+            pagination: { page: 1, pageSize: 5 }
+          })
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          log('list-result',
+            `✅ Listagem funcionou!\n\n` +
+            `Total: ${data.total || 0}\n` +
+            `Usuários retornados: ${data.users?.length || 0}\n\n` +
+            `Dados:\n${JSON.stringify(data, null, 2)}`,
+            'success'
+          )
+        } else {
+          log('list-result',
+            `❌ Erro na listagem\n\n` +
+            `Status: ${response.status}\n` +
+            `Erro: ${JSON.stringify(data, null, 2)}`,
+            'error'
+          )
+        }
+      } catch (error) {
+        log('list-result', `❌ ERRO: ${error.message}`, 'error')
+      }
+    }
+
+    async function testMetrics() {
+      log('metrics-result', '⏳ Testando...', 'warning')
+
+      const token = await checkAuth()
+      if (!token) {
+        log('metrics-result', '❌ Faça login primeiro!', 'error')
+        return
+      }
+
+      try {
+        const response = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            action: 'get_metrics',
+            type: 'plan'
+          })
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          log('metrics-result',
+            `✅ Métricas funcionaram!\n\n` +
+            `${JSON.stringify(data, null, 2)}`,
+            'success'
+          )
+        } else {
+          log('metrics-result',
+            `❌ Erro nas métricas\n\n` +
+            `Status: ${response.status}\n` +
+            `Erro: ${JSON.stringify(data, null, 2)}`,
+            'error'
+          )
+        }
+      } catch (error) {
+        log('metrics-result', `❌ ERRO: ${error.message}`, 'error')
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,4 +1,117 @@
-# 📋 Próximos Passos - NutriMais AI
+# 🎯 Próximos Passos - Resolver "Unauthorized" no Painel Admin
+
+## Status Atual
+✅ Código implementado (migrations, Edge Function, frontend)
+❌ Edge Function NÃO deployada no Supabase
+❌ Painel admin mostra "Unauthorized"
+❌ Sem logs em Edge Functions
+
+---
+
+## 🚀 AÇÃO NECESSÁRIA
+
+Você precisa fazer o **deploy manual** da Edge Function no Dashboard do Supabase.
+
+### Por que manual?
+O CLI está com problema de autenticação (`Unauthorized (401)`), então o deploy via `npx supabase functions deploy` não funciona.
+
+---
+
+## 📋 Checklist de Deploy
+
+### 1️⃣ Deploy da Edge Function (CRÍTICO!)
+
+**Siga o guia:** [`GUIA_RAPIDO_DEPLOY.md`](GUIA_RAPIDO_DEPLOY.md)
+
+Resumo:
+1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions
+2. Crie/edite `admin-operations`
+3. Copie **TODO** o código de `supabase/functions/admin-operations/index.ts`
+4. Clique em "Deploy"
+
+---
+
+### 2️⃣ Configurar Variáveis de Ambiente
+
+1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/settings/functions
+2. Adicione:
+   - `PROJECT_URL` = `https://keawapzxqoyesptwpwav.supabase.co`
+   - `SERVICE_ROLE_KEY` = (copie de Settings > API > service_role)
+
+---
+
+### 3️⃣ Testar o Deploy
+
+**Opção A: Teste rápido no navegador**
+
+Abra: [`http://localhost:5173/test-admin-function.html`](http://localhost:5173/test-admin-function.html)
+
+Clique em cada botão na ordem:
+1. 🏓 Testar Ping → deve mostrar "FUNÇÃO ESTÁ FUNCIONANDO"
+2. 👤 Verificar Login → deve confirmar que você está logado
+3. 🛡️ Verificar Admin → deve confirmar que você é admin
+4. 📋 Listar Usuários → deve mostrar lista de usuários
+5. 📊 Buscar Métricas → deve mostrar métricas
+
+**Opção B: Teste direto (sem login)**
+
+Abra: https://keawapzxqoyesptwpwav.functions.supabase.co/admin-operations
+
+**Resultado esperado:**
+- ✅ Erro 400 ou JSON = função está funcionando
+- ❌ Timeout = função NÃO foi deployada
+
+---
+
+### 4️⃣ Verificar Cadastro Admin
+
+Se o teste mostrar "você NÃO é admin", execute no SQL Editor:
+
+```sql
+INSERT INTO public.admin_users (user_id, email)
+SELECT id, 'mariocromia@gmail.com'
+FROM auth.users
+WHERE email = 'mariocromia@gmail.com'
+ON CONFLICT (email) DO NOTHING;
+```
+
+---
+
+## 📁 Arquivos de Referência
+
+- **Guia rápido:** [`GUIA_RAPIDO_DEPLOY.md`](GUIA_RAPIDO_DEPLOY.md)
+- **Código da function:** [`supabase/functions/admin-operations/index.ts`](supabase/functions/admin-operations/index.ts)
+- **Script de verificação:** [`scripts/verify-admin-setup.sql`](scripts/verify-admin-setup.sql)
+- **Teste no navegador:** [`public/test-admin-function.html`](public/test-admin-function.html)
+
+---
+
+## 🆘 Se Precisar de Ajuda
+
+Execute `scripts/verify-admin-setup.sql` no SQL Editor e me envie o resultado.
+
+Ou abra o arquivo de teste no navegador e me envie os resultados de cada passo.
+
+---
+
+## ✅ Como Saber se Funcionou
+
+1. URL da função responde (mesmo com erro 400)
+2. Teste no navegador mostra "✅" em todos os passos
+3. Página `/admin` carrega sem "Unauthorized"
+4. Cards de métricas aparecem
+5. Tabela de usuários carrega
+
+---
+
+**Importante:** O problema é **exclusivamente** o deploy da Edge Function. Todo o resto (migrations, código frontend, banco de dados) está pronto e funcionando.
+
+Assim que você fizer o deploy manual seguindo o guia, tudo vai funcionar! 🚀
+
+---
+---
+
+# 📋 Implementações Anteriores - NutriMais AI
 
 ## ✅ O que já está implementado:
 
