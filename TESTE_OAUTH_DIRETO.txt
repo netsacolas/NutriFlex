@@ -1,0 +1,52 @@
+═══════════════════════════════════════════════════════════════
+TESTE DIRETO DA API OAUTH DA KIWIFY
+═══════════════════════════════════════════════════════════════
+
+Execute este comando no servidor para testar a autenticação OAuth
+diretamente com a API da Kiwify (sem passar pelo Supabase):
+
+curl -X POST https://public-api.kiwify.com/oauth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "client_credentials",
+    "client_id": "4c747409-c212-45d1-aaf9-4a5d43dac808",
+    "client_secret": "00d8f9dc83a5afeeee0fe459cfb5265272b95e5458c4908411273e5dfac03401"
+  }'
+
+═══════════════════════════════════════════════════════════════
+RESULTADOS POSSÍVEIS
+═══════════════════════════════════════════════════════════════
+
+✅ SUCESSO (Status 200):
+{
+  "access_token": "eyJhbGc...",
+  "expires_in": 3600,
+  "token_type": "Bearer"
+}
+
+❌ ERRO 401 (Credenciais Inválidas):
+{
+  "error": "invalid_client",
+  "error_description": "Client authentication failed"
+}
+
+❌ ERRO 403 (Acesso Negado):
+{
+  "error": "access_denied",
+  "error_description": "..."
+}
+
+❌ TIMEOUT/Network Error:
+curl: (7) Failed to connect to public-api.kiwify.com
+
+═══════════════════════════════════════════════════════════════
+ME ENVIE O RESULTADO COMPLETO
+═══════════════════════════════════════════════════════════════
+
+Isso vai mostrar se o problema é:
+1. Credenciais OAuth inválidas/expiradas
+2. Problema de rede/firewall
+3. API da Kiwify fora do ar
+4. Outro erro específico
+
+Execute e me envie o resultado!
