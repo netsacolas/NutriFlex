@@ -22,7 +22,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import HydrationPage from './pages/HydrationPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import ThankYouPage from './pages/ThankYouPage';
-import { AdminPanel } from './pages/AdminPanel';
+import { AdminPanel } from './pages/AdminPanelNew';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
