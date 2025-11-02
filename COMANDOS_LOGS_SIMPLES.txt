@@ -1,0 +1,33 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMANDOS PARA VER LOGS - COPIE E COLE NO SERVIDOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ Ver últimos 30 logs da função kiwify-api:
+
+npx supabase functions logs kiwify-api --project-ref keawapzxqoyesptwpwav --limit 30
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2️⃣ Se houver muitos logs, procure pelo correlation_id específico:
+
+npx supabase functions logs kiwify-api --project-ref keawapzxqoyesptwpwav --limit 50 | grep -A 10 "04519c27-7f1c-402d-9f88-e259380248c77"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3️⃣ Ver logs em tempo real (pressione Ctrl+C para parar):
+
+npx supabase functions logs kiwify-api --project-ref keawapzxqoyesptwpwav --follow
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANTE:
+- Execute o comando 1 primeiro
+- COPIE TODO O RESULTADO e me envie
+- Procure especialmente por mensagens de erro relacionadas a:
+  • "CLIENT_SECRET"
+  • "credentials"
+  • "OAuth"
+  • "Failed to fetch"
+  • "401" ou "403"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

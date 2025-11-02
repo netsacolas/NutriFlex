@@ -15,7 +15,8 @@
       "Bash(supabase db push:*)",
       "Bash(npx supabase:*)",
       "Bash(move \"src\\pages\\AdminPanel.tsx\" \"pages\\AdminPanel.tsx\")",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(\"c:\\NutriMais\\PROXIMOS_PASSOS.md\")"
     ],
     "deny": [],
     "ask": []

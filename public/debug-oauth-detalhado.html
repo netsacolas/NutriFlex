@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug OAuth Detalhado</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #252526;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    h1 {
+      color: #4ec9b0;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+      font-family: inherit;
+    }
+    button:hover {
+      background: #1177bb;
+    }
+    .log {
+      background: #1e1e1e;
+      border-left: 3px solid #4ec9b0;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .log.error {
+      border-left-color: #f48771;
+      background: #2d1e1e;
+    }
+    .log.success {
+      border-left-color: #89d185;
+      background: #1e2d1e;
+    }
+    .log.warn {
+      border-left-color: #dcdcaa;
+      background: #2d2d1e;
+    }
+    .timestamp {
+      color: #6a9955;
+      margin-right: 10px;
+    }
+    #output {
+      margin-top: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    pre {
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .status-ok { background: #89d185; color: #1e1e1e; }
+    .status-fail { background: #f48771; color: #1e1e1e; }
+    .code-inline {
+      background: #3e3e42;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #ce9178;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Debug OAuth Detalhado - Kiwify</h1>
+
+    <div>
+      <button onclick="testStep1()">1️⃣ Testar Conectividade</button>
+      <button onclick="testStep2()">2️⃣ Testar OAuth Status</button>
+      <button onclick="testStep3()">3️⃣ Forçar Refresh Token</button>
+      <button onclick="testStep4()">4️⃣ Listar Assinaturas (Teste Completo)</button>
+      <button onclick="clearLogs()">🗑️ Limpar</button>
+    </div>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    const API_URL = 'https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8';
+
+    function log(message, type = 'info') {
+      const output = document.getElementById('output');
+      const div = document.createElement('div');
+      div.className = `log ${type}`;
+      const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+      div.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
+      output.appendChild(div);
+      div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearLogs() {
+      document.getElementById('output').innerHTML = '';
+    }
+
+    async function testStep1() {
+      log('🔗 Teste 1: Verificando conectividade com a Edge Function...', 'info');
+
+      try {
+        const startTime = Date.now();
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ANON_KEY}`,
+          },
+          body: JSON.stringify({ action: 'ping' }) // Ação inválida de propósito
+        });
+
+        const endTime = Date.now();
+        const duration = endTime - startTime;
+
+        log(`⏱️ Tempo de resposta: ${duration}ms`, duration < 1000 ? 'success' : 'warn');
+        log(`📊 Status HTTP: ${response.status}`, response.status === 200 || response.status === 400 ? 'success' : 'error');
+
+        const data = await response.json();
+
+        if (response.status === 400 && data.error && data.error.includes('desconhecida')) {
+          log('✅ Edge Function está ONLINE e respondendo!', 'success');
+          log('Servidor rejeitou ação inválida corretamente (comportamento esperado)', 'success');
+        } else {
+          log('📄 Resposta:', 'info');
+          log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+        }
+
+      } catch (error) {
+        log(`❌ Erro de conectividade: ${error.message}`, 'error');
+        log('Possíveis causas:', 'error');
+        log('• Edge Function não está deployed', 'error');
+        log('• Problemas de rede/CORS', 'error');
+        log('• URL incorreta', 'error');
+      }
+    }
+
+    async function testStep2() {
+      log('🔐 Teste 2: Verificando OAuth Status...', 'info');
+
+      try {
+        const startTime = Date.now();
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            action: 'oauth_status',
+            force_refresh: false
+          })
+        });
+
+        const endTime = Date.now();
+        const duration = endTime - startTime;
+
+        log(`⏱️ Tempo de resposta: ${duration}ms`, duration < 2000 ? 'success' : 'warn');
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          log(`❌ Erro HTTP ${response.status}`, 'error');
+          log(`📄 Resposta de erro:`, 'error');
+          log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+
+          if (data.correlation_id) {
+            log(`🔍 Correlation ID: <code class="code-inline">${data.correlation_id}</code>`, 'warn');
+            log('Use este ID para buscar nos logs do Supabase:', 'warn');
+            log(`<code class="code-inline">npx supabase functions logs kiwify-api --project-ref keawapzxqoyesptwpwav --limit 50 | grep "${data.correlation_id}"</code>`, 'warn');
+          }
+
+          // Diagnóstico do erro
+          if (data.error && data.error.includes('credentials')) {
+            log('💡 DIAGNÓSTICO: Problema com credenciais OAuth', 'warn');
+            log('Verifique se os secrets estão configurados:', 'warn');
+            log('• KIWIFY_CLIENT_ID', 'warn');
+            log('• KIWIFY_CLIENT_SECRET', 'warn');
+            log('• KIWIFY_ACCOUNT_ID', 'warn');
+          }
+
+          return;
+        }
+
+        log(`✅ OAuth Status obtido com sucesso!`, 'success');
+        log(`<span class="status-badge ${data.token_valid ? 'status-ok' : 'status-fail'}">${data.token_valid ? 'TOKEN VÁLIDO' : 'TOKEN INVÁLIDO'}</span>`, 'info');
+
+        if (data.token_valid) {
+          const expiresAt = new Date(data.expires_at);
+          const now = new Date();
+          const hoursLeft = ((data.expires_at - now.getTime()) / (1000 * 60 * 60)).toFixed(1);
+
+          log(`📅 Expira em: ${expiresAt.toLocaleString('pt-BR')}`, 'success');
+          log(`⏳ Tempo restante: ${hoursLeft} horas`, 'success');
+          log(`📦 Fonte: ${data.source}`, 'info');
+        }
+
+        log(`📄 Resposta completa:`, 'info');
+        log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+
+      } catch (error) {
+        log(`❌ Erro: ${error.message}`, 'error');
+        console.error('Erro completo:', error);
+      }
+    }
+
+    async function testStep3() {
+      log('🔄 Teste 3: Forçando refresh do token OAuth...', 'info');
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            action: 'oauth_status',
+            force_refresh: true
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          log(`❌ Erro ao fazer refresh`, 'error');
+          log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+          return;
+        }
+
+        log(`✅ Token atualizado com sucesso!`, 'success');
+        log(`<span class="status-badge ${data.token_valid ? 'status-ok' : 'status-fail'}">${data.token_valid ? 'TOKEN VÁLIDO' : 'TOKEN INVÁLIDO'}</span>`, 'info');
+
+        if (data.expires_at) {
+          const expiresAt = new Date(data.expires_at);
+          log(`📅 Nova expiração: ${expiresAt.toLocaleString('pt-BR')}`, 'success');
+        }
+
+        log(`📄 Resposta:`, 'info');
+        log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+
+      } catch (error) {
+        log(`❌ Erro: ${error.message}`, 'error');
+      }
+    }
+
+    async function testStep4() {
+      log('📋 Teste 4: Listando assinaturas (teste completo de integração)...', 'info');
+      log('Email de teste: birofov720@hh7f.com', 'info');
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            action: 'list_subscriptions',
+            email: 'birofov720@hh7f.com'
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          log(`❌ Erro ao listar assinaturas`, 'error');
+          log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+
+          if (data.correlation_id) {
+            log(`🔍 Correlation ID: <code class="code-inline">${data.correlation_id}</code>`, 'warn');
+          }
+          return;
+        }
+
+        log(`✅ Assinaturas obtidas com sucesso!`, 'success');
+
+        if (data.data && data.data.length > 0) {
+          log(`📊 Total de assinaturas encontradas: ${data.data.length}`, 'success');
+
+          data.data.forEach((sub, i) => {
+            log(`<strong>Assinatura ${i + 1}:</strong>`, 'info');
+            log(`  ID: ${sub.id}`, 'info');
+            log(`  Plano ID: ${sub.plan_id || sub.product_id || 'N/A'}`, 'info');
+            log(`  Status: ${sub.status || sub.subscription_status || 'N/A'}`, 'info');
+            log(`  Frequência: ${sub.frequency || sub.billing_period || 'N/A'}`, 'info');
+          });
+        } else {
+          log(`⚠️ Nenhuma assinatura encontrada para este email`, 'warn');
+        }
+
+        log(`📄 Resposta completa:`, 'info');
+        log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+
+      } catch (error) {
+        log(`❌ Erro: ${error.message}`, 'error');
+      }
+    }
+
+    // Auto-start
+    window.addEventListener('load', () => {
+      log('👋 Bem-vindo ao Debug OAuth Detalhado!', 'success');
+      log('Clique nos botões acima para executar os testes em sequência.', 'info');
+      log('', 'info');
+      log('💡 Dica: Execute na ordem (1 → 2 → 3 → 4) para diagnóstico completo', 'warn');
+    });
+  </script>
+</body>
+</html>
