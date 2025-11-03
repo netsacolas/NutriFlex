@@ -342,6 +342,16 @@ const processSubscription = async (
     ctx.metrics.lastSubscriptionTimestamp,
     subscriptionUpdatedAt(subscription),
   );
+
+  // Process payment embedded in sale (Kiwify returns payment data inside each sale)
+  if (subscription.payment && subscription.status && isSettledPayment(subscription.status as string)) {
+    await processPaymentFromSale(subscription, {
+      userId,
+      localId: data?.id ?? null,
+      plan,
+      status,
+    }, ctx);
+  }
 };
 
 interface PaymentProcessingContext {
@@ -419,6 +429,77 @@ const processPayment = async (
       ctx.metrics.errors += 1;
       ctx.logger.error('payment_insert_failed', {
         subscription_id: subscriptionId,
+        kiwify_order_id: kiwifyOrderId,
+        ...serializeError(error),
+      });
+    }
+    return;
+  }
+
+  ctx.metrics.paymentsInserted += 1;
+  ctx.metrics.lastPaymentTimestamp = updateLatest(
+    ctx.metrics.lastPaymentTimestamp,
+    paidAt,
+  );
+};
+
+const processPaymentFromSale = async (
+  sale: JsonRecord,
+  subscriptionContext: SubscriptionContext,
+  ctx: SubscriptionProcessingContext,
+): Promise<void> => {
+  const paymentData = sale.payment as JsonRecord | undefined;
+  if (!paymentData) {
+    return;
+  }
+
+  ctx.metrics.paymentsFetched += 1;
+
+  const kiwifyOrderId = sale.id as string | undefined;
+  if (!kiwifyOrderId) {
+    ctx.logger.warn('payment_from_sale_missing_id', { sale_id: sale.id });
+    ctx.metrics.paymentsSkipped += 1;
+    return;
+  }
+
+  // Extract payment info from sale structure
+  const netAmount = typeof paymentData.net_amount === 'number'
+    ? paymentData.net_amount
+    : (typeof sale.net_amount === 'number' ? sale.net_amount : 0);
+
+  const paidAt = normalizeIso(
+    sale.approved_date ?? sale.paid_at ?? sale.updated_at ?? sale.created_at
+  ) ?? new Date().toISOString();
+
+  const payload = {
+    user_id: subscriptionContext.userId,
+    subscription_id: subscriptionContext.localId,
+    plan: subscriptionContext.plan,
+    amount_cents: netAmount,
+    currency: normalizeCurrency(paymentData.charge_currency ?? sale.currency),
+    payment_method: getFirstNonEmpty(
+      sale.payment_method as string | undefined,
+      paymentData.payment_method as string | undefined,
+    ),
+    kiwify_order_id: kiwifyOrderId,
+    kiwify_transaction_id: kiwifyOrderId, // Kiwify uses order ID as transaction ID
+    payment_status: 'paid',
+    paid_at: paidAt,
+  };
+
+  const { error } = await ctx.supabase
+    .from('payment_history')
+    .insert(payload);
+
+  if (error) {
+    if ((error as { code?: string }).code === '23505') {
+      ctx.metrics.paymentsSkipped += 1;
+      ctx.logger.warn('payment_from_sale_duplicate', {
+        kiwify_order_id: kiwifyOrderId,
+      });
+    } else {
+      ctx.metrics.errors += 1;
+      ctx.logger.error('payment_from_sale_insert_failed', {
         kiwify_order_id: kiwifyOrderId,
         ...serializeError(error),
       });
@@ -569,20 +650,9 @@ export const runIncrementalSync = async (options: IncrementalSyncOptions): Promi
     },
   );
 
-  if (options.includePayments !== false) {
-    await iteratePayments(
-      options.client,
-      { paidFrom: since, paidTo: options.until, perPage },
-      async (payment) => {
-        await processPayment(payment, {
-          supabase: options.supabase,
-          logger: options.logger,
-          metrics,
-          subscriptionMap,
-        });
-      },
-    );
-  }
+  // Note: Payments are now processed inline within processSubscription
+  // The Kiwify API returns payment data embedded in each sale object
+  // No need for separate /v1/payments endpoint (which doesn't exist)
 
   const lastTimestamp =
     metrics.lastPaymentTimestamp &&
@@ -675,20 +745,9 @@ export const runManualSync = async (options: ManualSyncOptions): Promise<SyncRes
     await collect({ email });
   }
 
-  if (options.includePayments !== false) {
-    await iteratePayments(
-      options.client,
-      { perPage, paidFrom: since, paidTo: until ?? undefined },
-      async (payment) => {
-        await processPayment(payment, {
-          supabase: options.supabase,
-          logger: options.logger,
-          metrics,
-          subscriptionMap,
-        });
-      },
-    );
-  }
+  // Note: Payments are now processed inline within processSubscription
+  // The Kiwify API returns payment data embedded in each sale object
+  // No need for separate /v1/payments endpoint (which doesn't exist)
 
   const finishedAt = new Date().toISOString();
 
