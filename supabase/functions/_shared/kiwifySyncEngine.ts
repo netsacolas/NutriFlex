@@ -343,8 +343,9 @@ const processSubscription = async (
     subscriptionUpdatedAt(subscription),
   );
 
-  // Process payment embedded in sale (Kiwify returns payment data inside each sale)
-  if (subscription.payment && subscription.status && isSettledPayment(subscription.status as string)) {
+  // Process payment from sale (Kiwify may return payment inline or in nested object)
+  // Only process if status indicates payment was settled
+  if (subscription.status && isSettledPayment(subscription.status as string)) {
     await processPaymentFromSale(subscription, {
       userId,
       localId: data?.id ?? null,
@@ -448,11 +449,6 @@ const processPaymentFromSale = async (
   subscriptionContext: SubscriptionContext,
   ctx: SubscriptionProcessingContext,
 ): Promise<void> => {
-  const paymentData = sale.payment as JsonRecord | undefined;
-  if (!paymentData) {
-    return;
-  }
-
   ctx.metrics.paymentsFetched += 1;
 
   const kiwifyOrderId = sale.id as string | undefined;
@@ -462,10 +458,17 @@ const processPaymentFromSale = async (
     return;
   }
 
-  // Extract payment info from sale structure
-  const netAmount = typeof paymentData.net_amount === 'number'
+  // Kiwify API may return payment data in two ways:
+  // 1. Nested object: sale.payment.net_amount (when fetching single sale)
+  // 2. Inline: sale.net_amount (when listing multiple sales)
+  const paymentData = sale.payment as JsonRecord | undefined;
+
+  // Extract payment info - prefer nested object, fallback to inline fields
+  const netAmount = paymentData && typeof paymentData.net_amount === 'number'
     ? paymentData.net_amount
     : (typeof sale.net_amount === 'number' ? sale.net_amount : 0);
+
+  const currency = paymentData?.charge_currency ?? paymentData?.currency ?? sale.currency;
 
   const paidAt = normalizeIso(
     sale.approved_date ?? sale.paid_at ?? sale.updated_at ?? sale.created_at
@@ -476,10 +479,10 @@ const processPaymentFromSale = async (
     subscription_id: subscriptionContext.localId,
     plan: subscriptionContext.plan,
     amount_cents: netAmount,
-    currency: normalizeCurrency(paymentData.charge_currency ?? sale.currency),
+    currency: normalizeCurrency(currency),
     payment_method: getFirstNonEmpty(
       sale.payment_method as string | undefined,
-      paymentData.payment_method as string | undefined,
+      paymentData?.payment_method as string | undefined,
     ),
     kiwify_order_id: kiwifyOrderId,
     kiwify_transaction_id: kiwifyOrderId, // Kiwify uses order ID as transaction ID
