@@ -1,0 +1,154 @@
+═══════════════════════════════════════════════════════════════
+DEPLOY MANUAL DA EDGE FUNCTION KIWIFY-API
+═══════════════════════════════════════════════════════════════
+
+CORREÇÕES IMPLEMENTADAS:
+✅ resolvePlan agora busca plan_id em product.plan_id
+✅ resolvePlan usa fallback em product.plan_name (Tri/Mensal/Anual)
+✅ subscriptionPlanId busca em product.plan_id e product.id
+
+PRÓXIMO PASSO: Deploy via Supabase Dashboard
+
+═══════════════════════════════════════════════════════════════
+OPÇÃO 1: DEPLOY VIA DASHBOARD (RECOMENDADO)
+═══════════════════════════════════════════════════════════════
+
+1. Acesse o Supabase Dashboard:
+   https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions
+
+2. Localize a função "kiwify-api"
+
+3. Clique em "Deploy New Version" ou "Update Function"
+
+4. IMPORTANTE: Você precisa fazer o deploy dos seguintes arquivos:
+   - supabase/functions/kiwify-api/index.ts
+   - supabase/functions/_shared/kiwify.ts ✅ MODIFICADO
+   - supabase/functions/_shared/kiwifySyncEngine.ts ✅ MODIFICADO
+   - supabase/functions/_shared/kiwifyClient.ts
+   - supabase/functions/_shared/logger.ts
+
+5. Cole o conteúdo atualizado de cada arquivo (veja abaixo)
+
+═══════════════════════════════════════════════════════════════
+OPÇÃO 2: DEPLOY VIA CLI (COM TOKEN)
+═══════════════════════════════════════════════════════════════
+
+Se você tiver um token de acesso do Supabase:
+
+1. Gere um token de acesso em:
+   https://supabase.com/dashboard/account/tokens
+
+2. Execute:
+   set SUPABASE_ACCESS_TOKEN=seu_token_aqui
+   npx supabase functions deploy kiwify-api --project-ref keawapzxqoyesptwpwav
+
+═══════════════════════════════════════════════════════════════
+OPÇÃO 3: DEPLOY VIA GITHUB ACTIONS (AUTOMÁTICO)
+═══════════════════════════════════════════════════════════════
+
+Se você tem CI/CD configurado:
+
+1. As alterações já foram commitadas e enviadas para o GitHub
+2. O workflow deve fazer o deploy automaticamente
+3. Verifique em: https://github.com/netsacolas/NutriFlex/actions
+
+═══════════════════════════════════════════════════════════════
+VERIFICAR SE O DEPLOY FOI BEM-SUCEDIDO
+═══════════════════════════════════════════════════════════════
+
+Após o deploy, execute:
+
+node debug-kiwify.js
+
+E verifique se os planos estão sendo reconhecidos corretamente.
+
+Ou teste diretamente com uma compra:
+
+1. Faça login no site com birofov720@hh7f.com
+2. Acesse /obrigado
+3. Verifique se a conta é ativada como Premium
+
+═══════════════════════════════════════════════════════════════
+CONTEÚDO DOS ARQUIVOS MODIFICADOS
+═══════════════════════════════════════════════════════════════
+
+📄 supabase/functions/_shared/kiwify.ts
+   - Linha 39-43: Adicionado suporte para productData
+   - Linha 51-52: Busca plan_id em product.plan_id e product.id
+   - Linha 75-86: Fallback para product.plan_name (Tri/Mensal/Anual)
+
+📄 supabase/functions/_shared/kiwifySyncEngine.ts
+   - Linha 208-209: Busca plan_id em product.plan_id e product.id
+
+═══════════════════════════════════════════════════════════════
+TESTE COMPLETO PÓS-DEPLOY
+═══════════════════════════════════════════════════════════════
+
+1. Execute: node debug-kiwify.js
+
+   Deve mostrar:
+   ✅ Status: paid
+   ✅ SERIA MAPEADO PARA: active (Premium deve ser ativado)
+   ✅ Plan ID encontrado: 636ae5ac-1648-413d-9f24-ff428a9a723d
+
+2. Teste sincronização manual via API:
+
+   curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <SEU_TOKEN>" \
+     -d '{"action":"sync_manual","emails":["birofov720@hh7f.com"]}'
+
+3. Verifique a tabela user_subscriptions:
+
+   SELECT user_id, plan, status, kiwify_plan_id
+   FROM user_subscriptions
+   WHERE user_id IN (
+     SELECT id FROM auth.users WHERE email = 'birofov720@hh7f.com'
+   );
+
+   Deve retornar:
+   - plan: premium_quarterly (ou premium_monthly/annual conforme o plano)
+   - status: active
+   - kiwify_plan_id: 636ae5ac-1648-413d-9f24-ff428a9a723d
+
+4. Teste fluxo completo:
+   - Fazer login com usuário que comprou
+   - Acessar /obrigado
+   - Aguardar sincronização
+   - Redirecionar para /app
+   - Verificar se conta está PREMIUM
+
+═══════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA: Deploy falha com erro 401
+SOLUÇÃO: Gere um novo token de acesso ou use o Dashboard
+
+PROBLEMA: Função deployada mas ainda não reconhece planos
+SOLUÇÃO:
+1. Verifique se os secrets KIWIFY_PLAN_*_ID estão corretos
+2. Execute: node debug-kiwify.js para ver qual plan_id a API retorna
+3. Compare com os secrets configurados
+
+PROBLEMA: Status 'paid' mas plano continua 'free'
+SOLUÇÃO:
+1. Verifique logs com: npx supabase functions logs kiwify-api
+2. Procure por erros de mapeamento
+3. Confirme que product.plan_id está presente na resposta
+
+═══════════════════════════════════════════════════════════════
+RESUMO
+═══════════════════════════════════════════════════════════════
+
+✅ Problema identificado: plan_id estava em product.plan_id
+✅ Correção implementada em kiwify.ts e kiwifySyncEngine.ts
+✅ Commit criado: 72b430a
+✅ Push realizado com sucesso
+
+FALTA FAZER:
+1. Deploy da Edge Function (você precisa fazer via Dashboard ou CLI)
+2. Testar sincronização após deploy
+3. Verificar ativação de Premium em compra real
+
+═══════════════════════════════════════════════════════════════
