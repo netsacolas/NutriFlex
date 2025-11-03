@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { supabase } from '../services/supabaseClient';
 
 const ThankYouPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,9 +14,40 @@ const ThankYouPage: React.FC = () => {
   const transactionId = searchParams.get('transaction_id');
 
   useEffect(() => {
-    // Atualiza o status da assinatura
+    // Atualiza o status da assinatura E sincroniza via API
     const updateSubscription = async () => {
       setIsLoading(true);
+
+      try {
+        // Primeiro, tentar sincronizar via API Kiwify
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        const userEmail = sessionData?.session?.user?.email;
+
+        if (token && userEmail) {
+          // Chamar sync_manual para sincronizar a compra recente
+          await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kiwify-api`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                action: 'sync_manual',
+                emails: [userEmail],
+                // Buscar compras das últimas 24 horas
+                since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+              }),
+            }
+          ).catch(err => console.error('Erro ao sincronizar:', err));
+        }
+      } catch (error) {
+        console.error('Erro na sincronização:', error);
+      }
+
+      // Atualizar contexto de assinatura
       await refresh();
       setTimeout(() => setIsLoading(false), 2000);
     };
