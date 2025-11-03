@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════════════
+COMO ACESSAR OS LOGS DO SUPABASE PARA VER O ERRO COMPLETO
+═══════════════════════════════════════════════════════════════
+
+O correlation_id mais recente é: c1e73ea4-945e-49d9-ad8f-d04b39204d07
+
+OPÇÃO 1: Dashboard Web (MAIS FÁCIL)
+═══════════════════════════════════════════════════════════════
+
+1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/logs/edge-functions
+
+2. Selecione a função: kiwify-api
+
+3. Procure por: c1e73ea4-945e-49d9-ad8f-d04b39204d07
+
+4. Copie TODO o stacktrace do erro e me envie
+
+OPÇÃO 2: Via SQL no Dashboard
+═══════════════════════════════════════════════════════════════
+
+1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/editor
+
+2. Cole e execute:
+
+SELECT
+  timestamp,
+  event_message,
+  metadata
+FROM edge_logs
+WHERE metadata->>'correlation_id' = 'c1e73ea4-945e-49d9-ad8f-d04b39204d07'
+ORDER BY timestamp DESC
+LIMIT 50;
+
+3. Me envie o resultado completo
+
+OPÇÃO 3: Teste Local Simplificado
+═══════════════════════════════════════════════════════════════
+
+Vamos tentar sync sem incluir pagamentos primeiro:
+
+curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" \
+  -d '{"action":"sync_manual","emails":["birofov720@hh7f.com"],"include_payments":false}'
+
+Se isso funcionar, sabemos que o erro está no processPaymentFromSale.
+Se falhar, o erro está em outro lugar.
+
+═══════════════════════════════════════════════════════════════
+O QUE PROCURAR NOS LOGS
+═══════════════════════════════════════════════════════════════
+
+Informações críticas:
+- ❌ Mensagem de erro exata
+- 📋 Stack trace completo
+- 🔍 Linha do código que falhou
+- 📝 Variáveis envolvidas no erro
+
+Erros possíveis:
+1. TypeError: Cannot read property 'X' of undefined
+2. ReferenceError: X is not defined
+3. PostgreSQL error: constraint violation
+4. TypeError: X is not a function
+
+═══════════════════════════════════════════════════════════════
+ME ENVIE:
+═══════════════════════════════════════════════════════════════
+
+1. Logs completos do correlation_id: c1e73ea4-945e-49d9-ad8f-d04b39204d07
+
+OU
+
+2. Resultado do teste com include_payments:false
