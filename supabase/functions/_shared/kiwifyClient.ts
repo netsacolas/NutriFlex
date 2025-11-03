@@ -396,15 +396,22 @@ export class KiwifyApiClient {
   async fetchCharges(params: FetchChargesParams = {}): Promise<PaginatedResponse<JsonRecord>> {
     const { cursor, ...rest } = params;
 
+    // Kiwify API requires start_date and end_date for /v1/payments
+    // Default to last 90 days if not provided
+    const now = new Date();
+    const defaultEndDate = now.toISOString().split('T')[0];
+    const defaultStartDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
     const payload = await this.requestJson(`/v1/payments`, {
       method: 'GET',
       query: {
         page: rest.page,
         per_page: rest.perPage,
-        paid_from: rest.paidFrom,
-        paid_to: rest.paidTo,
-        email: rest.email,
+        start_date: rest.paidFrom || defaultStartDate,
+        end_date: rest.paidTo || defaultEndDate,
         subscription_id: rest.subscriptionId,
+        // Note: email filter may not be supported by /v1/payments endpoint
+        // Filtering by email should be done in the application layer if needed
       },
       headers: cursor ? { 'x-kiwify-cursor': cursor } : undefined,
     });
