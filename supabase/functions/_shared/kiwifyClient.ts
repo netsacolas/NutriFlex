@@ -367,11 +367,14 @@ export class KiwifyApiClient {
     const defaultEndDate = now.toISOString().split('T')[0];
     const defaultStartDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
+    // IMPORTANT: Kiwify API does NOT accept page/per_page when filtering by email or externalId
+    // Only send pagination params when doing a general list (no specific filters)
+    const hasSpecificFilter = !!(rest.email || rest.externalId);
+
     const payload = await this.requestJson(`/v1/sales`, {
       method: 'GET',
       query: {
-        page: rest.page,
-        per_page: rest.perPage,
+        ...(hasSpecificFilter ? {} : { page: rest.page, per_page: rest.perPage }),
         start_date: rest.updatedFrom || defaultStartDate,
         end_date: rest.updatedTo || defaultEndDate,
       },
