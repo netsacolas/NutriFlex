@@ -21,7 +21,9 @@
       "Bash(curl:*)",
       "Bash(node debug-kiwify.js:*)",
       "Bash(chmod:*)",
-      "Bash(node test-sync-after-deploy.js:*)"
+      "Bash(node test-sync-after-deploy.js:*)",
+      "Bash(node debug-complete-flow.js:*)",
+      "Bash(node test-user-email.js:*)"
     ],
     "deny": [],
     "ask": []
