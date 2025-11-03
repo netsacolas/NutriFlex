@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { PWAManager } from './components/PWAComponents';
 import { initBackgroundSync, SyncStatusBadge } from './utils/backgroundSync';
+import { AutoSyncWrapper } from './components/AutoSyncWrapper';
 
 // Layout
 import MainLayout from './components/Layout/MainLayout';
@@ -179,12 +180,14 @@ const App: React.FC = () => {
     <BrowserRouter>
       <AuthProvider>
         <SubscriptionProvider>
-          {/* PWA Components */}
-          <PWAManager />
-          <SyncStatusBadge />
+          <AutoSyncWrapper>
+            {/* PWA Components */}
+            <PWAManager />
+            <SyncStatusBadge />
 
-          {/* Main App Router */}
-          <AppRouter />
+            {/* Main App Router */}
+            <AppRouter />
+          </AutoSyncWrapper>
         </SubscriptionProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -8,7 +8,7 @@ const ThankYouPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { subscription, refresh, isPremium } = useSubscription();
   const [isLoading, setIsLoading] = useState(true);
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(5);
 
   const planParam = searchParams.get('plan') || 'premium';
   const transactionId = searchParams.get('transaction_id');
