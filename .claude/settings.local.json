@@ -20,7 +20,8 @@
       "Bash(bash:*)",
       "Bash(curl:*)",
       "Bash(node debug-kiwify.js:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(node test-sync-after-deploy.js:*)"
     ],
     "deny": [],
     "ask": []
