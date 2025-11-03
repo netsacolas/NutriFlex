@@ -118,6 +118,11 @@ NutriMais AI é uma aplicação web inteligente para diário alimentar que simpl
 3. **Landing Page Institucional**  `pages/LandingPage.tsx` com seções Hero, Features, Pricing, FAQ e depoimentos, além de templates de e-mail para onboarding.
 4. **Melhorias de UX/UI**  sidebar para desktop, bottom navigation mobile, headers padronizados e avatar do usuário aplicado ao dashboard.
 5. **Histórico Expandido**  `pages/HistoryPage.tsx` com quatro abas (refeições, peso, atividades, hidratação), filtros temporais e gráficos de evolução.
+6. **Integração Kiwify via API** ✅ **FUNCIONANDO EM PRODUÇÃO**  sincronização automática de assinaturas usando API pública oficial da Kiwify, com dupla camada de proteção:
+   - **Sync imediato**: ThankYouPage executa `sync_manual` ao redirecionar da compra (últimas 24h)
+   - **Auto-sync no login**: `useAutoSyncSubscription` hook como fallback, sincroniza automaticamente ao detectar login (últimas 48h, cooldown 5min)
+   - **Commits principais**: `72b430a` (fix plan_id detection), `8ff3286` (auto-sync), `38ee923` (fix reload infinito)
+   - **Documentação completa**: Ver `DOCUMENTACAO_KIWIFY.md` para manual detalhado de implementação
 
 ---
 
