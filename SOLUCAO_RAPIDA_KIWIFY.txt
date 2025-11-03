@@ -1,0 +1,238 @@
+═══════════════════════════════════════════════════════════════
+🎯 SOLUÇÃO RÁPIDA: ATIVAR RECONHECIMENTO DE PLANOS KIWIFY
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA ATUAL:
+❌ Compras via Kiwify não ativam conta Premium
+❌ Plano permanece "free" após pagamento
+❌ user_subscriptions não é atualizado
+
+CAUSA RAIZ IDENTIFICADA:
+⚠️  API Kiwify retorna plan_id em: product.plan_id
+⚠️  Edge Function busca em: subscription.plan_id ❌
+⚠️  Resultado: plan_id não encontrado → plano = "free"
+
+CORREÇÃO JÁ IMPLEMENTADA NO CÓDIGO:
+✅ Arquivo kiwify.ts atualizado (commit 72b430a)
+✅ Arquivo kiwifySyncEngine.ts atualizado (commit 72b430a)
+✅ Código commitado e enviado ao GitHub
+
+FALTA FAZER:
+🚀 Deploy da Edge Function para aplicar as correções
+
+═══════════════════════════════════════════════════════════════
+OPÇÃO 1: DEPLOY AUTOMÁTICO VIA DASHBOARD (2 MINUTOS)
+═══════════════════════════════════════════════════════════════
+
+1. Abra o navegador em:
+   https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions
+
+2. Localize a função "kiwify-api" na lista
+
+3. Clique no botão de REDEPLOY ou "..." → "Redeploy"
+
+4. Se houver integração com GitHub, clique em "Deploy from GitHub"
+   - Selecione branch: main
+   - Confirme o deploy
+
+5. Aguarde 30-60 segundos até o status ficar "Active"
+
+6. PRONTO! As correções foram aplicadas
+
+═══════════════════════════════════════════════════════════════
+OPÇÃO 2: SE NÃO TIVER INTEGRAÇÃO GITHUB
+═══════════════════════════════════════════════════════════════
+
+MÉTODO A: Usar CLI com Token de Acesso
+
+1. Gere um token em:
+   https://supabase.com/dashboard/account/tokens
+
+   Clique em "Generate new token"
+   Nome: "Deploy Kiwify Fix"
+   Copie o token
+
+2. No terminal, execute:
+
+   Windows (PowerShell):
+   $env:SUPABASE_ACCESS_TOKEN="SEU_TOKEN_AQUI"
+   npx supabase functions deploy kiwify-api --project-ref keawapzxqoyesptwpwav
+
+   Linux/Mac:
+   export SUPABASE_ACCESS_TOKEN="SEU_TOKEN_AQUI"
+   npx supabase functions deploy kiwify-api --project-ref keawapzxqoyesptwpwav
+
+3. Aguarde o deploy completar
+
+MÉTODO B: Copiar e Colar Código no Dashboard
+
+1. Acesse: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/functions
+
+2. Clique em "kiwify-api" → "Edit"
+
+3. Localize o arquivo "_shared/kiwify.ts"
+
+4. Na função "resolvePlan", ADICIONE estas linhas após a linha 37:
+
+   ANTES (linha 37):
+   ```
+   const planData =
+     typeof data.plan === 'object' && data.plan !== null
+       ? (data.plan as Record<string, unknown>)
+       : null;
+   ```
+
+   ADICIONAR DEPOIS:
+   ```
+   // NOVO: Suporte para product.plan_id (estrutura usada pela Kiwify)
+   const productData =
+     typeof data.product === 'object' && data.product !== null
+       ? (data.product as Record<string, unknown>)
+       : null;
+   ```
+
+5. Na mesma função, na linha do "planId = getFirstNonEmpty(...)",
+   ADICIONE estas duas linhas ANTES de "metadataValue(subscription, 'plan_id')":
+
+   ```
+   productData?.plan_id as string | undefined,  // NOVO
+   productData?.id as string | undefined,       // NOVO
+   ```
+
+6. Role até o final da função resolvePlan e ADICIONE antes do "return 'premium_monthly';":
+
+   ```
+   // NOVO: Fallback para product.plan_name
+   const planName = getFirstNonEmpty(
+     productData?.plan_name as string | undefined,
+     planData?.name as string | undefined,
+   );
+
+   if (planName) {
+     const normalized = planName.toLowerCase();
+     if (normalized.includes('mensal') || normalized.includes('month')) return 'premium_monthly';
+     if (normalized.includes('tri') || normalized.includes('quarter')) return 'premium_quarterly';
+     if (normalized.includes('anual') || normalized.includes('year') || normalized.includes('annual')) return 'premium_annual';
+   }
+   ```
+
+7. Agora vá para o arquivo "_shared/kiwifySyncEngine.ts"
+
+8. Localize a função "subscriptionPlanId" (linha ~201)
+
+9. ADICIONE estas duas linhas na lista de getFirstNonEmpty:
+
+   ```
+   subscription.product?.plan_id as string | undefined,  // NOVO
+   subscription.product?.id as string | undefined,       // NOVO
+   ```
+
+10. Clique em "Save" ou "Deploy"
+
+═══════════════════════════════════════════════════════════════
+TESTAR SE FUNCIONOU
+═══════════════════════════════════════════════════════════════
+
+Após fazer o deploy (qualquer método), execute:
+
+1. Teste de diagnóstico:
+   ```
+   node debug-kiwify.js
+   ```
+
+   Deve mostrar:
+   ✅ SERIA MAPEADO PARA: active (Premium deve ser ativado)
+
+2. Forçar sincronização manual:
+
+   Acesse no navegador (logado no sistema):
+   http://localhost:5173/obrigado
+
+   Ou execute via curl:
+   ```
+   curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" \
+     -d '{"action":"sync_manual","emails":["birofov720@hh7f.com"]}'
+   ```
+
+3. Verifique a tabela user_subscriptions:
+
+   Vá para: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/editor
+
+   Execute:
+   ```sql
+   SELECT
+     u.email,
+     s.plan,
+     s.status,
+     s.kiwify_plan_id
+   FROM user_subscriptions s
+   JOIN auth.users u ON u.id = s.user_id
+   WHERE u.email = 'birofov720@hh7f.com';
+   ```
+
+   Deve retornar:
+   plan: premium_quarterly (ou premium_monthly/annual)
+   status: active
+   kiwify_plan_id: 636ae5ac-1648-413d-9f24-ff428a9a723d
+
+4. Teste no site:
+   - Faça login com birofov720@hh7f.com
+   - Acesse /app
+   - Verifique se aparece "Conta Premium" no canto superior direito
+
+═══════════════════════════════════════════════════════════════
+VERIFICAR LOGS EM CASO DE ERRO
+═══════════════════════════════════════════════════════════════
+
+Se ainda não funcionar:
+
+1. Acesse os logs:
+   https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/logs/edge-functions
+
+2. Filtre por "kiwify-api"
+
+3. Procure por erros relacionados a:
+   - "subscription_upsert_failed"
+   - "user_lookup_failed"
+   - "resolvePlan"
+
+4. Se encontrar erros, copie o correlation_id e procure nos logs completos
+
+═══════════════════════════════════════════════════════════════
+SECRETS NECESSÁRIOS (JÁ CONFIGURADOS)
+═══════════════════════════════════════════════════════════════
+
+✅ KIWIFY_PLAN_MONTHLY_ID = b999e4a7-2372-4a01-a6ac-b08f0803e99c
+✅ KIWIFY_PLAN_QUARTERLY_ID = 636ae5ac-1648-413d-9f24-ff428a9a723d
+❓ KIWIFY_PLAN_ANNUAL_ID = (vazio - ok se não tiver plano anual)
+
+Verificar em:
+https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/settings/functions
+
+═══════════════════════════════════════════════════════════════
+RESUMO DO QUE FOI FEITO
+═══════════════════════════════════════════════════════════════
+
+✅ Problema identificado via debug script
+✅ Código corrigido (busca plan_id em product.plan_id)
+✅ Código commitado (72b430a) e enviado ao GitHub
+✅ Scripts de teste criados (debug-kiwify.js)
+✅ Documentação completa criada
+
+FALTA FAZER:
+🚀 Você fazer o deploy (siga OPÇÃO 1 ou 2 acima)
+✅ Testar após deploy
+✅ Confirmar que plano é ativado corretamente
+
+═══════════════════════════════════════════════════════════════
+DÚVIDAS?
+═══════════════════════════════════════════════════════════════
+
+Execute este arquivo:
+node debug-kiwify.js
+
+E me envie a saída completa para diagnóstico adicional.
+
+═══════════════════════════════════════════════════════════════

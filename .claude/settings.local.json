@@ -19,7 +19,8 @@
       "Bash(\"c:\\NutriMais\\PROXIMOS_PASSOS.md\")",
       "Bash(bash:*)",
       "Bash(curl:*)",
-      "Bash(node debug-kiwify.js:*)"
+      "Bash(node debug-kiwify.js:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
