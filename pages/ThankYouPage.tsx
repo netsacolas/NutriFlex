@@ -15,6 +15,7 @@ const ThankYouPage: React.FC = () => {
 
   useEffect(() => {
     // Atualiza o status da assinatura E sincroniza via API
+    // SEMPRE executa a sincronização, mesmo se o usuário clicar em outro link
     const updateSubscription = async () => {
       setIsLoading(true);
 
@@ -26,6 +27,7 @@ const ThankYouPage: React.FC = () => {
 
         if (token && userEmail) {
           // Chamar sync_manual para sincronizar a compra recente
+          // Esta chamada sempre executa, garantindo que o plano seja ativado
           await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kiwify-api`,
             {
@@ -53,15 +55,18 @@ const ThankYouPage: React.FC = () => {
     };
 
     updateSubscription();
-  }, [refresh]);
+
+    // Dependências vazias = executa apenas uma vez ao montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    // Countdown para redirecionamento automático
+    // Countdown para redirecionamento automático para a Home
     if (countdown > 0 && !isLoading) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (countdown === 0) {
-      navigate('/app');
+      navigate('/');
     }
   }, [countdown, isLoading, navigate]);
 
@@ -202,7 +207,7 @@ const ThankYouPage: React.FC = () => {
                 {/* Countdown */}
                 <div className="text-center pt-4">
                   <p className="text-sm text-gray-500 mb-4">
-                    Redirecionando para o dashboard em <strong className="text-emerald-600">{countdown}s</strong>
+                    Redirecionando para a página inicial em <strong className="text-emerald-600">{countdown}s</strong>
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div
@@ -215,16 +220,16 @@ const ThankYouPage: React.FC = () => {
                 {/* Botões de Ação */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
-                    onClick={() => navigate('/app')}
+                    onClick={() => navigate('/')}
                     className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-cyan-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-cyan-700 transition-all transform hover:-translate-y-0.5"
                   >
-                    🚀 Ir para o Dashboard
+                    🏠 Voltar para Início
                   </button>
                   <button
-                    onClick={() => navigate('/chat')}
+                    onClick={() => navigate('/app')}
                     className="flex-1 px-6 py-4 bg-white border-2 border-emerald-500 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-colors"
                   >
-                    💬 Conversar com IA
+                    🚀 Ir para o Dashboard
                   </button>
                 </div>
               </>
