@@ -16,7 +16,10 @@
       "Bash(npx supabase:*)",
       "Bash(move \"src\\pages\\AdminPanel.tsx\" \"pages\\AdminPanel.tsx\")",
       "Bash(cat:*)",
-      "Bash(\"c:\\NutriMais\\PROXIMOS_PASSOS.md\")"
+      "Bash(\"c:\\NutriMais\\PROXIMOS_PASSOS.md\")",
+      "Bash(bash:*)",
+      "Bash(curl:*)",
+      "Bash(node debug-kiwify.js:*)"
     ],
     "deny": [],
     "ask": []

@@ -36,12 +36,20 @@ export const resolvePlan = (data: Record<string, unknown>): SubscriptionPlanId =
       ? (data.plan as Record<string, unknown>)
       : null;
 
+  // NOVO: Suporte para product.plan_id (estrutura usada pela Kiwify)
+  const productData =
+    typeof data.product === 'object' && data.product !== null
+      ? (data.product as Record<string, unknown>)
+      : null;
+
   const planId = getFirstNonEmpty(
     data.plan_id as string | undefined,
     data.product_id as string | undefined,
     data.plan_code as string | undefined,
     planData?.id as string | undefined,
     planData?.code as string | undefined,
+    productData?.plan_id as string | undefined,  // NOVO: buscar dentro de product.plan_id
+    productData?.id as string | undefined,
   );
 
   if (planId && monthly && planId === monthly) return 'premium_monthly';
@@ -62,6 +70,19 @@ export const resolvePlan = (data: Record<string, unknown>): SubscriptionPlanId =
     if (normalized.includes('month')) return 'premium_monthly';
     if (normalized.includes('quarter')) return 'premium_quarterly';
     if (normalized.includes('year') || normalized.includes('annual')) return 'premium_annual';
+  }
+
+  // NOVO: Fallback para product.plan_name
+  const planName = getFirstNonEmpty(
+    productData?.plan_name as string | undefined,
+    planData?.name as string | undefined,
+  );
+
+  if (planName) {
+    const normalized = planName.toLowerCase();
+    if (normalized.includes('mensal') || normalized.includes('month')) return 'premium_monthly';
+    if (normalized.includes('tri') || normalized.includes('quarter')) return 'premium_quarterly';
+    if (normalized.includes('anual') || normalized.includes('year') || normalized.includes('annual')) return 'premium_annual';
   }
 
   return 'premium_monthly';

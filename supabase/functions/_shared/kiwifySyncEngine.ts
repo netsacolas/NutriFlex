@@ -205,6 +205,8 @@ const subscriptionPlanId = (subscription: JsonRecord): string | null =>
     subscription.plan_code as string | undefined,
     subscription.plan?.id as string | undefined,
     subscription.plan?.code as string | undefined,
+    subscription.product?.plan_id as string | undefined,  // NOVO: buscar em product.plan_id
+    subscription.product?.id as string | undefined,
     metadataValue(subscription, 'plan_id'),
   );
 
