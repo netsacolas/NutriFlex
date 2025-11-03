@@ -12,6 +12,21 @@ export const useAutoSyncSubscription = () => {
 
   useEffect(() => {
     const syncSubscription = async () => {
+      // Verificar se já sincronizou nesta sessão (persiste entre reloads)
+      const syncKey = user?.email ? `autosync_${user.email}` : null;
+      const lastSync = syncKey ? sessionStorage.getItem(syncKey) : null;
+
+      // Se já sincronizou nos últimos 5 minutos, não sincronizar novamente
+      if (lastSync) {
+        const lastSyncTime = parseInt(lastSync, 10);
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+
+        if (lastSyncTime > fiveMinutesAgo) {
+          console.log('[AutoSync] Sincronização já executada recentemente, pulando...');
+          return;
+        }
+      }
+
       // Só sincroniza uma vez por sessão
       if (!user || !user.email || hasSynced.current) {
         return;
@@ -55,6 +70,9 @@ export const useAutoSyncSubscription = () => {
 
           // Marcar como sincronizado para não executar novamente nesta sessão
           hasSynced.current = true;
+          if (syncKey) {
+            sessionStorage.setItem(syncKey, Date.now().toString());
+          }
 
           // Se alguma assinatura foi atualizada, recarregar a página para atualizar o contexto
           if (result.result?.subscriptionsPersisted > 0) {
@@ -66,9 +84,19 @@ export const useAutoSyncSubscription = () => {
           }
         } else {
           console.warn('[AutoSync] Erro na sincronização:', result.error);
+          // Marcar como sincronizado mesmo com erro para evitar loop
+          hasSynced.current = true;
+          if (syncKey) {
+            sessionStorage.setItem(syncKey, Date.now().toString());
+          }
         }
       } catch (error) {
         console.error('[AutoSync] Erro ao sincronizar:', error);
+        // Marcar como sincronizado mesmo com erro para evitar loop
+        hasSynced.current = true;
+        if (syncKey) {
+          sessionStorage.setItem(syncKey, Date.now().toString());
+        }
       }
     };
 
