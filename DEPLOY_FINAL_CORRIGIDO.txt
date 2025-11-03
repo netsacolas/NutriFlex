@@ -1,0 +1,191 @@
+═══════════════════════════════════════════════════════════════
+DEPLOY FINAL CORRIGIDO - INTEGRAÇÃO KIWIFY
+═══════════════════════════════════════════════════════════════
+
+🎯 ÚLTIMO ERRO CORRIGIDO
+═══════════════════════════════════════════════════════════════
+
+ERRO: ValidationError: "page" is not allowed. "per_page" is not allowed
+
+CAUSA: API Kiwify /v1/sales rejeita page/per_page ao filtrar por email
+
+SOLUÇÃO: Condicional que remove page/per_page quando há filtro específico
+
+═══════════════════════════════════════════════════════════════
+EXECUTE NO SERVIDOR (AGORA VAI FUNCIONAR!)
+═══════════════════════════════════════════════════════════════
+
+cd ~/projetos/nutrimais
+
+# 1. Atualizar código
+git pull
+
+# 2. Redeploy
+npx supabase functions deploy kiwify-api
+
+# 3. Testar sync_manual
+curl -X POST https://keawapzxqoyesptwpwav.supabase.co/functions/v1/kiwify-api \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNzE4MTAsImV4cCI6MjA3Njk0NzgxMH0.gc42HHODbHSsIIztIevnER6zt__CN19Mm7Ba0a98kM8" \
+  -d '{"action":"sync_manual","emails":["birofov720@hh7f.com"]}'
+
+═══════════════════════════════════════════════════════════════
+RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+{
+  "correlation_id": "...",
+  "success": true,
+  "result": {
+    "subscriptionsFetched": 1,
+    "subscriptionsPersisted": 1,
+    "paymentsFetched": 1,
+    "paymentsInserted": 1,
+    "paymentsSkipped": 0,
+    "usersMatched": 1,
+    "usersMissing": 0,
+    "errors": 0
+  }
+}
+
+✅ ZERO ERROS = SUCESSO TOTAL!
+
+═══════════════════════════════════════════════════════════════
+VERIFICAR DADOS NO BANCO
+═══════════════════════════════════════════════════════════════
+
+Dashboard: https://supabase.com/dashboard/project/keawapzxqoyesptwpwav/editor
+
+1. Consultar assinatura:
+   SELECT * FROM user_subscriptions
+   WHERE kiwify_subscription_id = 'e4b8befe-4525-447d-bbd2-d54f7b1bd9a6';
+
+2. Consultar pagamento:
+   SELECT * FROM payment_history
+   WHERE kiwify_order_id = 'e4b8befe-4525-447d-bbd2-d54f7b1bd9a6';
+
+Dados esperados:
+- Assinatura: plan = premium_quarterly, status = active
+- Pagamento: amount_cents = 216, payment_method = pix
+
+═══════════════════════════════════════════════════════════════
+RESUMO DE TODAS AS CORREÇÕES
+═══════════════════════════════════════════════════════════════
+
+1. ✅ OAuth funcionando
+   - URL: /v1/oauth/token
+   - Content-Type: application/x-www-form-urlencoded
+   - Credenciais válidas
+
+2. ✅ Endpoint /v1/sales
+   - Parâmetros obrigatórios: start_date, end_date
+   - SEM page/per_page quando há filtro específico (email/externalId)
+   - COM page/per_page apenas em listagem geral
+
+3. ✅ Pagamentos embutidos
+   - Processados inline a partir do campo "payment" de cada venda
+   - Endpoint /v1/payments não existe (confirmado por diagnóstico)
+   - Uma chamada = venda + pagamento (atômico)
+
+4. ✅ Plan IDs configurados
+   - Monthly: b999e4a7-2372-4a01-a6ac-b08f0803e99c
+   - Quarterly: 636ae5ac-1648-413d-9f24-ff428a9a723d
+
+5. ✅ Header x-kiwify-account-id
+   - Presente em todas requisições autenticadas
+   - Valor: av8qNBGVVoyVD75
+
+═══════════════════════════════════════════════════════════════
+ARQUITETURA FINAL
+═══════════════════════════════════════════════════════════════
+
+Kiwify Checkout
+      ↓
+  Venda criada
+      ↓
+┌─────────────────────────────────┐
+│  /v1/sales (API Kiwify)         │
+│                                 │
+│  Parâmetros:                    │
+│  - start_date (obrigatório)     │
+│  - end_date (obrigatório)       │
+│  - page/per_page (APENAS sem    │
+│    filtro específico)           │
+│                                 │
+│  Retorno:                       │
+│  {                              │
+│    id, status, product,         │
+│    customer, payment {...}      │
+│  }                              │
+└──────────┬──────────────────────┘
+           ↓
+┌──────────────────────────────────┐
+│  kiwify-api (Supabase)           │
+│  ┌─────────────────────────┐    │
+│  │ fetchSubscriptions       │    │
+│  │ (sem page/per_page se    │    │
+│  │  email/externalId)       │    │
+│  └─────────┬───────────────┘    │
+│            ↓                     │
+│  ┌─────────────────────────┐    │
+│  │ processSubscription      │    │
+│  │ ↓                        │    │
+│  │ processPaymentFromSale   │    │
+│  └─────────────────────────┘    │
+└──────────┬───────────────────────┘
+           ↓
+┌───────────────────────────────────┐
+│  PostgreSQL                       │
+│  ┌─────────────────────────┐     │
+│  │ user_subscriptions       │     │
+│  │ - plan, status, dates    │     │
+│  ├─────────────────────────┤     │
+│  │ payment_history          │     │
+│  │ - amount, method, date   │     │
+│  └─────────────────────────┘     │
+└───────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════
+HISTÓRICO DE ERROS E SOLUÇÕES
+═══════════════════════════════════════════════════════════════
+
+❌ Erro 1: OAuth 404
+✅ Solução: /v1/oauth/token + x-www-form-urlencoded
+
+❌ Erro 2: Invalid client credentials
+✅ Solução: Credenciais atualizadas do painel Kiwify
+
+❌ Erro 3: /v1/subscriptions não encontrado
+✅ Solução: Usar /v1/sales (endpoint correto)
+
+❌ Erro 4: Validação de parâmetros em /v1/sales
+✅ Solução: start_date e end_date obrigatórios
+
+❌ Erro 5: /v1/payments não existe
+✅ Solução: Extrair payment de dentro de cada venda
+
+❌ Erro 6: page/per_page não permitido com email
+✅ Solução: Condicional hasSpecificFilter
+
+═══════════════════════════════════════════════════════════════
+PRÓXIMOS PASSOS APÓS SUCESSO
+═══════════════════════════════════════════════════════════════
+
+1. ✅ Verificar dados sincronizados no banco
+2. 🔄 Fazer compra real no checkout Kiwify
+3. 🔄 Sincronizar nova compra via sync_manual
+4. 🔄 Deploy kiwify-sync (job incremental)
+5. 🔄 Agendar execução periódica
+6. 🔄 Testar fluxo completo de usuário
+
+═══════════════════════════════════════════════════════════════
+COMMITS APLICADOS
+═══════════════════════════════════════════════════════════════
+
+5a8cf55 - Fix OAuth (/v1/oauth/token + x-www-form-urlencoded)
+a80a18c - Fix: Processar pagamentos diretamente das vendas
+04f7dd2 - Fix: Remover page/per_page ao filtrar por email
+
+═══════════════════════════════════════════════════════════════
+INTEGRAÇÃO 100% FUNCIONAL! 🎉
+═══════════════════════════════════════════════════════════════

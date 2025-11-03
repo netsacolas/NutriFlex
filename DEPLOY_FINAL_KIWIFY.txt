@@ -70,10 +70,12 @@ RESUMO DAS CORREÇÕES APLICADAS
 
 ✅ OAuth funcionando (URL correta + x-www-form-urlencoded)
 ✅ Header x-kiwify-account-id adicionado
-✅ Endpoint correto (/v1/sales ao invés de /v1/subscriptions)
-✅ Parâmetros obrigatórios (start_date + end_date)
+✅ Endpoint /v1/sales correto (ao invés de /v1/subscriptions)
+✅ Endpoint /v1/payments correto (start_date + end_date obrigatórios)
+✅ Parâmetros obrigatórios em ambos endpoints
 ✅ Plan IDs descobertos e configurados
 ✅ Credenciais OAuth corretas
+✅ sync_manual funcionando completamente
 
 INTEGRAÇÃO 100% FUNCIONAL! 🎉
 

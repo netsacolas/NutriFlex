@@ -1,0 +1,57 @@
+═══════════════════════════════════════════════════════════════
+EXECUTAR DIAGNÓSTICO NO SERVIDOR
+═══════════════════════════════════════════════════════════════
+
+O erro persiste porque provavelmente o endpoint /v1/payments não existe
+ou tem parâmetros diferentes do esperado.
+
+Execute este script de diagnóstico no servidor para descobrir o
+endpoint correto:
+
+cd ~/projetos/nutrimais
+git pull
+chmod +x diagnostico-kiwify-payments.sh
+./diagnostico-kiwify-payments.sh
+
+═══════════════════════════════════════════════════════════════
+O QUE O SCRIPT FAZ
+═══════════════════════════════════════════════════════════════
+
+1. Obtém token OAuth (igual ao que já funciona)
+2. Testa /v1/payments SEM parâmetros
+3. Testa /v1/payments COM start_date e end_date
+4. Testa /v1/payments COM paid_from e paid_to
+5. Testa endpoint raiz /v1/ (lista endpoints disponíveis)
+6. Testa /v1/orders (pode ser o endpoint correto)
+7. Busca uma venda específica para ver estrutura de pagamento
+
+═══════════════════════════════════════════════════════════════
+O QUE PROCURAR NO OUTPUT
+═══════════════════════════════════════════════════════════════
+
+✅ Qual teste retornou dados (não erro 404)?
+✅ Qual é a estrutura de resposta?
+✅ Quais parâmetros são aceitos?
+✅ Há dados de pagamento dentro de /v1/sales?
+
+═══════════════════════════════════════════════════════════════
+POSSÍVEIS CENÁRIOS
+═══════════════════════════════════════════════════════════════
+
+CENÁRIO A: /v1/payments não existe
+→ Solução: Usar dados de pagamento que já vêm em /v1/sales
+
+CENÁRIO B: /v1/payments existe mas com parâmetros diferentes
+→ Solução: Ajustar código com parâmetros corretos
+
+CENÁRIO C: /v1/orders é o endpoint correto
+→ Solução: Trocar /v1/payments por /v1/orders
+
+CENÁRIO D: Pagamentos vêm embutidos em cada venda
+→ Solução: Extrair payment_history diretamente de /v1/sales
+
+═══════════════════════════════════════════════════════════════
+EXECUTE E ME ENVIE TODO O OUTPUT
+═══════════════════════════════════════════════════════════════
+
+Copie e cole TODA a saída do script para análise.
