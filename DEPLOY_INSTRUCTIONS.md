@@ -120,9 +120,27 @@ Após o deploy, abra o console do navegador (F12) e:
 
 Para manter o estado das assinaturas sempre atualizado, configure um cron job que invoque a função `kiwify-sync` a cada 10 minutos.
 
+#### Quando o recurso de Cron Jobs do Supabase estiver disponível
 1. Gere um token seguro e defina `KIWIFY_SYNC_CRON_TOKEN` no ambiente (ex.: Supabase Secrets).
 2. Execute `scripts/schedule-kiwify-sync.sh` após autenticar com o Supabase CLI (`supabase login`).
 3. Verifique o agendamento com `supabase functions schedule list`. O job `kiwify-sync-incremental` deve aparecer como ativo.
+
+#### Alternativa para planos sem Cron Jobs
+Enquanto o Supabase não disponibilizar agendamentos para o projeto:
+1. Gere o token `KIWIFY_SYNC_CRON_TOKEN` e mantenha-o salvo com segurança.
+2. No servidor que executará o cron, exporte a variável (ex.: adicione em `~/.bashrc` ou no `crontab`):
+   ```
+   export KIWIFY_SYNC_CRON_TOKEN=seu_token
+   ```
+3. Utilize o script `scripts/run-kiwify-sync.sh` para disparar a função manualmente:
+   ```
+   ./scripts/run-kiwify-sync.sh
+   ```
+4. Adicione uma entrada no `crontab` para executar a cada 10 minutos:
+   ```
+   */10 * * * * KIWIFY_SYNC_CRON_TOKEN=seu_token /home/mario/projetos/nutrimais/scripts/run-kiwify-sync.sh >> /var/log/kiwify-sync.log 2>&1
+   ```
+5. Consulte os logs (`/var/log/kiwify-sync.log`) ou o painel do Supabase (`supabase functions logs kiwify-sync`) para confirmar que as execuções estão ocorrendo.
 
 ---
 
