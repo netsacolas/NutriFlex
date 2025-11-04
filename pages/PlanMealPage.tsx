@@ -7,6 +7,7 @@ import { profileService } from '../services/profileService';
 import { searchFoods } from '../data/foodDatabase';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { supabase } from '../services/supabaseClient';
+import { MEAL_CALCULATION_REQUEST_TYPE } from '../shared/geminiConstants';
 import {
   SparklesIcon,
   StarIcon,
@@ -71,24 +72,32 @@ const PlanMealPage: React.FC = () => {
 
   const loadTodayAiGenerationsCount = async (userId: string) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const startOfTodayUtc = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0, 0
+      ));
+      const startOfTomorrowUtc = new Date(startOfTodayUtc);
+      startOfTomorrowUtc.setUTCDate(startOfTomorrowUtc.getUTCDate() + 1);
 
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('gemini_requests')
-        .select('id', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('request_type', 'meal_planning')
-        .gte('created_at', `${today}T00:00:00.000Z`)
-        .lte('created_at', `${today}T23:59:59.999Z`);
+        .eq('request_type', MEAL_CALCULATION_REQUEST_TYPE)
+        .gte('created_at', startOfTodayUtc.toISOString())
+        .lt('created_at', startOfTomorrowUtc.toISOString());
 
       if (error) {
         console.error('Error counting AI generations:', error);
         return;
       }
 
-      const count = data?.length || 0;
-      setTodayAiGenerationsCount(count);
-      console.log(`📊 Gerações de IA hoje: ${count}`);
+      const total = count ?? 0;
+      setTodayAiGenerationsCount(total);
+      console.log(`📊 Gerações de porções hoje: ${total}`);
     } catch (error) {
       console.error('Error loading AI generations count:', error);
     }
@@ -290,7 +299,7 @@ const PlanMealPage: React.FC = () => {
     if (limits.maxMealsPerDay !== null && todayAiGenerationsCount >= limits.maxMealsPerDay) {
       setShowUpgradeNotice(true);
       setToast({
-        message: `Plano gratuito permite apenas ${limits.maxMealsPerDay} gerações de IA por dia. Assine o Premium para liberar ilimitado.`,
+        message: `Plano gratuito permite apenas ${limits.maxMealsPerDay} cálculos de porções por dia. Assine o Premium para liberar ilimitado.`,
         type: 'error'
       });
       setTimeout(() => {
@@ -601,10 +610,10 @@ const PlanMealPage: React.FC = () => {
               <div>
                 <p className="text-sm text-emerald-600 font-semibold">Plano Grátis ativo</p>
                 <p className="text-gray-800 font-medium">
-                  Gerações de IA hoje: {todayAiGenerationsCount}/{limits.maxMealsPerDay}
+                  Cálculos de porções hoje: {todayAiGenerationsCount}/{limits.maxMealsPerDay}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Cada cálculo de porções conta como 1 geração. Refeições registradas: {todayMealsCount}
+                  Cada cálculo de porções consome 1 crédito diário. Refeições registradas: {todayMealsCount}
                 </p>
                 <p className="text-xs text-gray-500">
                   O plano Premium libera gerações ilimitadas, histórico completo e assistente de IA.
@@ -621,7 +630,7 @@ const PlanMealPage: React.FC = () => {
             {showUpgradeNotice && (
               <div id="upgrade-notice" className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                 <p className="text-orange-700 text-sm font-medium">
-                  ⚠️ Você atingiu o limite diário do Plano Grátis ({limits.maxMealsPerDay} gerações de IA por dia). Para continuar planejando refeições e liberar todos os recursos profissionais, faça o upgrade para o Premium.
+                  ⚠️ Você atingiu o limite diário do Plano Grátis ({limits.maxMealsPerDay} cálculos de porções por dia). Para continuar planejando refeições e liberar todos os recursos profissionais, faça o upgrade para o Premium.
                 </p>
                 <button
                   onClick={() => navigate('/assinatura')}

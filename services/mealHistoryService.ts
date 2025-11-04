@@ -97,11 +97,15 @@ export const mealHistoryService = {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('meal_consumption')
-        .select('*')
-        .eq('user_id', userId)
-        .order('consumed_at', { ascending: false });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || user.id !== userId) {
+        return { data: null, error: { message: 'Usuário não autenticado' } };
+      }
+
+      const { data, error } = await supabase.rpc<MealHistory[]>(
+        'meal_history_limited',
+        { p_days: 365 },
+      );
 
       if (error) {
         console.error('Error fetching meal history:', error);
@@ -127,13 +131,19 @@ export const mealHistoryService = {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('meal_consumption')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('consumed_at', startDate.toISOString())
-        .lte('consumed_at', endDate.toISOString())
-        .order('consumed_at', { ascending: false });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || user.id !== userId) {
+        return [];
+      }
+
+      const { data, error } = await supabase.rpc<MealHistory[]>(
+        'meal_history_limited',
+        {
+          p_days: 365,
+          p_start: startDate.toISOString(),
+          p_end: endDate.toISOString(),
+        },
+      );
 
       if (error) {
         console.error('Error fetching meal history by period:', error);

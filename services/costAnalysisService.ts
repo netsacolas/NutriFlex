@@ -8,6 +8,7 @@
  */
 
 import { supabase } from './supabaseClient';
+import { MEAL_CALCULATION_REQUEST_TYPE } from '../shared/geminiConstants';
 
 // Preços por milhão de tokens (USD)
 const PRICING = {
@@ -17,8 +18,8 @@ const PRICING = {
 
 // Estimativas médias de tokens por tipo de requisição
 // Baseado em observações reais do sistema
-const TOKEN_ESTIMATES = {
-  meal_calculation: {
+const TOKEN_ESTIMATES: Record<string, { input: number; output: number }> = {
+  [MEAL_CALCULATION_REQUEST_TYPE]: {
     input: 800,   // Prompt detalhado com macros, alimentos, instruções
     output: 600,  // JSON com porções, macros, sugestões
   },
@@ -236,7 +237,7 @@ export function formatBRL(value: number): string {
  */
 export function translateRequestType(type: string): string {
   const translations: Record<string, string> = {
-    meal_calculation: 'Cálculo de Refeição',
+    [MEAL_CALCULATION_REQUEST_TYPE]: 'Cálculo de Refeição',
     'weight-analysis': 'Análise de Peso',
     'nutrition-chat': 'Chat Nutricional',
     unknown: 'Desconhecido',
@@ -250,7 +251,7 @@ export function translateRequestType(type: string): string {
  */
 export function getRequestTypeIcon(type: string): string {
   const icons: Record<string, string> = {
-    meal_calculation: '🍽️',
+    [MEAL_CALCULATION_REQUEST_TYPE]: '🍽️',
     'weight-analysis': '⚖️',
     'nutrition-chat': '💬',
     unknown: '❓',

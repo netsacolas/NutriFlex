@@ -13,6 +13,13 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import {
+  MEAL_CALCULATION_REQUEST_TYPE
+} from '../../../shared/geminiConstants.ts';
+import {
+  getPlanLimits,
+  type SubscriptionPlanId
+} from '../../../shared/subscriptionLimits.ts';
 
 // Configuração de CORS
 const corsHeaders = {
@@ -93,22 +100,83 @@ serve(async (req) => {
     }
 
     // 2. RATE LIMITING: Verificar quantas requisições o usuário fez na última hora
-    const { count } = await supabaseClient
-      .from('gemini_requests')
-      .select('*', { count: 'exact', head: true })
+    const { data: subscription } = await supabaseClient
+      .from('user_subscriptions')
+      .select('plan,status,current_period_end')
       .eq('user_id', user.id)
-      .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString());
+      .maybeSingle();
 
-    if (count && count >= 20) {
-      return new Response(
-        JSON.stringify({
-          error: 'Rate limit exceeded - Maximum 20 requests per hour',
-        }),
-        {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    const now = new Date();
+    let effectivePlan: SubscriptionPlanId = 'free';
+
+    if (subscription?.status === 'active') {
+      const candidatePlan = (subscription.plan ?? 'free') as SubscriptionPlanId;
+      const hasExpired = subscription.current_period_end
+        ? new Date(subscription.current_period_end) < now
+        : false;
+
+      if (!hasExpired) {
+        effectivePlan = candidatePlan;
+      }
+    }
+
+    const planLimits = getPlanLimits(effectivePlan);
+
+    const utcNow = new Date();
+    const startOfTodayUtc = new Date(Date.UTC(
+      utcNow.getUTCFullYear(),
+      utcNow.getUTCMonth(),
+      utcNow.getUTCDate(),
+      0,
+      0,
+      0,
+      0
+    ));
+    const startOfTomorrowUtc = new Date(startOfTodayUtc);
+    startOfTomorrowUtc.setUTCDate(startOfTomorrowUtc.getUTCDate() + 1);
+
+    if (planLimits.dailyMealCalculations !== null) {
+      const { count: dailyCount } = await supabaseClient
+        .from('gemini_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('request_type', MEAL_CALCULATION_REQUEST_TYPE)
+        .gte('created_at', startOfTodayUtc.toISOString())
+        .lt('created_at', startOfTomorrowUtc.toISOString());
+
+      if (dailyCount !== null && dailyCount >= planLimits.dailyMealCalculations) {
+        return new Response(
+          JSON.stringify({
+            error: `Limite diário atingido para o plano ${effectivePlan}. Atualize para o Premium para liberar cálculos ilimitados.`
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
+
+    const effectiveHourlyCap = planLimits.hourlyGeminiCap ?? 20;
+    if (effectiveHourlyCap !== null) {
+      const { count: hourlyCount } = await supabaseClient
+        .from('gemini_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('request_type', MEAL_CALCULATION_REQUEST_TYPE)
+        .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString());
+
+      if (hourlyCount !== null && hourlyCount >= effectiveHourlyCap) {
+        return new Response(
+          JSON.stringify({
+            error: `Limite de ${effectiveHourlyCap} requisições por hora atingido. Aguarde alguns minutos e tente novamente.`
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
     }
 
     // 3. VALIDAÇÃO DE INPUT
@@ -260,7 +328,8 @@ Retorne a resposta em JSON neste formato exato:
     await supabaseClient.from('gemini_requests').insert({
       user_id: user.id,
       user_email: user.email,
-      request_type: 'meal_calculation',
+      request_type: MEAL_CALCULATION_REQUEST_TYPE,
+      plan_snapshot: effectivePlan,
       created_at: new Date().toISOString(),
     });
 

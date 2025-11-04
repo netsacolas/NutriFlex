@@ -48,6 +48,10 @@ serve(async (req) => {
   const logger = createLogger(correlationId);
 
   try {
+    const cronTokenHeader = req.headers.get('x-nutrimais-cron-token');
+    const cronTokenEnv = Deno.env.get('KIWIFY_SYNC_CRON_TOKEN');
+    const isCronInvocation = Boolean(cronTokenEnv && cronTokenHeader && cronTokenHeader === cronTokenEnv);
+
     const supabase = createSupabaseClient();
     const client = new KiwifyApiClient(logger);
 
@@ -65,9 +69,53 @@ serve(async (req) => {
 
     const mode = (body.mode as string | undefined) ?? modeFromQuery ?? 'incremental';
 
+    let authenticatedUser: { id: string; email?: string | null } | null = null;
+    let isAdmin = false;
+
+    if (!isCronInvocation) {
+      const authHeader = req.headers.get('authorization') ?? '';
+
+      if (!authHeader.toLowerCase().startsWith('bearer ')) {
+        return badRequest('Token de acesso obrigatório para sincronização manual.', correlationId);
+      }
+
+      const token = authHeader.slice(7).trim();
+
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !userData?.user) {
+        logger.warn('sync_auth_failed', serializeError(userError));
+        return badRequest('Sessão inválida. Faça login novamente.', correlationId);
+      }
+
+      authenticatedUser = {
+        id: userData.user.id,
+        email: userData.user.email,
+      };
+
+      const { data: adminRecord, error: adminError } = await supabase
+        .from('admin_users')
+        .select('user_id')
+        .eq('user_id', authenticatedUser.id)
+        .maybeSingle();
+
+      if (adminError) {
+        logger.warn('sync_admin_lookup_failed', serializeError(adminError));
+      }
+
+      isAdmin = Boolean(adminRecord);
+    }
+
+    if (!isCronInvocation && !authenticatedUser) {
+      return badRequest('Não autorizado.', correlationId);
+    }
+
     logger.info('kiwify_sync_invoked', { mode });
 
     if (mode === 'manual') {
+      if (!isCronInvocation && !isAdmin) {
+        return badRequest('Sincronização manual disponível apenas para administradores.', correlationId);
+      }
+
       const emails = (body.emails as string[] | undefined) ?? [];
       const userIds = (body.user_ids as string[] | undefined) ?? (body.user_id ? [body.user_id] : []);
       const subscriptionIds = (body.subscription_ids as string[] | undefined) ?? (body.subscription_id ? [body.subscription_id] : []);
@@ -95,6 +143,12 @@ serve(async (req) => {
       });
 
       return ok({ success: true, mode: 'manual', result }, correlationId);
+    }
+
+    if (!isCronInvocation && authenticatedUser && !isAdmin) {
+      if (body.lookback_hours && typeof body.lookback_hours === 'number' && body.lookback_hours > 24) {
+        return badRequest('Lookback máximo permitido para usuários é de 24 horas.', correlationId);
+      }
     }
 
     const incrementalResult = await runIncrementalSync({

@@ -116,6 +116,14 @@ Após o deploy, abra o console do navegador (F12) e:
 - [Kiwify Dashboard](https://dashboard.kiwify.com.br)
 - [Supabase Dashboard](https://supabase.com/dashboard/project/keawapzxqoyesptwpwav)
 
+### 🔁 Agendamento do Kiwify Sync
+
+Para manter o estado das assinaturas sempre atualizado, configure um cron job que invoque a função `kiwify-sync` a cada 10 minutos.
+
+1. Gere um token seguro e defina `KIWIFY_SYNC_CRON_TOKEN` no ambiente (ex.: Supabase Secrets).
+2. Execute `scripts/schedule-kiwify-sync.sh` após autenticar com o Supabase CLI (`supabase login`).
+3. Verifique o agendamento com `supabase functions schedule list`. O job `kiwify-sync-incremental` deve aparecer como ativo.
+
 ---
 
 **Última atualização:** 2025-01-30

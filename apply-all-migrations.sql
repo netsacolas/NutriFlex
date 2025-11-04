@@ -398,6 +398,15 @@ CREATE TRIGGER trg_auth_user_create_subscription
     FOR EACH ROW
     EXECUTE FUNCTION public.create_default_subscription();
 
+-- Migration 010: plan_snapshot em gemini_requests
+ALTER TABLE public.gemini_requests
+  ADD COLUMN IF NOT EXISTS plan_snapshot subscription_plan DEFAULT 'free';
+
+COMMENT ON COLUMN public.gemini_requests.plan_snapshot IS 'Plano do usuario no momento da requisicao Gemini';
+
+UPDATE public.gemini_requests
+SET plan_snapshot = COALESCE(plan_snapshot, 'free');
+
 -- =====================================================
 -- SUCESSO! Todas as migrations foram aplicadas.
 -- Agora o calculo de porcoes deve funcionar!

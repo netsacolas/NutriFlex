@@ -54,15 +54,10 @@ export const mealConsumptionService = {
         return { data: null, error: { message: 'Usuário não autenticado' } };
       }
 
-      const since = new Date();
-      since.setDate(since.getDate() - days);
-
-      const { data, error } = await supabase
-        .from('meal_consumption')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('consumed_at', since.toISOString())
-        .order('consumed_at', { ascending: false });
+      const { data, error } = await supabase.rpc<MealConsumption[]>(
+        'meal_history_limited',
+        { p_days: days },
+      );
 
       return { data, error };
     } catch (error) {

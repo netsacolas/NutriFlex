@@ -26,6 +26,7 @@ import {
   type RequestHistoryFilters,
   type UserInfo,
 } from '../../services/costAnalysisService';
+import { MEAL_CALCULATION_REQUEST_TYPE } from '../../shared/geminiConstants';
 
 interface CostAnalysisModalProps {
   isOpen: boolean;
@@ -477,7 +478,7 @@ const CostAnalysisModal: React.FC<CostAnalysisModalProps> = ({ isOpen, onClose }
                       className="w-full bg-primary-bg text-text-primary px-3 py-2 rounded-lg border border-border-color focus:ring-2 focus:ring-green-500 focus:outline-none"
                     >
                       <option value="all">Todos os tipos</option>
-                      <option value="meal_calculation">🍽️ Cálculo de Refeição</option>
+                      <option value={MEAL_CALCULATION_REQUEST_TYPE}>🍽️ Cálculo de Refeição</option>
                       <option value="weight-analysis">⚖️ Análise de Peso</option>
                       <option value="nutrition-chat">💬 Chat Nutricional</option>
                     </select>

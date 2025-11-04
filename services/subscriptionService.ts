@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import logger from '../utils/logger';
+import { getPlanLimits } from '../shared/subscriptionLimits';
 import type {
   PlanTierDefinition,
   SubscriptionPlan,
@@ -7,6 +8,15 @@ import type {
 } from '../types';
 
 const isE2EMock = import.meta.env.VITE_E2E_MOCK === 'true';
+
+const buildPlanLimits = (planId: SubscriptionPlan): PlanTierDefinition['limits'] => {
+  const limits = getPlanLimits(planId);
+  return {
+    maxMealsPerDay: limits.dailyMealCalculations,
+    historyItems: planId === 'free' ? 5 : null,
+    aiChatEnabled: planId !== 'free'
+  };
+};
 
 const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
   free: {
@@ -20,11 +30,7 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
       'Historico com ultimos 5 registros',
       'Recalcular com IA no painel de saude'
     ],
-    limits: {
-      maxMealsPerDay: 2,
-      historyItems: 5,
-      aiChatEnabled: false
-    }
+    limits: buildPlanLimits('free')
   },
   premium_monthly: {
     id: 'premium_monthly',
@@ -40,11 +46,7 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
       'Relatórios personalizados',
       'Suporte prioritário'
     ],
-    limits: {
-      maxMealsPerDay: null,
-      historyItems: null,
-      aiChatEnabled: true
-    }
+    limits: buildPlanLimits('premium_monthly')
   },
   premium_quarterly: {
     id: 'premium_quarterly',
@@ -59,11 +61,7 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
       'Renovação automática trimestral',
       'Garantia de satisfação'
     ],
-    limits: {
-      maxMealsPerDay: null,
-      historyItems: null,
-      aiChatEnabled: true
-    }
+    limits: buildPlanLimits('premium_quarterly')
   },
   premium_annual: {
     id: 'premium_annual',
@@ -78,11 +76,7 @@ const planDefinitions: Record<SubscriptionPlan, PlanTierDefinition> = {
       'Relatórios históricos avançados',
       'Melhor custo-benefício'
     ],
-    limits: {
-      maxMealsPerDay: null,
-      historyItems: null,
-      aiChatEnabled: true
-    }
+    limits: buildPlanLimits('premium_annual')
   }
 };
 
