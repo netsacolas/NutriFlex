@@ -29,24 +29,26 @@ WHERE id IN (
   SELECT id FROM duplicates WHERE rn > 1
 );
 
--- 2. Adicionar constraint UNIQUE para kiwify_subscription_id
+-- 2. Adicionar índice único parcial para kiwify_subscription_id
 -- Permite múltiplos NULL (usuários sem assinatura Kiwify)
--- Mas não permite duplicação de IDs válidos
+-- Mas não permite duplicação de IDs válidos (apenas valores não-nulos)
 
+-- Remover constraint antigo se existir
 ALTER TABLE public.user_subscriptions
   DROP CONSTRAINT IF EXISTS unique_kiwify_subscription_id;
 
-ALTER TABLE public.user_subscriptions
-  ADD CONSTRAINT unique_kiwify_subscription_id
-  UNIQUE NULLS NOT DISTINCT (kiwify_subscription_id);
+-- Remover índice antigo se existir
+DROP INDEX IF EXISTS unique_kiwify_subscription_id;
+DROP INDEX IF EXISTS idx_user_subscriptions_kiwify_sub_id;
 
--- 3. Adicionar índice para melhorar performance de buscas
-CREATE INDEX IF NOT EXISTS idx_user_subscriptions_kiwify_sub_id
+-- Criar índice único parcial (não inclui NULL)
+-- Isto permite múltiplos NULL mas garante que valores não-nulos sejam únicos
+CREATE UNIQUE INDEX unique_kiwify_subscription_id
   ON public.user_subscriptions(kiwify_subscription_id)
   WHERE kiwify_subscription_id IS NOT NULL;
 
--- 4. Comentários explicativos
-COMMENT ON CONSTRAINT unique_kiwify_subscription_id ON public.user_subscriptions IS
+-- 3. Comentários explicativos
+COMMENT ON INDEX unique_kiwify_subscription_id IS
   'Garante que cada assinatura Kiwify está associada a apenas um usuário. NULL é permitido para usuários sem assinatura Kiwify.';
 
 -- ============================================================================
