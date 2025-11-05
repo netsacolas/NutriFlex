@@ -12,6 +12,21 @@ export const useAutoSyncSubscription = () => {
 
   useEffect(() => {
     const syncSubscription = async () => {
+      // Só sincroniza uma vez por sessão
+      if (!user || !user.email || hasSynced.current) {
+        return;
+      }
+
+      // IMPORTANTE: Não sincronizar para contas recém-criadas (menos de 5 minutos)
+      // Isso evita que novos cadastros sejam incorretamente associados a assinaturas Kiwify existentes
+      const userCreatedAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+
+      if (userCreatedAt > fiveMinutesAgo) {
+        console.log('[AutoSync] Conta muito recente, pulando sincronização automática');
+        return;
+      }
+
       // Verificar se já sincronizou nesta sessão (persiste entre reloads)
       const syncKey = user?.email ? `autosync_${user.email}` : null;
       const lastSync = syncKey ? sessionStorage.getItem(syncKey) : null;
@@ -19,17 +34,12 @@ export const useAutoSyncSubscription = () => {
       // Se já sincronizou nos últimos 5 minutos, não sincronizar novamente
       if (lastSync) {
         const lastSyncTime = parseInt(lastSync, 10);
-        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+        const cooldownPeriod = Date.now() - 5 * 60 * 1000;
 
-        if (lastSyncTime > fiveMinutesAgo) {
+        if (lastSyncTime > cooldownPeriod) {
           console.log('[AutoSync] Sincronização já executada recentemente, pulando...');
           return;
         }
-      }
-
-      // Só sincroniza uma vez por sessão
-      if (!user || !user.email || hasSynced.current) {
-        return;
       }
 
       try {
