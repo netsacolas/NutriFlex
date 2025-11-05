@@ -460,6 +460,69 @@ CREATE UNIQUE INDEX unique_kiwify_subscription_id
 COMMENT ON INDEX unique_kiwify_subscription_id IS
   'Garante que cada assinatura Kiwify está associada a apenas um usuário. NULL é permitido para usuários sem assinatura Kiwify.';
 
+-- ============================================================================
+-- Migration 018: Corrigir função handle_new_user_complete corrompida
+-- ============================================================================
+-- CRÍTICO: Função foi modificada manualmente criando dados Kiwify FALSOS
+
+-- 1. Dropar e recriar a função CORRETAMENTE
+DROP FUNCTION IF EXISTS public.handle_new_user_complete() CASCADE;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user_complete()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+BEGIN
+    INSERT INTO public.profiles (id, full_name, created_at, updated_at)
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+        NOW(),
+        NOW()
+    )
+    ON CONFLICT (id) DO NOTHING;
+
+    -- APENAS campos essenciais - SEM customer_email, kiwify_*, etc
+    INSERT INTO public.user_subscriptions (user_id, plan, status, current_period_start)
+    VALUES (NEW.id, 'free', 'active', NOW())
+    ON CONFLICT (user_id) DO NOTHING;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 2. Recriar trigger
+DROP TRIGGER IF EXISTS on_auth_user_created_complete ON auth.users;
+
+CREATE TRIGGER on_auth_user_created_complete
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_user_complete();
+
+COMMENT ON FUNCTION public.handle_new_user_complete() IS
+'Cria perfil e assinatura FREE. NUNCA preencher campos Kiwify - sincronização real apenas.';
+
+-- 3. Limpar dados falsos
+UPDATE user_subscriptions
+SET
+  plan = 'free',
+  status = 'active',
+  kiwify_subscription_id = NULL,
+  kiwify_plan_id = NULL,
+  customer_email = NULL,
+  kiwify_order_id = NULL,
+  last_event_at = NULL,
+  current_period_end = NULL,
+  updated_at = NOW()
+WHERE
+  kiwify_subscription_id IS NOT NULL
+  AND user_id IN (
+    SELECT u.id FROM auth.users u
+    WHERE u.created_at >= '2025-11-01'
+      AND NOT EXISTS (SELECT 1 FROM payment_history ph WHERE ph.user_id = u.id)
+  );
+
 -- =====================================================
 -- SUCESSO! Todas as migrations foram aplicadas.
 -- Agora o calculo de porcoes deve funcionar!
