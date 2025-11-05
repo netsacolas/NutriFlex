@@ -50,6 +50,16 @@ serve(async (req) => {
   try {
     const cronTokenHeader = req.headers.get('x-nutrimais-cron-token');
     const cronTokenEnv = Deno.env.get('KIWIFY_SYNC_CRON_TOKEN');
+
+    // Debug: Log token validation (hashed for security)
+    logger.info('Token validation debug', {
+      hasHeaderToken: Boolean(cronTokenHeader),
+      hasEnvToken: Boolean(cronTokenEnv),
+      headerLength: cronTokenHeader?.length || 0,
+      envLength: cronTokenEnv?.length || 0,
+      tokensMatch: cronTokenHeader === cronTokenEnv
+    });
+
     const isCronInvocation = Boolean(cronTokenEnv && cronTokenHeader && cronTokenHeader === cronTokenEnv);
 
     const supabase = createSupabaseClient();

@@ -23,7 +23,8 @@
       "Bash(chmod:*)",
       "Bash(node test-sync-after-deploy.js:*)",
       "Bash(node debug-complete-flow.js:*)",
-      "Bash(node test-user-email.js:*)"
+      "Bash(node test-user-email.js:*)",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": []
