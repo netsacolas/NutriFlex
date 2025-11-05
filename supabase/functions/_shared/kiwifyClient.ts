@@ -371,10 +371,17 @@ export class KiwifyApiClient {
     // Only send pagination params when doing a general list (no specific filters)
     const hasSpecificFilter = !!(rest.email || rest.externalId);
 
+    const paginationParams = hasSpecificFilter
+      ? {}
+      : {
+          ...(rest.page !== undefined && { page: rest.page }),
+          ...(rest.perPage !== undefined && { per_page: rest.perPage }),
+        };
+
     const payload = await this.requestJson(`/v1/sales`, {
       method: 'GET',
       query: {
-        ...(hasSpecificFilter ? {} : { page: rest.page, per_page: rest.perPage }),
+        ...paginationParams,
         start_date: rest.updatedFrom || defaultStartDate,
         end_date: rest.updatedTo || defaultEndDate,
       },
@@ -408,11 +415,11 @@ export class KiwifyApiClient {
     const payload = await this.requestJson(`/v1/payments`, {
       method: 'GET',
       query: {
-        page: rest.page,
-        per_page: rest.perPage,
+        ...(rest.page !== undefined && { page: rest.page }),
+        ...(rest.perPage !== undefined && { per_page: rest.perPage }),
         start_date: rest.paidFrom || defaultStartDate,
         end_date: rest.paidTo || defaultEndDate,
-        subscription_id: rest.subscriptionId,
+        ...(rest.subscriptionId && { subscription_id: rest.subscriptionId }),
         // Note: email filter may not be supported by /v1/payments endpoint
         // Filtering by email should be done in the application layer if needed
       },
