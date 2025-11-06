@@ -28,30 +28,45 @@ const ThankYouPage: React.FC = () => {
         if (token && userEmail) {
           // Chamar sync_manual para sincronizar a compra recente
           // Esta chamada sempre executa, garantindo que o plano seja ativado
-          await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kiwify-api`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                action: 'sync_manual',
-                emails: [userEmail],
-                // Buscar compras das últimas 24 horas
-                since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-              }),
+          console.log('[ThankYouPage] Iniciando sincronização para:', userEmail);
+
+          try {
+            const syncResponse = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kiwify-api`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  action: 'sync_manual',
+                  emails: [userEmail],
+                  // Buscar compras das últimas 24 horas
+                  since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                }),
+              }
+            );
+
+            const syncResult = await syncResponse.json();
+            console.log('[ThankYouPage] Sincronização concluída:', syncResult);
+
+            if (!syncResponse.ok) {
+              console.error('[ThankYouPage] Erro na sincronização:', syncResult);
             }
-          ).catch(err => console.error('Erro ao sincronizar:', err));
+          } catch (err) {
+            console.error('[ThankYouPage] Erro ao sincronizar:', err);
+          }
         }
       } catch (error) {
         console.error('Erro na sincronização:', error);
       }
 
-      // Atualizar contexto de assinatura
+      // Atualizar contexto de assinatura (aguarda sincronização completa)
       await refresh();
-      setTimeout(() => setIsLoading(false), 2000);
+
+      // Aguarda um pouco mais para garantir que a sincronização propagou
+      setTimeout(() => setIsLoading(false), 3000);
     };
 
     updateSubscription();
