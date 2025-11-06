@@ -316,30 +316,47 @@ const processSubscription = async (
     last_event_at: subscriptionUpdatedAt(subscription) ?? new Date().toISOString(),
   };
 
-  // First, check if this kiwify_subscription_id already exists
-  const { data: existing } = await ctx.supabase
+  // Check if this kiwify_subscription_id already exists
+  const { data: existingByKiwify } = await ctx.supabase
     .from('user_subscriptions')
     .select('id, user_id')
     .eq('kiwify_subscription_id', subscriptionId)
     .maybeSingle();
 
+  // Check if this user already has a subscription
+  const { data: existingByUser } = await ctx.supabase
+    .from('user_subscriptions')
+    .select('id, kiwify_subscription_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
   let data, error;
 
-  if (existing) {
-    // Update existing record
+  if (existingByKiwify) {
+    // Update existing record by kiwify_subscription_id
     const result = await ctx.supabase
       .from('user_subscriptions')
       .update(payload)
-      .eq('id', existing.id)
+      .eq('id', existingByKiwify.id)
+      .select('id')
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  } else if (existingByUser) {
+    // Update existing record by user_id
+    const result = await ctx.supabase
+      .from('user_subscriptions')
+      .update(payload)
+      .eq('id', existingByUser.id)
       .select('id')
       .maybeSingle();
     data = result.data;
     error = result.error;
   } else {
-    // Insert new record (upsert by user_id in case user has another subscription)
+    // Insert new record
     const result = await ctx.supabase
       .from('user_subscriptions')
-      .upsert(payload, { onConflict: 'user_id' })
+      .insert(payload)
       .select('id')
       .maybeSingle();
     data = result.data;
