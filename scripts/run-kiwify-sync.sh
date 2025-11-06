@@ -11,6 +11,7 @@ fi
 
 curl -sS -X POST \
   -H "Content-Type: application/json" \
-  -H "x-nutrimais-cron-token:${KIWIFY_SYNC_CRON_TOKEN}" \
+  -H "x-nutrimais-cron-token: ${KIWIFY_SYNC_CRON_TOKEN}" \
+  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAwNDgzNzgsImV4cCI6MjA0NTYyNDM3OH0.vF3ypBzW-pYbLSr9fS5tRAJL3JD66qWXJ8ztC5KkRKM" \
   --data '{"mode":"incremental"}' \
   "${SUPABASE_ENDPOINT}"

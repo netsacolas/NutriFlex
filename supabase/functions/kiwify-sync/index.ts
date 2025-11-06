@@ -7,7 +7,7 @@ import { runIncrementalSync, runManualSync } from '../_shared/kiwifySyncEngine.t
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-nutrimais-cron-token',
 };
 
 const createSupabaseClient = () => {
