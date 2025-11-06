@@ -127,20 +127,7 @@ const resolveUserId = async (
   emailCache: Map<string, string | null>,
   filtersUserIds: Set<string>,
 ): Promise<string | null> => {
-  const directId = getFirstNonEmpty(
-    subscription.external_id as string | undefined,
-    subscription.externalId as string | undefined,
-    subscription.customer_external_id as string | undefined,
-    metadataValue(subscription, 'user_id'),
-    metadataValue(subscription, 'external_id'),
-  );
-  if (directId) {
-    if (filtersUserIds.size > 0 && !filtersUserIds.has(directId)) {
-      return null;
-    }
-    return directId;
-  }
-
+  // PRIORITY 1: Try email first (more reliable than external_id from Kiwify)
   const email = extractCustomerEmail(subscription);
   if (!email) {
     return null;
