@@ -129,6 +129,13 @@ const resolveUserId = async (
 ): Promise<string | null> => {
   // PRIORITY 1: Try email first (more reliable than external_id from Kiwify)
   const email = extractCustomerEmail(subscription);
+
+  logger.info('resolve_user_id_by_email', {
+    subscription_id: subscription.id,
+    extracted_email: email,
+    has_email: Boolean(email)
+  });
+
   if (!email) {
     return null;
   }
