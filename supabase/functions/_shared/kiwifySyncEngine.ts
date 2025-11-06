@@ -642,7 +642,7 @@ export const runIncrementalSync = async (options: IncrementalSyncOptions): Promi
 
   await iterateSubscriptions(
     options.client,
-    { updatedFrom: since, updatedTo: options.until, perPage },
+    { updatedFrom: since, updatedTo: options.until },
     async (subscription) => {
       await processSubscription(subscription, {
         supabase: options.supabase,
@@ -715,7 +715,7 @@ export const runManualSync = async (options: ManualSyncOptions): Promise<SyncRes
   const collect = async (params: FetchSubscriptionsParams) => {
     await iterateSubscriptions(
       options.client,
-      { ...params, perPage, updatedFrom: since, updatedTo: until ?? undefined },
+      { ...params, updatedFrom: since, updatedTo: until ?? undefined },
       async (subscription) => {
         const subscriptionId = subscription.id as string | undefined;
         if (subscriptionId && processedIds.has(subscriptionId)) {
