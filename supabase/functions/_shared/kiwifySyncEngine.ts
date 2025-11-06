@@ -342,9 +342,33 @@ const processSubscription = async (
 
   let data, error;
 
-  if (existingByKiwify) {
+  // Case 1: kiwify_subscription_id exists AND belongs to DIFFERENT user
+  if (existingByKiwify && existingByUser && existingByKiwify.id !== existingByUser.id) {
+    ctx.logger.info('subscription_conflict_detected', {
+      kiwify_record: existingByKiwify.id,
+      user_record: existingByUser.id,
+      action: 'delete_old_kiwify_and_update_user'
+    });
+
+    // Delete the old kiwify record (wrong user)
+    await ctx.supabase
+      .from('user_subscriptions')
+      .delete()
+      .eq('id', existingByKiwify.id);
+
+    // Update the correct user record
+    const result = await ctx.supabase
+      .from('user_subscriptions')
+      .update(payload)
+      .eq('id', existingByUser.id)
+      .select('id')
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  }
+  // Case 2: Only kiwify_subscription_id exists (same record)
+  else if (existingByKiwify) {
     ctx.logger.info('subscription_update_by_kiwify', { id: existingByKiwify.id });
-    // Update existing record by kiwify_subscription_id
     const result = await ctx.supabase
       .from('user_subscriptions')
       .update(payload)
@@ -353,8 +377,9 @@ const processSubscription = async (
       .maybeSingle();
     data = result.data;
     error = result.error;
-  } else if (existingByUser) {
-    // Update existing record by user_id
+  }
+  // Case 3: Only user_id exists
+  else if (existingByUser) {
     ctx.logger.info('subscription_update_by_user', { id: existingByUser.id });
     const result = await ctx.supabase
       .from('user_subscriptions')
@@ -364,8 +389,9 @@ const processSubscription = async (
       .maybeSingle();
     data = result.data;
     error = result.error;
-  } else {
-    // Insert new record
+  }
+  // Case 4: Neither exists - insert new
+  else {
     ctx.logger.info('subscription_insert_new', { user_id: userId });
     const result = await ctx.supabase
       .from('user_subscriptions')
