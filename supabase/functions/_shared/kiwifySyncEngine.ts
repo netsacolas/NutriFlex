@@ -530,7 +530,7 @@ const iterateSubscriptions = async (
   for (let safety = 0; safety < 500; safety += 1) {
     const response = await client.fetchSubscriptions({
       ...params,
-      page,
+      // Don't send page - Kiwify API uses cursor-based pagination
       cursor: cursor ?? undefined,
     });
 
@@ -571,7 +571,7 @@ const iteratePayments = async (
   for (let safety = 0; safety < 500; safety += 1) {
     const response = await client.fetchCharges({
       ...params,
-      page,
+      // Don't send page - Kiwify API uses cursor-based pagination
       cursor: cursor ?? undefined,
     });
 
