@@ -51,14 +51,19 @@ serve(async (req) => {
     const cronTokenHeader = req.headers.get('x-nutrimais-cron-token');
     const cronTokenEnv = Deno.env.get('KIWIFY_SYNC_CRON_TOKEN');
 
-    // Debug: Log token validation (hashed for security)
-    logger.info('Token validation debug', {
+    // Debug: Log token validation ANTES de qualquer verificação
+    const debugInfo = {
       hasHeaderToken: Boolean(cronTokenHeader),
       hasEnvToken: Boolean(cronTokenEnv),
       headerLength: cronTokenHeader?.length || 0,
       envLength: cronTokenEnv?.length || 0,
-      tokensMatch: cronTokenHeader === cronTokenEnv
-    });
+      tokensMatch: cronTokenHeader === cronTokenEnv,
+      headerFirst10: cronTokenHeader?.substring(0, 10) || 'null',
+      envFirst10: cronTokenEnv?.substring(0, 10) || 'null'
+    };
+
+    console.log('[KIWIFY-SYNC] Token validation debug:', JSON.stringify(debugInfo));
+    logger.info('Token validation debug', debugInfo);
 
     const isCronInvocation = Boolean(cronTokenEnv && cronTokenHeader && cronTokenHeader === cronTokenEnv);
 
