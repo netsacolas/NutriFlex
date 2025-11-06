@@ -8,7 +8,7 @@ const ThankYouPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { subscription, refresh, isPremium } = useSubscription();
   const [isLoading, setIsLoading] = useState(true);
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(8);
 
   const planParam = searchParams.get('plan') || 'premium';
   const transactionId = searchParams.get('transaction_id');
@@ -65,8 +65,8 @@ const ThankYouPage: React.FC = () => {
       // Atualizar contexto de assinatura (aguarda sincronização completa)
       await refresh();
 
-      // Aguarda um pouco mais para garantir que a sincronização propagou
-      setTimeout(() => setIsLoading(false), 3000);
+      // Aguarda 5 segundos para garantir que a sincronização propagou completamente
+      setTimeout(() => setIsLoading(false), 5000);
     };
 
     updateSubscription();
