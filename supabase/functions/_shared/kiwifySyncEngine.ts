@@ -330,9 +330,20 @@ const processSubscription = async (
     .eq('user_id', userId)
     .maybeSingle();
 
+  // DEBUG: Log what we found
+  ctx.logger.info('subscription_upsert_check', {
+    subscription_id: subscriptionId,
+    user_id: userId,
+    found_by_kiwify: Boolean(existingByKiwify),
+    found_by_user: Boolean(existingByUser),
+    existing_kiwify_id: existingByKiwify?.id,
+    existing_user_id: existingByUser?.id,
+  });
+
   let data, error;
 
   if (existingByKiwify) {
+    ctx.logger.info('subscription_update_by_kiwify', { id: existingByKiwify.id });
     // Update existing record by kiwify_subscription_id
     const result = await ctx.supabase
       .from('user_subscriptions')
@@ -344,6 +355,7 @@ const processSubscription = async (
     error = result.error;
   } else if (existingByUser) {
     // Update existing record by user_id
+    ctx.logger.info('subscription_update_by_user', { id: existingByUser.id });
     const result = await ctx.supabase
       .from('user_subscriptions')
       .update(payload)
@@ -354,6 +366,7 @@ const processSubscription = async (
     error = result.error;
   } else {
     // Insert new record
+    ctx.logger.info('subscription_insert_new', { user_id: userId });
     const result = await ctx.supabase
       .from('user_subscriptions')
       .insert(payload)
