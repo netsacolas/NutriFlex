@@ -316,11 +316,35 @@ const processSubscription = async (
     last_event_at: subscriptionUpdatedAt(subscription) ?? new Date().toISOString(),
   };
 
-  const { data, error } = await ctx.supabase
+  // First, check if this kiwify_subscription_id already exists
+  const { data: existing } = await ctx.supabase
     .from('user_subscriptions')
-    .upsert(payload, { onConflict: 'user_id' })
-    .select('id')
+    .select('id, user_id')
+    .eq('kiwify_subscription_id', subscriptionId)
     .maybeSingle();
+
+  let data, error;
+
+  if (existing) {
+    // Update existing record
+    const result = await ctx.supabase
+      .from('user_subscriptions')
+      .update(payload)
+      .eq('id', existing.id)
+      .select('id')
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  } else {
+    // Insert new record (upsert by user_id in case user has another subscription)
+    const result = await ctx.supabase
+      .from('user_subscriptions')
+      .upsert(payload, { onConflict: 'user_id' })
+      .select('id')
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     ctx.metrics.errors += 1;
