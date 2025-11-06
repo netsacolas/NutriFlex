@@ -415,13 +415,12 @@ export class KiwifyApiClient {
     const payload = await this.requestJson(`/v1/payments`, {
       method: 'GET',
       query: {
-        ...(rest.page !== undefined && { page: rest.page }),
-        ...(rest.perPage !== undefined && { per_page: rest.perPage }),
         start_date: rest.paidFrom || defaultStartDate,
         end_date: rest.paidTo || defaultEndDate,
         ...(rest.subscriptionId && { subscription_id: rest.subscriptionId }),
-        // Note: email filter may not be supported by /v1/payments endpoint
-        // Filtering by email should be done in the application layer if needed
+        // Note: Kiwify API does NOT accept page/per_page in /v1/payments
+        // Pagination is done via cursor only (x-kiwify-cursor header)
+        // Email filter is not supported by /v1/payments endpoint
       },
       headers: cursor ? { 'x-kiwify-cursor': cursor } : undefined,
     });
