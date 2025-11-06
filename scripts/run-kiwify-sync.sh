@@ -9,9 +9,12 @@ if [[ -z "${KIWIFY_SYNC_CRON_TOKEN:-}" ]]; then
   exit 1
 fi
 
+# Service role key necessária para invocar Edge Functions via cron
+SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMDA0ODM3OCwiZXhwIjoyMDQ1NjI0Mzc4fQ.u0_T2gtKC_J-yqJe4bvKhxUxdWHk4dHPZKk_vMPvbNA}"
+
 curl -sS -X POST \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
   -H "x-nutrimais-cron-token: ${KIWIFY_SYNC_CRON_TOKEN}" \
-  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYXdhcHp4cW95ZXNwdHdwd2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAwNDgzNzgsImV4cCI6MjA0NTYyNDM3OH0.vF3ypBzW-pYbLSr9fS5tRAJL3JD66qWXJ8ztC5KkRKM" \
   --data '{"mode":"incremental"}' \
   "${SUPABASE_ENDPOINT}"
